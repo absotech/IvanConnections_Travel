@@ -106,6 +106,7 @@ Contributions are very welcome!
 Feel free to fork the repo, open issues, and submit pull requests.
 
 📄 License
+
 This project is licensed under the [MIT License](https://opensource.org/license/mit).
 
 Made with ❤️ by [Absotech](https://github.com/absotech) — Powered by public transport and .NET.
