@@ -2,7 +2,7 @@
 {
     public static class LocationManagement
     {
-        private static CancellationTokenSource _cancelTokenSource;
+        private static CancellationTokenSource? _cancelTokenSource;
         private static bool _isCheckingLocation;
 
         public static async Task<Location> GetLocationAsync(
@@ -32,7 +32,7 @@
         {
             try
             {
-                Location location = await Geolocation.Default.GetLastKnownLocationAsync();
+                Location? location = await Geolocation.Default.GetLastKnownLocationAsync();
 
                 if (location != null)
                     return location;
@@ -56,7 +56,7 @@
                 GeolocationRequest request = new(geolocationAccuracy, TimeSpan.FromSeconds(timeOutSeconds));
                 _cancelTokenSource = new CancellationTokenSource();
 
-                Location location = await Geolocation.Default.GetLocationAsync(request, _cancelTokenSource.Token);
+                Location? location = await Geolocation.Default.GetLocationAsync(request, _cancelTokenSource.Token);
                 return location;
             }
             catch

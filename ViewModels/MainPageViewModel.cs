@@ -6,39 +6,36 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Maui.ApplicationModel;
+using IvanConnections_Travel.Utils;
 namespace IvanConnections_Travel.ViewModels
 {
     public class MainPageViewModel : INotifyPropertyChanged, IDisposable
     {
+        private static readonly HttpClient _httpClient = new HttpClient(); // Reuse HttpClient
         private readonly System.Timers.Timer _refreshTimer;
         private readonly SemaphoreSlim _semaphore = new(1, 1);
-        public ObservableCollection<Vehicle> Pins { get; set; } = [];
+        private string? _lastVehicleHash = null;
+        private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        public ObservableCollection<Vehicle> Pins { get; private set; } = new(); // Lazy initialization
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public MainPageViewModel()
-        {            _refreshTimer = new System.Timers.Timer(2000);
-            _refreshTimer.Elapsed += (s, e) =>
-            {
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await RefreshPinsAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Background refresh error: {ex.Message}");
-                    }
-                });
-            };
+        {
+            _refreshTimer = new System.Timers.Timer(5000); // Increase interval to reduce load
+            _refreshTimer.Elapsed += async (s, e) => await RefreshPinsAsync();
             _refreshTimer.AutoReset = true;
+
             StartPeriodicRefresh();
         }
 
         public void StartPeriodicRefresh()
         {
             _refreshTimer.Start();
-            _ = Task.Run(async () => await LoadPinsFromBackendAsync());
+            Task.Run(LoadPinsFromBackendAsync);
         }
 
         public void StopPeriodicRefresh()
@@ -65,27 +62,28 @@ namespace IvanConnections_Travel.ViewModels
         {
             try
             {
-                using var httpClient = new HttpClient();
 #if DEBUG
-                httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+                _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
 #endif
-                var response = await httpClient.GetAsync("http://192.168.0.99:5000/ivanconnectionstravel/api/Vehicles/valid");
+                var response = await _httpClient.GetAsync("http://192.168.0.99:5000/ivanconnectionstravel/api/Vehicles/valid");
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-                    var vehicles = JsonSerializer.Deserialize<List<Vehicle>>(json, options);
+                    var vehicles = JsonSerializer.Deserialize<List<Vehicle>>(json, _jsonSerializerOptions);
+
                     if (vehicles is not null)
                     {
-                        Pins.Clear();
-                        foreach (var v in vehicles)
+                        var currentHash = ComputingHelpers.ComputeMd5Hash(json);
+                        if (currentHash != _lastVehicleHash)
                         {
-                            Pins.Add(v);
+                            _lastVehicleHash = currentHash;
+
+                            // Use batch update to improve performance
+                            var updatedPins = new ObservableCollection<Vehicle>(vehicles);
+                            Pins = updatedPins;
+
+                            WeakReferenceMessenger.Default.Send(new PinsUpdatedMessage(updatedPins.ToList()));
                         }
-                        WeakReferenceMessenger.Default.Send(new PinsUpdatedMessage([.. Pins]));
                     }
                 }
                 else
@@ -106,4 +104,5 @@ namespace IvanConnections_Travel.ViewModels
             _semaphore?.Dispose();
         }
     }
+
 }

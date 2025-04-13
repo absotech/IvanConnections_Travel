@@ -38,6 +38,11 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     googleMap.Clear();
+                    foreach (var (markerOptions, label) in markers)
+                    {
+                        var marker = googleMap.AddMarker(markerOptions) ?? throw new InvalidOperationException("Marker is null.");
+                        marker.Tag = label;
+                    }
                     googleMap.TrafficEnabled = true;
 
                     try
@@ -54,11 +59,6 @@ namespace IvanConnections_Travel.Platforms.Handlers
                         System.Diagnostics.Debug.WriteLine($"Map style resource not found: {e.Message}");
                     }
 
-                    foreach (var (markerOptions, label) in markers)
-                    {
-                        var marker = googleMap.AddMarker(markerOptions) ?? throw new InvalidOperationException("Marker is null.");
-                        marker.Tag = label;
-                    }
                 });
             });
         }

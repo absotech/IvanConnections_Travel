@@ -3,31 +3,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
              xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
-             x:Class="IvanConnections_Travel.MainPage">
-
-    <Grid RowDefinitions="*"
-          ColumnDefinitions="*">
+             xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             NavigationPage.HasNavigationBar="False"
+             NavigationPage.HasBackButton="False"
+             x:Class="IvanConnections_Travel.MainPage"
+             xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
+             x:DataType="vm:MainPageViewModel">
+    <Grid RowDefinitions="*"  
+         ColumnDefinitions="*">
         <maps:Map x:Name="MyMap"
                   IsShowingUser="True"
                   Grid.Row="0"
                   Grid.Column="0">
-            <x:Arguments>
-                <maps:MapSpan>
-                    <x:Arguments>
-                        <sensors:Location>
-                            <x:Arguments>
-                                <x:Double>47.1585</x:Double>
-                                <x:Double>27.6014</x:Double>
-                            </x:Arguments>
-                        </sensors:Location>
-                        <x:Double>0.01</x:Double>
-                        <x:Double>0.01</x:Double>
-                    </x:Arguments>
-                </maps:MapSpan>
-            </x:Arguments>
-        </maps:Map>
-    </Grid>
-
-
-
+        </maps:Map>  
+   </Grid>  
 </ContentPage>
