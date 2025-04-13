@@ -83,8 +83,4 @@
 		<PackageReference Include="Microsoft.Maui.Maps" Version="9.0.50" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="CustomControls\" />
-	</ItemGroup>
-
 </Project>

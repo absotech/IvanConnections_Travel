@@ -1,20 +1,35 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+             xmlns:cc="clr-namespace:IvanConnections_Travel.CustomControls"
              xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
              xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
              NavigationPage.HasNavigationBar="False"
              NavigationPage.HasBackButton="False"
              x:Class="IvanConnections_Travel.MainPage"
+             xmlns:models="clr-namespace:IvanConnections_Travel.Models"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:MainPageViewModel">
+    <ContentPage.Resources>
+        <converters:StringToLocationConverter x:Key="stringToLocation" />
+        <converters:RecordToIconConverter x:Key="recordToIcon" />
+    </ContentPage.Resources>
     <Grid RowDefinitions="*"  
          ColumnDefinitions="*">
-        <maps:Map x:Name="MyMap"
+        <cc:MvvmMap x:Name="MyMap"
+                    ItemsSource="{Binding Records}"
                   IsShowingUser="True"
                   Grid.Row="0"
                   Grid.Column="0">
-        </maps:Map>  
+            <cc:MvvmMap.ItemTemplate>
+                <DataTemplate x:DataType="models:Record">
+                    <cc:CustomPin Location="{Binding Location, Converter={StaticResource stringToLocation}}"
+                                  Icon="{Binding Converter={StaticResource recordToIcon}}"
+                                  Label="{Binding Name}"
+                                  Map="{Reference MyMap}" />
+                </DataTemplate>
+            </cc:MvvmMap.ItemTemplate>
+        </cc:MvvmMap>  
    </Grid>  
 </ContentPage>

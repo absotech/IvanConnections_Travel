@@ -65,7 +65,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         private static List<(MarkerOptions marker, string label)> PrepareMarkers()
         {
-            var context = Platform.CurrentActivity ?? Android.App.Application.Context;
+            var context = Platform.CurrentActivity;
             var markers = new List<(MarkerOptions, string)>();
 
             foreach (var pinData in MapPinCache.Pins)
