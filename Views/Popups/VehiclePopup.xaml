@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels.Popups"
+               CanBeDismissedByTappingOutsideOfPopup="True"
+               x:DataType="vm:VehiclePopupViewModel"
+               Color="Transparent"
+               x:Class="IvanConnections_Travel.Views.Popups.VehiclePopup">
+    <Border Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+            StrokeThickness="2"
+            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+            MinimumWidthRequest="250"
+            Padding="30">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="20" />
+        </Border.StrokeShape>
+        <Grid RowDefinitions="auto, auto, auto, auto">
+            <Label FontSize="20"
+                   Grid.Row="0"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,10">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Traseu " />
+                        <Span Text="{Binding VehicleType}" />
+                        <Span Text=": " />
+                        <Span Text="{Binding Vehicle.RouteShortName}" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+            <Label HorizontalOptions="Center"
+                   Text="{Binding VehicleInfo}"
+                   IsVisible="{Binding VehicleInfo, Converter={toolkit:IsNotNullConverter}}"
+                   Grid.Row="1" />
+            <Label HorizontalOptions="Center"
+                   TextDecorations="Underline"
+                   Grid.Row="2">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Urmărește " />
+                        <Span Text="{Binding VehicleType}" />
+                    </FormattedString>
+                </Label.FormattedText>
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding FollowCommand}" />
+                </Label.GestureRecognizers>
+            </Label>
+        </Grid>
+    </Border>
+</toolkit:Popup>

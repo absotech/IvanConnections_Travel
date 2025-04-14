@@ -1,20 +1,44 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="IvanConnections_Travel.MainPage"
              xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
              xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
              xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             NavigationPage.HasNavigationBar="False"
-             NavigationPage.HasBackButton="False"
-             x:Class="IvanConnections_Travel.MainPage"
+             Shell.NavBarIsVisible="False"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:MainPageViewModel">
+    <ContentPage.Behaviors>
+        <xct:EventToCommandBehavior EventName="Appearing"
+                                    Command="{Binding AppearingCommand}" />
+        <xct:EventToCommandBehavior EventName="Disappearing"
+                                    Command="{Binding DisappearingCommand}" />
+    </ContentPage.Behaviors>
     <Grid RowDefinitions="*"  
          ColumnDefinitions="*">
         <maps:Map x:Name="MyMap"
                   IsShowingUser="True"
                   Grid.Row="0"
                   Grid.Column="0">
-        </maps:Map>  
-   </Grid>  
+        </maps:Map>
+        <Border Grid.Row="0"
+                Grid.Column="0"
+                Margin="10"
+                Padding="2"
+                MaximumWidthRequest="200"
+                BackgroundColor="White"
+                VerticalOptions="Start">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="20" />
+            </Border.StrokeShape>
+            <Entry x:Name="SearchBar"
+                   IsEnabled="{Binding IsSearchEnabled}"
+                   Placeholder="Caută o rută"
+                   xct:SetFocusOnEntryCompletedBehavior.NextElement="{x:Reference MyMap}"
+                   TextColor="Black"
+                   ReturnCommand="{Binding RefreshPinsCommand}"
+                   ReturnType="Search"
+                   Text="{Binding SearchText}"/>
+        </Border>
+    </Grid>  
 </ContentPage>

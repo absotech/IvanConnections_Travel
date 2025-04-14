@@ -8,7 +8,7 @@
     Title="IvanConnections_Travel">
 
     <ShellContent
-        Title="Home"
+        Title="IC Travel"
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
 

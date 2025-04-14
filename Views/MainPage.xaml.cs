@@ -44,7 +44,7 @@ namespace IvanConnections_Travel
             WeakReferenceMessenger.Default.Register<ShowToastMessage>(this, (r, m) =>
             {
 #if ANDROID
-                Toast.MakeText(Platform.CurrentActivity, m.Value, ToastLength.Short)?.Show();
+                Toast.MakeText(Platform.CurrentActivity, m.Value, ToastLength.Long)?.Show();
 #endif
             });
 
@@ -58,8 +58,8 @@ namespace IvanConnections_Travel
             Debug.WriteLine("Location permission granted.");
 
             var location = await LocationManagement.GetLocationAsync(
-                GeolocationAccuracy.Medium,
-                10,
+                GeolocationAccuracy.Lowest,
+                3,
                 updatedLocation =>
                 {
                     MainThread.BeginInvokeOnMainThread(() =>

@@ -84,7 +84,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="CustomControls\" />
+	  <MauiXaml Update="Views\Popups\VehiclePopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Views\Popups\VehiclePopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
 	</ItemGroup>
 
 </Project>

@@ -22,14 +22,47 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         public void OnMapReady(GoogleMap googleMap)
         {
+            try
+            {
+                googleMap.TrafficEnabled = true;
+                googleMap.UiSettings.ZoomControlsEnabled = false;
+                bool success = googleMap.SetMapStyle(
+                    MapStyleOptions.LoadRawResourceStyle(Platform.CurrentActivity ?? throw new InvalidOperationException("Context is null."), Resource.Raw.map_style));
+                if (!success)
+                {
+                    System.Diagnostics.Debug.WriteLine("Failed to apply map style.");
+                }
+            }
+            catch (Resources.NotFoundException e)
+            {
+                System.Diagnostics.Debug.WriteLine($"Map style resource not found: {e.Message}");
+            }
+
             googleMap.MarkerClick += (s, e) =>
             {
                 if (e.Marker?.Tag?.ToString() is string label)
                 {
-                    WeakReferenceMessenger.Default.Send(new ShowToastMessage(label));
+                    var pinData = MapPinCache.Pins.FirstOrDefault(p => p.Label == label);
+
+                    if (pinData != null && pinData.LocalTimestamp.HasValue && pinData.VehicleType.HasValue)
+                    {
+                        string vehicleTypeName = Translations.GetVehicleTypeNameInRomanian(pinData.VehicleType.Value);
+                        string timeText = TimeFormatUtils.FormatTimeDifferenceInRomanian(pinData.LocalTimestamp.Value);
+                        string message = $"Cod {vehicleTypeName}: {label}, actualizat acum {timeText}";
+                        WeakReferenceMessenger.Default.Send(new ShowToastMessage(message));
+                        WeakReferenceMessenger.Default.Send(new ClickMessage(pinData));
+                    }
+                    else
+                    {
+                        WeakReferenceMessenger.Default.Send(new ShowToastMessage(label));
+                    }
                 }
 
                 e.Handled = false;
+            };
+            googleMap.MapClick += (s, e) =>
+            {
+                WeakReferenceMessenger.Default.Send(new ClickMessage(null));
             };
             Task.Run(() =>
             {
@@ -43,22 +76,6 @@ namespace IvanConnections_Travel.Platforms.Handlers
                         var marker = googleMap.AddMarker(markerOptions) ?? throw new InvalidOperationException("Marker is null.");
                         marker.Tag = label;
                     }
-                    googleMap.TrafficEnabled = true;
-
-                    try
-                    {
-                        bool success = googleMap.SetMapStyle(
-                            MapStyleOptions.LoadRawResourceStyle(Platform.CurrentActivity ?? throw new InvalidOperationException("Context is null."), Resource.Raw.map_style));
-                        if (!success)
-                        {
-                            System.Diagnostics.Debug.WriteLine("Failed to apply map style.");
-                        }
-                    }
-                    catch (Resources.NotFoundException e)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Map style resource not found: {e.Message}");
-                    }
-
                 });
             });
         }
@@ -74,8 +91,20 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     continue;
 
                 var markerOptions = new MarkerOptions();
+                markerOptions.SetTitle($"Cod {Translations.GetVehicleTypeNameInRomanian(pinData.VehicleType.Value)} {pinData.RouteShortName}: {pinData.Label}");
+                if (pinData.IsElectricBus)
+                {
+                    markerOptions.SetSnippet("Autobuz electric");
+                }
+                else if (pinData.IsNewTram)
+                {
+                    markerOptions.SetSnippet("Tramvai nou");
+                }
+                else
+                {
+                    markerOptions.SetSnippet(null);
+                }
                 markerOptions.SetPosition(new LatLng(pinData.Latitude.Value, pinData.Longitude.Value));
-                markerOptions.SetTitle($"Line: {pinData.RouteShortName}");
 
                 string colorValue = ColorManagement.NormalizeColorHex(pinData.RouteColor ?? throw new InvalidOperationException($"RouteColor for {pinData.Id} is null."));
                 string directionKey = pinData.Direction.HasValue ? (pinData.Direction.Value >= 0 ? "d" + Math.Round(pinData.Direction.Value) : "s") : "x";
@@ -101,6 +130,6 @@ namespace IvanConnections_Travel.Platforms.Handlers
             }
             _bitmapCache.Clear();
         }
-       
+
     }
 }

@@ -1,7 +1,8 @@
 ﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Core;
+using IvanConnections_Travel.ViewModels.Popups;
+using IvanConnections_Travel.Views.Popups;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Controls.Compatibility.Hosting;
-using Microsoft.Maui.Embedding;
 
 namespace IvanConnections_Travel
 {
@@ -23,7 +24,8 @@ namespace IvanConnections_Travel
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
-
+            DependencyService.Register<IPopupService, PopupService>();
+            builder.Services.AddTransientPopup<VehiclePopup, VehiclePopupViewModel>();
             return builder.Build();
         }
     }

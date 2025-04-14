@@ -2,15 +2,19 @@
 using IvanConnections_Travel.Messages;
 using IvanConnections_Travel.Models;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.Maui.ApplicationModel;
 using IvanConnections_Travel.Utils;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Maui.Core;
+using IvanConnections_Travel.ViewModels.Popups;
+
 namespace IvanConnections_Travel.ViewModels
 {
-    public class MainPageViewModel : INotifyPropertyChanged, IDisposable
+    public partial class MainPageViewModel : ObservableObject, IDisposable
     {
+        private readonly IPopupService _popupService;
         private static readonly HttpClient _httpClient = new HttpClient(); // Reuse HttpClient
         private readonly System.Timers.Timer _refreshTimer;
         private readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -19,13 +23,47 @@ namespace IvanConnections_Travel.ViewModels
         {
             PropertyNameCaseInsensitive = true
         };
+        [ObservableProperty]
+        private int? _selectedId = null;
 
-        public ObservableCollection<Vehicle> Pins { get; private set; } = new(); // Lazy initialization
-        public event PropertyChangedEventHandler? PropertyChanged;
+        [ObservableProperty]
+        private HashSet<string?> _routes = [];
+
+        [ObservableProperty]
+        private string? _searchText;
+
+        [ObservableProperty]
+        private bool _isSearchEnabled = true;
+
+        [ObservableProperty]
+        private ObservableCollection<Vehicle> _pins = [];
 
         public MainPageViewModel()
         {
-            _refreshTimer = new System.Timers.Timer(5000); // Increase interval to reduce load
+            _popupService = DependencyService.Get<IPopupService>();
+            WeakReferenceMessenger.Default.Register<ClickMessage>(this, async (r, m) =>
+            {
+#if ANDROID
+                if (m.Value != null)
+                {
+                    var shouldTrackVehicle = await _popupService.ShowPopupAsync<VehiclePopupViewModel>(viewModel => viewModel.Load(m.Value));
+                    if ((bool?)shouldTrackVehicle == true)
+                    {
+                        SelectedId = m.Value.Id;
+                        _lastVehicleHash = null;
+                        _ = LoadPinsFromBackendAsync();
+                    }
+                }
+                else
+                {
+                    SelectedId = null;
+                    _lastVehicleHash = null;
+                    _ = LoadPinsFromBackendAsync();
+                }
+                //Debug.WriteLine($"SelectedId: {SelectedId}");
+#endif
+            });
+            _refreshTimer = new System.Timers.Timer(5000);
             _refreshTimer.Elapsed += async (s, e) => await RefreshPinsAsync();
             _refreshTimer.AutoReset = true;
 
@@ -35,7 +73,7 @@ namespace IvanConnections_Travel.ViewModels
         public void StartPeriodicRefresh()
         {
             _refreshTimer.Start();
-            Task.Run(LoadPinsFromBackendAsync);
+            _ = LoadPinsFromBackendAsync();
         }
 
         public void StopPeriodicRefresh()
@@ -43,19 +81,36 @@ namespace IvanConnections_Travel.ViewModels
             _refreshTimer.Stop();
         }
 
+        [RelayCommand]
         private async Task RefreshPinsAsync()
         {
-            if (await _semaphore.WaitAsync(0))
+            if (!await _semaphore.WaitAsync(0))
+                return;
+
+            try
             {
-                try
-                {
-                    await LoadPinsFromBackendAsync();
-                }
-                finally
-                {
-                    _semaphore.Release();
-                }
+                await LoadPinsFromBackendAsync();
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Refresh error: {ex.Message}");
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        private string BuildApiUrl()
+        {
+            const string baseUrl = "http://192.168.0.99:5000/ivanconnectionstravel/api/Vehicles";
+
+            if (!string.IsNullOrEmpty(SearchText) && Routes.Contains(SearchText, StringComparer.OrdinalIgnoreCase))
+            {
+                return $"{baseUrl}/valid/byroute/{Uri.EscapeDataString(SearchText)}";
+            }
+
+            return $"{baseUrl}/valid";
         }
 
         public async Task LoadPinsFromBackendAsync()
@@ -63,40 +118,93 @@ namespace IvanConnections_Travel.ViewModels
             try
             {
 #if DEBUG
-                _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-#endif
-                var response = await _httpClient.GetAsync("http://192.168.0.99:5000/ivanconnectionstravel/api/Vehicles/valid");
-                if (response.IsSuccessStatusCode)
+                if (!_httpClient.DefaultRequestHeaders.Contains("Accept"))
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var vehicles = JsonSerializer.Deserialize<List<Vehicle>>(json, _jsonSerializerOptions);
+                    _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+                }
+#endif
+                var apiUrl = BuildApiUrl();
+                var response = await _httpClient.GetAsync(apiUrl);
 
-                    if (vehicles is not null)
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"API error: {response.StatusCode} for {apiUrl}");
+                    return;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var currentHash = ComputingHelpers.ComputeMd5Hash(json);
+                if (currentHash == _lastVehicleHash)
+                    return;
+
+                _lastVehicleHash = currentHash;
+
+                var vehicles = JsonSerializer.Deserialize<List<Vehicle>>(json, _jsonSerializerOptions);
+                if (vehicles == null)
+                    return;
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Pins.Clear();
+                    if (SelectedId.HasValue && SelectedId != 0)
                     {
-                        var currentHash = ComputingHelpers.ComputeMd5Hash(json);
-                        if (currentHash != _lastVehicleHash)
+                        var selectedVehicle = vehicles.FirstOrDefault(v => v.Id == SelectedId);
+                        if (selectedVehicle != null)
                         {
-                            _lastVehicleHash = currentHash;
-
-                            // Use batch update to improve performance
-                            var updatedPins = new ObservableCollection<Vehicle>(vehicles);
-                            Pins = updatedPins;
-
-                            WeakReferenceMessenger.Default.Send(new PinsUpdatedMessage(updatedPins.ToList()));
+                            Pins.Add(selectedVehicle);
                         }
                     }
-                }
-                else
-                {
-                    Debug.WriteLine($"API error: {response.StatusCode}");
-                }
+                    else
+                        foreach (var vehicle in vehicles)
+                        {
+                            Pins.Add(vehicle);
+                        }
+
+                    if (vehicles.Count != 0 && Routes.Count == 0)
+                    {
+                        var distinctRoutes = vehicles
+                            .Select(v => v.RouteShortName)
+                            .Where(r => !string.IsNullOrEmpty(r))
+                            .Distinct()
+                            .OrderBy(r => r)
+                            .ToList();
+
+                        Routes.Clear();
+                        foreach (var route in distinctRoutes)
+                        {
+                            Routes.Add(route);
+                        }
+
+                        Debug.WriteLine($"Updated routes collection with {Routes.Count} distinct routes");
+                    }
+
+                    WeakReferenceMessenger.Default.Send(new PinsUpdatedMessage([.. Pins]));
+                });
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Exception: {ex.Message}");
+                Debug.WriteLine($"Exception in LoadPinsFromBackendAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
             }
         }
 
+        [RelayCommand]
+        public async Task Search()
+        {
+            await RefreshPinsAsync();
+        }
+        [RelayCommand]
+        private async Task Appearing()
+        {
+            Debug.WriteLine("MainPageViewModel Appearing");
+        }
+        [RelayCommand]
+        private async Task Disappearing()
+        {
+            Dispose();
+        }
         public void Dispose()
         {
             _refreshTimer?.Stop();
@@ -104,5 +212,4 @@ namespace IvanConnections_Travel.ViewModels
             _semaphore?.Dispose();
         }
     }
-
 }

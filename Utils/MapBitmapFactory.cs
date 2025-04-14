@@ -7,7 +7,6 @@ using Paint = Android.Graphics.Paint;
 using Rect = Android.Graphics.Rect;
 using RectF = Android.Graphics.RectF;
 using PorterDuffMode = Android.Graphics.PorterDuff.Mode;
-using PorterDuff = Android.Graphics.PorterDuff;
 
 
 
@@ -47,14 +46,14 @@ namespace IvanConnections_Travel.Utils
                 : Resource.Drawable.tram_icon;
 
             var baseBitmap = BitmapFactory.DecodeResource(context.Resources, iconResId) ?? throw new InvalidOperationException($"Failed to decode resource for icon type: {iconType}");
-            var scaledBitmap = Bitmap.CreateScaledBitmap(baseBitmap, 96, 96, true);
+            var scaledBitmap = Bitmap.CreateScaledBitmap(baseBitmap, 128, 128, true);
             baseBitmap.Recycle();
 
             // Set arrow/stop icon size to 40
-            int overlaySize = 40;
+            int overlaySize = 60;
 
             // Ensure enough space in the bitmap for the main icon plus the arrow/stop outside it
-            int padding = 10; // Space between main icon and arrow/stop
+            int padding = 20; // Space between main icon and arrow/stop
             int resultWidth = scaledBitmap.Width + overlaySize + padding;
             int resultHeight = scaledBitmap.Height + overlaySize + padding;
 
@@ -89,7 +88,7 @@ namespace IvanConnections_Travel.Utils
             var textPaint = new Paint
             {
                 Color = Color.White,
-                TextSize = 32,
+                TextSize = 40,
                 AntiAlias = true,
                 TextAlign = Paint.Align.Center
             };
@@ -126,7 +125,7 @@ namespace IvanConnections_Travel.Utils
 
                 if (bearing.Value >= 0)
                 {
-                    overlayBase = BitmapFactory.DecodeResource(context.Resources, Resource.Drawable.arrow_icon);
+                    overlayBase = BitmapFactory.DecodeResource(context.Resources, Resource.Drawable.arrow_icon_notfilled);
                 }
                 else
                 {
@@ -146,7 +145,7 @@ namespace IvanConnections_Travel.Utils
 
                 var overlayPaint = new Paint { AntiAlias = true };
                 overlayPaint.SetColorFilter(new PorterDuffColorFilter(
-                    bearing.Value >= 0 ? Color.ParseColor("#000000") : Color.Red,
+                    bearing.Value >= 0 ? Color.ParseColor("#FFFFFF") : Color.Red,
                     PorterDuffMode.SrcIn));
 
                 overlayCanvas.DrawBitmap(scaledOverlay, 0, 0, overlayPaint);
@@ -219,6 +218,15 @@ namespace IvanConnections_Travel.Utils
         public override string ToString()
         {
             return $"{VehicleType}_{RouteShortName}_{ColorValue}_{DirectionKey}";
+        }
+        public static bool operator ==(BitmapCacheKey left, BitmapCacheKey right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(BitmapCacheKey left, BitmapCacheKey right)
+        {
+            return !(left == right);
         }
     }
 }
