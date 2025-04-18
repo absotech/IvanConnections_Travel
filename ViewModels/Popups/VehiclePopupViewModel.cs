@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IvanConnections_Travel.Models;
+using System.Text.Json;
 
 namespace IvanConnections_Travel.ViewModels.Popups
 {
@@ -19,20 +20,45 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private string vehicleType;
         [ObservableProperty]
         private string? vehicleInfo;
+        [ObservableProperty]
+        private DateTime? timeOfArrival;
+        [ObservableProperty]
+        private bool loading = true;
 
 
-        internal void Load(Vehicle vehicle)
+        internal async void Load(Vehicle vehicle)
         {
+            Loading = true;
             if (vehicle == null)
+            {
+                Loading = false;
                 return;
+            }
+
             Vehicle = vehicle;
             VehicleType = Utils.Translations.GetVehicleTypeNameInRomanian(vehicle.VehicleType.Value);
-            if(vehicle.IsElectricBus)
+
+            if (vehicle.IsElectricBus)
                 VehicleInfo = "Autobuz electric";
             else if (vehicle.IsNewTram)
                 VehicleInfo = "Tramvai nou";
             else
                 VehicleInfo = null;
+
+            if (vehicle.NextStop != null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    var duration = await GetDistanceWithTrafficAsync(vehicle.Latitude.Value, vehicle.Longitude.Value, vehicle.NextStop.StopLat, vehicle.NextStop.StopLon);
+                    Loading = false;
+                    var seconds = duration ?? 0;
+                    TimeOfArrival = vehicle.LocalTimestamp + TimeSpan.FromSeconds(seconds);
+                });
+            }
+            else
+                Loading = false;
+
+
         }
 
         [RelayCommand]
@@ -40,6 +66,36 @@ namespace IvanConnections_Travel.ViewModels.Popups
         {
             ShouldFollow = true;
             followVehicleManager.HandleEvent(this, ShouldFollow, nameof(FollowVehicle));
+        }
+        public static async Task<int?> GetDistanceWithTrafficAsync(double originLat, double originLng, double destLat, double destLng)
+        {
+            var apiKey = "***REMOVED***";
+            var url = $"https://maps.googleapis.com/maps/api/distancematrix/json?" +
+                      $"origins={originLat},{originLng}" +
+                      $"&destinations={destLat},{destLng}" +
+                      $"&departure_time=now" +
+                      $"&traffic_model=best_guess" +
+                      $"&key={apiKey}";
+
+            using var client = new HttpClient();
+            var response = await client.GetStringAsync(url);
+
+            using var jsonDoc = JsonDocument.Parse(response);
+            var root = jsonDoc.RootElement;
+
+            var status = root.GetProperty("status").GetString();
+            if (status != "OK")
+                return null;
+
+            var row = root.GetProperty("rows")[0];
+            var element = row.GetProperty("elements")[0];
+
+            var elementStatus = element.GetProperty("status").GetString();
+            if (elementStatus != "OK")
+                return null;
+            var duration = element.GetProperty("duration_in_traffic").GetProperty("value").GetInt32();
+
+            return duration;
         }
     }
 }

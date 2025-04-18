@@ -15,7 +15,7 @@
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="20" />
         </Border.StrokeShape>
-        <Grid RowDefinitions="auto, auto, auto, auto">
+        <Grid RowDefinitions="auto, auto, auto, auto, auto">
             <Label FontSize="20"
                    Grid.Row="0"
                    HorizontalOptions="Center"
@@ -28,14 +28,43 @@
                         <Span Text="{Binding Vehicle.RouteShortName}" />
                     </FormattedString>
                 </Label.FormattedText>
+            </Label> 
+            <Label FontSize="15"
+                   Grid.Row="1"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,10">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="{Binding Vehicle.PreviousStopName} " />
+                        <Span Text=" -> " />
+                        <Span Text="{Binding Vehicle.NextStop.StopName}" />
+                    </FormattedString>
+                </Label.FormattedText>
             </Label>
+            <Label FontSize="15"
+                   Grid.Row="2"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,10">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Ajunge la " />
+                        <Span Text="{Binding TimeOfArrival, StringFormat='{0:HH:mm}'}" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+            <ActivityIndicator IsRunning="{Binding Loading}"
+                               IsVisible="{Binding Loading}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               HeightRequest="15"
+                               Grid.Row="2" />
             <Label HorizontalOptions="Center"
                    Text="{Binding VehicleInfo}"
                    IsVisible="{Binding VehicleInfo, Converter={toolkit:IsNotNullConverter}}"
-                   Grid.Row="1" />
+                   Grid.Row="3" />
             <Label HorizontalOptions="Center"
                    TextDecorations="Underline"
-                   Grid.Row="2">
+                   Grid.Row="4">
                 <Label.FormattedText>
                     <FormattedString>
                         <Span Text="Urmărește " />

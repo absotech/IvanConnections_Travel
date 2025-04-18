@@ -7,6 +7,7 @@ using Paint = Android.Graphics.Paint;
 using Rect = Android.Graphics.Rect;
 using RectF = Android.Graphics.RectF;
 using PorterDuffMode = Android.Graphics.PorterDuff.Mode;
+using Android.Graphics.Drawables;
 
 
 
@@ -16,20 +17,6 @@ namespace IvanConnections_Travel.Utils
     {
         private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> _bitmapCache = new();
 
-        public static Bitmap GetOrCreateMapPin(
-            Context context,
-            VehicleType vehicleType,
-            string routeShortName,
-            string colorHex,
-            double? direction)
-        {
-            string colorValue = ColorManagement.NormalizeColorHex(colorHex);
-            var key = new BitmapCacheKey(vehicleType, routeShortName, colorValue, direction);
-
-            return _bitmapCache.GetOrAdd(key, _ => CreateCustomPinBitmap(
-                context, vehicleType, routeShortName, colorValue, direction));
-        }
-
         public static void ClearBitmapCache()
         {
             foreach (var bitmap in _bitmapCache.Values)
@@ -37,6 +24,28 @@ namespace IvanConnections_Travel.Utils
                 bitmap?.Recycle();
             }
             _bitmapCache.Clear();
+        }
+        public static Bitmap CreateStopPinBitmap(Context context, string label)
+        {
+            int size = 64;
+            var baseBitmap = BitmapFactory.DecodeResource(context.Resources, Resource.Drawable.bus_stop)
+                ?? throw new InvalidOperationException($"Failed to decode resource for icon type: {Resource.Drawable.bus_stop}");
+
+            var scaledBitmap = Bitmap.CreateScaledBitmap(baseBitmap, size, size, true);
+            baseBitmap.Recycle();
+            int resultWidth = scaledBitmap.Width;
+            int resultHeight = scaledBitmap.Height;
+
+            var resultBitmap = Bitmap.CreateBitmap(resultWidth, resultHeight, Bitmap.Config.Argb8888);
+
+            using (var canvas = new Canvas(resultBitmap))
+            {
+                var paint = new Paint();
+                paint.SetColorFilter(new PorterDuffColorFilter(Color.White, PorterDuff.Mode.SrcIn));
+                canvas.DrawBitmap(scaledBitmap, 0, 0, paint);
+            }
+
+            return resultBitmap;
         }
 
         public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing)
@@ -187,19 +196,21 @@ namespace IvanConnections_Travel.Utils
         public string RouteShortName { get; }
         public string ColorValue { get; }
         public string DirectionKey { get; }
+        public bool IsStop { get; }
 
-        public BitmapCacheKey(VehicleType vehicleType, string routeShortName, string colorValue, double? direction)
+        public BitmapCacheKey(VehicleType vehicleType, string routeShortName, string colorValue, double? direction, bool isStop)
         {
             VehicleType = vehicleType;
             RouteShortName = routeShortName ?? string.Empty;
             ColorValue = colorValue ?? string.Empty;
             DirectionKey = direction.HasValue ?
                 (direction.Value >= 0 ? "d" + Math.Round(direction.Value) : "s") : "x";
+            IsStop = isStop;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(VehicleType, RouteShortName, ColorValue, DirectionKey);
+            return HashCode.Combine(VehicleType, RouteShortName, ColorValue, DirectionKey, IsStop);
         }
 
         public bool Equals(BitmapCacheKey other)
@@ -207,26 +218,14 @@ namespace IvanConnections_Travel.Utils
             return VehicleType == other.VehicleType &&
                    RouteShortName == other.RouteShortName &&
                    ColorValue == other.ColorValue &&
-                   DirectionKey == other.DirectionKey;
+                   DirectionKey == other.DirectionKey &&
+                   IsStop == other.IsStop;
         }
 
-        public override bool Equals(object? obj)
-        {
-            return obj is BitmapCacheKey key && Equals(key);
-        }
+        public override bool Equals(object? obj) => obj is BitmapCacheKey key && Equals(key);
 
-        public override string ToString()
-        {
-            return $"{VehicleType}_{RouteShortName}_{ColorValue}_{DirectionKey}";
-        }
-        public static bool operator ==(BitmapCacheKey left, BitmapCacheKey right)
-        {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(BitmapCacheKey left, BitmapCacheKey right)
-        {
-            return !(left == right);
-        }
+        public override string ToString() =>
+            $"{(IsStop ? "STOP" : "VEHICLE")}_{VehicleType}_{RouteShortName}_{ColorValue}_{DirectionKey}";
     }
+
 }

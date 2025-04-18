@@ -19,6 +19,7 @@ namespace IvanConnections_Travel.ViewModels
         private readonly System.Timers.Timer _refreshTimer;
         private readonly SemaphoreSlim _semaphore = new(1, 1);
         private string? _lastVehicleHash = null;
+        private List<Stop> _stops = new();
         private readonly JsonSerializerOptions _jsonSerializerOptions = new()
         {
             PropertyNameCaseInsensitive = true
@@ -63,10 +64,10 @@ namespace IvanConnections_Travel.ViewModels
                 //Debug.WriteLine($"SelectedId: {SelectedId}");
 #endif
             });
-            _refreshTimer = new System.Timers.Timer(5000);
+            _refreshTimer = new System.Timers.Timer(3000);
             _refreshTimer.Elapsed += async (s, e) => await RefreshPinsAsync();
             _refreshTimer.AutoReset = true;
-
+            _ = LoadStopsFromBackendAsync();
             StartPeriodicRefresh();
         }
 
@@ -112,7 +113,32 @@ namespace IvanConnections_Travel.ViewModels
 
             return $"{baseUrl}/valid";
         }
+        private async Task LoadStopsFromBackendAsync()
+        {
+            try
+            {
+                const string stopsUrl = "http://192.168.0.99:5000/ivanconnectionstravel/api/Stops";
+                var response = await _httpClient.GetAsync(stopsUrl);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"Failed to fetch stops: {response.StatusCode}");
+                    return;
+                }
 
+                var json = await response.Content.ReadAsStringAsync();
+                var stops = JsonSerializer.Deserialize<List<Stop>>(json, _jsonSerializerOptions);
+
+                if (stops != null)
+                {
+                    _stops = stops;
+                    Debug.WriteLine($"Loaded {_stops.Count} stops from backend.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading stops: {ex.Message}");
+            }
+        }
         public async Task LoadPinsFromBackendAsync()
         {
             try
@@ -123,6 +149,8 @@ namespace IvanConnections_Travel.ViewModels
                     _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
                 }
 #endif
+                if (_stops.Count == 0)
+                    _ = LoadStopsFromBackendAsync();
                 var apiUrl = BuildApiUrl();
                 var response = await _httpClient.GetAsync(apiUrl);
 
@@ -176,8 +204,8 @@ namespace IvanConnections_Travel.ViewModels
 
                         Debug.WriteLine($"Updated routes collection with {Routes.Count} distinct routes");
                     }
-
-                    WeakReferenceMessenger.Default.Send(new PinsUpdatedMessage([.. Pins]));
+                    
+                    WeakReferenceMessenger.Default.Send(new PinsUpdatedMessage([.. Pins], _stops));
                 });
             }
             catch (Exception ex)

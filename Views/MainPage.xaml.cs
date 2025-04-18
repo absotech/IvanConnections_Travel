@@ -15,22 +15,30 @@ namespace IvanConnections_Travel
     {
 
         private readonly MainPageViewModel _vm;
+        private CustomMapCallback? _customMapCallback;
 
         public MainPage()
         {
             InitializeComponent();
             _vm = new MainPageViewModel();
             BindingContext = _vm;
-
+            _customMapCallback = new CustomMapCallback(MyMap);
+            if (MyMap?.Handler?.PlatformView is MapView nativeMap)
+            {
+                MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    nativeMap.GetMapAsync(_customMapCallback);
+                });
+            }
             WeakReferenceMessenger.Default.Register<PinsUpdatedMessage>(this, (r, m) =>
             {
-                MapPinCache.Pins = m.Value;
+                (MapPinCache.Pins, MapPinCache.Stops) = m.Value;
 
                 if (MyMap?.Handler?.PlatformView is MapView nativeMap)
                 {
                     MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        nativeMap.GetMapAsync(new CustomMapCallback(MyMap));
+                        nativeMap.GetMapAsync(_customMapCallback);
                     });
                 }
             });

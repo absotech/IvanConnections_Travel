@@ -23,6 +23,9 @@ namespace IvanConnections_Travel.Models
         public string? RouteShortName { get; set; }
         public string? TripHeadsign { get; set; }
         public string? RouteColor { get; set; }
+        public string? PreviousStopName { get; set; }
+        public Stop? NextStop { get; set; }
+        public DateTime? TimeOfArrival { get; set; }
         public bool IsElectricBus { get; set; }
 
         public bool IsNewTram { get; set; }
