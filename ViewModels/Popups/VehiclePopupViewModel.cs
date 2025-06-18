@@ -74,6 +74,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
                       $"origins={originLat},{originLng}" +
                       $"&destinations={destLat},{destLng}" +
                       $"&departure_time=now" +
+                      $"&mode=transit" +
                       $"&traffic_model=best_guess" +
                       $"&key={apiKey}";
 
@@ -93,7 +94,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
             var elementStatus = element.GetProperty("status").GetString();
             if (elementStatus != "OK")
                 return null;
-            var duration = element.GetProperty("duration_in_traffic").GetProperty("value").GetInt32();
+            var duration = element.GetProperty("duration").GetProperty("value").GetInt32();
 
             return duration;
         }

@@ -104,7 +104,7 @@ namespace IvanConnections_Travel.ViewModels
 
         private string BuildApiUrl()
         {
-            const string baseUrl = "http://192.168.0.99:5000/ivanconnectionstravel/api/Vehicles";
+            const string baseUrl = "http://server.ivanconnections.cloud:5000/ivanconnectionstravel/api/Vehicles";
 
             if (!string.IsNullOrEmpty(SearchText) && Routes.Contains(SearchText, StringComparer.OrdinalIgnoreCase))
             {
@@ -117,7 +117,7 @@ namespace IvanConnections_Travel.ViewModels
         {
             try
             {
-                const string stopsUrl = "http://192.168.0.99:5000/ivanconnectionstravel/api/Stops";
+                const string stopsUrl = "http://server.ivanconnections.cloud:5000/ivanconnectionstravel/api/Stops";
                 var response = await _httpClient.GetAsync(stopsUrl);
                 if (!response.IsSuccessStatusCode)
                 {
