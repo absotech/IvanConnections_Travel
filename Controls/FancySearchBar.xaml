@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:IvanConnections_Travel.Controls"
+             x:Class="IvanConnections_Travel.Controls.FancySearchBar"
+             x:Name="this">
+    <Border StrokeThickness="1"
+            HeightRequest="50"
+            BackgroundColor="White"
+            Padding="15,0,5,0">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="25" />
+        </Border.StrokeShape>
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="CommonStates">
+                <VisualState x:Name="Normal">
+                    <VisualState.Setters>
+                        <Setter Property="Stroke"
+                                Value="#CCCCCC" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Focused">
+                    <VisualState.Setters>
+                        <Setter Property="Stroke"
+                                Value="{StaticResource Primary}" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <Grid ColumnDefinitions="*, Auto">
+            <local:BorderlessEntry x:Name="SearchBar"
+                                   Grid.Column="0"
+                                   VerticalOptions="Center"
+                                   PlaceholderColor="#A9A9A9"
+                                   TextColor="Black"
+                                   ReturnType="Search"
+                                   Text="{Binding Path=Text, Source={x:Reference this}}"
+                                   Placeholder="{Binding Path=Placeholder, Source={x:Reference this}}" />
+
+            <Image Grid.Column="1"
+                   HeightRequest="20"
+                   WidthRequest="20"
+                   Margin="0,0,10,0"
+                   VerticalOptions="Center">
+                <Image.Source>
+                    <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                     Glyph="&#xe8b6;"
+                                     Color="#A9A9A9" />
+                </Image.Source>
+            </Image>
+        </Grid>
+    </Border>
+</ContentView>
