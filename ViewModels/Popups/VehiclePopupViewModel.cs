@@ -69,34 +69,48 @@ namespace IvanConnections_Travel.ViewModels.Popups
         }
         public static async Task<int?> GetDistanceWithTrafficAsync(double originLat, double originLng, double destLat, double destLng)
         {
-            var apiKey = "***REMOVED***";
-            var url = $"https://maps.googleapis.com/maps/api/distancematrix/json?" +
+            var url = $"https://api.ivanconnections.com/ictravel/distance.php?" +
                       $"origins={originLat},{originLng}" +
                       $"&destinations={destLat},{destLng}" +
                       $"&departure_time=now" +
                       $"&mode=transit" +
-                      $"&traffic_model=best_guess" +
-                      $"&key={apiKey}";
+                      $"&traffic_model=best_guess";
 
             using var client = new HttpClient();
-            var response = await client.GetStringAsync(url);
+            try
+            {
+                var response = await client.GetStringAsync(url);
 
-            using var jsonDoc = JsonDocument.Parse(response);
-            var root = jsonDoc.RootElement;
+                using var jsonDoc = JsonDocument.Parse(response);
+                var root = jsonDoc.RootElement;
+                var status = root.GetProperty("status").GetString();
+                if (status != "OK")
+                {
+                    Console.WriteLine($"API Error: {response}");
+                    return null;
+                }
 
-            var status = root.GetProperty("status").GetString();
-            if (status != "OK")
+                var row = root.GetProperty("rows")[0];
+                var element = row.GetProperty("elements")[0];
+
+                var elementStatus = element.GetProperty("status").GetString();
+                if (elementStatus != "OK")
+                    return null;
+
+                var duration = element.GetProperty("duration").GetProperty("value").GetInt32();
+
+                return duration;
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine($"Error calling the proxy API: {e.Message}");
                 return null;
-
-            var row = root.GetProperty("rows")[0];
-            var element = row.GetProperty("elements")[0];
-
-            var elementStatus = element.GetProperty("status").GetString();
-            if (elementStatus != "OK")
+            }
+            catch (JsonException e)
+            {
+                Console.WriteLine($"Error parsing JSON response from proxy: {e.Message}");
                 return null;
-            var duration = element.GetProperty("duration").GetProperty("value").GetInt32();
-
-            return duration;
+            }
         }
     }
 }

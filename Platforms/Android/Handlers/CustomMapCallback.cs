@@ -106,22 +106,23 @@ namespace IvanConnections_Travel.Platforms.Handlers
             }
 
             // Stops
-            foreach (var stop in MapPinCache.Stops)
-            {
-                if (string.IsNullOrWhiteSpace(stop.StopName))
-                    continue;
+            if (MapPinCache.ShowStops)
+                foreach (var stop in MapPinCache.Stops)
+                {
+                    if (string.IsNullOrWhiteSpace(stop.StopName))
+                        continue;
 
-                var markerOptions = new MarkerOptions();
-                markerOptions.SetTitle($"Stație: {stop.StopName}");
-                markerOptions.SetSnippet("Stație de transport");
-                markerOptions.SetPosition(new LatLng(stop.StopLat, stop.StopLon));
+                    var markerOptions = new MarkerOptions();
+                    markerOptions.SetTitle($"Stație: {stop.StopName}");
+                    markerOptions.SetSnippet("Stație de transport");
+                    markerOptions.SetPosition(new LatLng(stop.StopLat, stop.StopLon));
 
-                var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStop: true);
-                var bitmap = _bitmapCache.GetOrAdd(key, _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName));
+                    var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStop: true);
+                    var bitmap = _bitmapCache.GetOrAdd(key, _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName));
 
-                markerOptions.SetIcon(BitmapDescriptorFactory.FromBitmap(bitmap));
-                markers.Add((markerOptions, stop.StopName, MarkerType.Stop));
-            }
+                    markerOptions.SetIcon(BitmapDescriptorFactory.FromBitmap(bitmap));
+                    markers.Add((markerOptions, stop.StopName, MarkerType.Stop));
+                }
 
             return markers;
         }

@@ -15,7 +15,7 @@ namespace IvanConnections_Travel.ViewModels
     public partial class MainPageViewModel : ObservableObject, IDisposable
     {
         private readonly IPopupService _popupService;
-        private static readonly HttpClient _httpClient = new HttpClient(); // Reuse HttpClient
+        private static readonly HttpClient _httpClient = new HttpClient();
         private readonly System.Timers.Timer _refreshTimer;
         private readonly SemaphoreSlim _semaphore = new(1, 1);
         private string? _lastVehicleHash = null;

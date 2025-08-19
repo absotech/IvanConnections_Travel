@@ -6,5 +6,6 @@ namespace IvanConnections_Travel.Shared.Cache
     {
         public static List<Vehicle> Pins { get; set; } = [];
         public static List<Stop> Stops { get; set; } = [];
+        public static bool ShowStops { get; set; } = true;
     }
 }

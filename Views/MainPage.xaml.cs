@@ -32,7 +32,7 @@ namespace IvanConnections_Travel
             }
             WeakReferenceMessenger.Default.Register<PinsUpdatedMessage>(this, (r, m) =>
             {
-                (MapPinCache.Pins, MapPinCache.Stops) = m.Value;
+                (MapPinCache.Pins, MapPinCache.Stops, MapPinCache.ShowStops) = m.Value;
 
                 if (MyMap?.Handler?.PlatformView is MapView nativeMap)
                 {
