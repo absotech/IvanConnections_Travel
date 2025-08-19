@@ -4,7 +4,6 @@ using IvanConnections_Travel.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text.Json;
-using IvanConnections_Travel.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Maui.Core;
@@ -15,11 +14,11 @@ namespace IvanConnections_Travel.ViewModels
     public partial class MainPageViewModel : ObservableObject, IDisposable
     {
         private readonly IPopupService _popupService;
-        private static readonly HttpClient _httpClient = new HttpClient();
-        private readonly System.Timers.Timer _refreshTimer;
+        private static readonly HttpClient _httpClient = new();
+        private readonly Dictionary<string, string> _etags = [];
         private readonly SemaphoreSlim _semaphore = new(1, 1);
-        private string? _lastVehicleHash = null;
-        private List<Stop> _stops = new();
+        private bool _isInitialized = false;
+        private CancellationTokenSource? _cts;
         private readonly JsonSerializerOptions _jsonSerializerOptions = new()
         {
             PropertyNameCaseInsensitive = true
@@ -39,6 +38,12 @@ namespace IvanConnections_Travel.ViewModels
         [ObservableProperty]
         private ObservableCollection<Vehicle> _pins = [];
 
+        [ObservableProperty]
+        private List<Stop> _allStops = [];
+
+        [ObservableProperty]
+        private bool _showStopsOnMap = true;
+
         public MainPageViewModel()
         {
             _popupService = DependencyService.Get<IPopupService>();
@@ -51,35 +56,65 @@ namespace IvanConnections_Travel.ViewModels
                     if ((bool?)shouldTrackVehicle == true)
                     {
                         SelectedId = m.Value.Id;
-                        _lastVehicleHash = null;
                         _ = LoadPinsFromBackendAsync();
                     }
                 }
                 else
                 {
                     SelectedId = null;
-                    _lastVehicleHash = null;
                     _ = LoadPinsFromBackendAsync();
                 }
                 //Debug.WriteLine($"SelectedId: {SelectedId}");
 #endif
             });
-            _refreshTimer = new System.Timers.Timer(3000);
-            _refreshTimer.Elapsed += async (s, e) => await RefreshPinsAsync();
-            _refreshTimer.AutoReset = true;
-            _ = LoadStopsFromBackendAsync();
-            StartPeriodicRefresh();
+            WeakReferenceMessenger.Default.Register<StopClickMessage>(this, async (r, m) =>
+            {
+#if ANDROID
+                if (m.Value != null)
+                {
+                    await _popupService.ShowPopupAsync<StopPopupViewModel>(async viewModel => await viewModel.LoadAsync(m.Value));
+                }
+#endif
+            });
         }
 
+        public async Task InitializeAsync()
+        {
+            if (_isInitialized)
+                return;
+
+            await LoadStopsFromBackendAsync();
+            await LoadPinsFromBackendAsync();
+            _isInitialized = true;
+        }
         public void StartPeriodicRefresh()
         {
-            _refreshTimer.Start();
-            _ = LoadPinsFromBackendAsync();
+            if (_cts != null) return;
+
+            _cts = new CancellationTokenSource();
+            Task.Run(async () => await PeriodicRefreshLoopAsync(_cts.Token));
         }
 
         public void StopPeriodicRefresh()
         {
-            _refreshTimer.Stop();
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
+        }
+        private async Task PeriodicRefreshLoopAsync(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                await RefreshPinsAsync();
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(3), token);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+            }
         }
 
         [RelayCommand]
@@ -90,7 +125,7 @@ namespace IvanConnections_Travel.ViewModels
 
             try
             {
-                await LoadPinsFromBackendAsync();
+                LoadPinsFromBackendAsync();
             }
             catch (Exception ex)
             {
@@ -117,6 +152,11 @@ namespace IvanConnections_Travel.ViewModels
         {
             try
             {
+                if (!ShowStopsOnMap)
+                {
+                    AllStops = [];
+                    return;
+                }
                 const string stopsUrl = "http://server.ivanconnections.cloud:5000/ivanconnectionstravel/api/Stops";
                 var response = await _httpClient.GetAsync(stopsUrl);
                 if (!response.IsSuccessStatusCode)
@@ -130,13 +170,16 @@ namespace IvanConnections_Travel.ViewModels
 
                 if (stops != null)
                 {
-                    _stops = stops;
-                    Debug.WriteLine($"Loaded {_stops.Count} stops from backend.");
+                    AllStops = stops;
+                }
+                else
+                {
+                    Debug.WriteLine("[Stops Loading] Deserialization resulted in a null list.");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading stops: {ex.Message}");
+                Debug.WriteLine($"[Stops Loading] A critical error occurred: {ex.Message}");
             }
         }
         public async Task LoadPinsFromBackendAsync()
@@ -149,44 +192,51 @@ namespace IvanConnections_Travel.ViewModels
                     _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
                 }
 #endif
-                if (_stops.Count == 0)
-                    _ = LoadStopsFromBackendAsync();
                 var apiUrl = BuildApiUrl();
-                var response = await _httpClient.GetAsync(apiUrl);
-
+                using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+                if (_etags.TryGetValue(apiUrl, out var etag))
+                {
+                    request.Headers.Add("If-None-Match", etag);
+                }
+                using var response = await _httpClient.SendAsync(request);
+                if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
+                {
+                    return;
+                }
                 if (!response.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"API error: {response.StatusCode} for {apiUrl}");
                     return;
                 }
-
+                if (response.Headers.TryGetValues("ETag", out var etagHeaderValues))
+                {
+                    _etags[apiUrl] = etagHeaderValues.First();
+                }
                 var json = await response.Content.ReadAsStringAsync();
-                var currentHash = ComputingHelpers.ComputeMd5Hash(json);
-                if (currentHash == _lastVehicleHash)
-                    return;
-
-                _lastVehicleHash = currentHash;
 
                 var vehicles = JsonSerializer.Deserialize<List<Vehicle>>(json, _jsonSerializerOptions);
                 if (vehicles == null)
                     return;
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    Pins.Clear();
+                    var newVehicleList = new List<Vehicle>();
+
                     if (SelectedId.HasValue && SelectedId != 0)
                     {
                         var selectedVehicle = vehicles.FirstOrDefault(v => v.Id == SelectedId);
                         if (selectedVehicle != null)
                         {
-                            Pins.Add(selectedVehicle);
+                            newVehicleList.Add(selectedVehicle);
                         }
                     }
                     else
+                    {
                         foreach (var vehicle in vehicles)
                         {
-                            Pins.Add(vehicle);
+                            newVehicleList.Add(vehicle);
                         }
-
+                    }
+                    Pins = new ObservableCollection<Vehicle>(newVehicleList);
                     if (vehicles.Count != 0 && Routes.Count == 0)
                     {
                         var distinctRoutes = vehicles
@@ -204,8 +254,6 @@ namespace IvanConnections_Travel.ViewModels
 
                         Debug.WriteLine($"Updated routes collection with {Routes.Count} distinct routes");
                     }
-                    
-                    WeakReferenceMessenger.Default.Send(new PinsUpdatedMessage([.. Pins], _stops));
                 });
             }
             catch (Exception ex)
@@ -216,6 +264,12 @@ namespace IvanConnections_Travel.ViewModels
                     Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
                 }
             }
+        }
+
+        [RelayCommand]
+        void ToggleShowStops()
+        {
+            ShowStopsOnMap = !ShowStopsOnMap;
         }
 
         [RelayCommand]
@@ -235,9 +289,9 @@ namespace IvanConnections_Travel.ViewModels
         }
         public void Dispose()
         {
-            _refreshTimer?.Stop();
-            _refreshTimer?.Dispose();
+            StopPeriodicRefresh();
             _semaphore?.Dispose();
+            WeakReferenceMessenger.Default.UnregisterAll(this);
         }
     }
 }

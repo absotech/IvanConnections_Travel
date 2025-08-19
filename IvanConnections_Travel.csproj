@@ -74,6 +74,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<MauiXaml Update="Controls\FancySearchBar.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\Popups\StopPopup.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Views\Popups\VehiclePopup.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>

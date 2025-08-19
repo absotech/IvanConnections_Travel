@@ -1,54 +1,32 @@
-﻿using Android.Gms.Maps;
-using Android.Widget;
-using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.Messaging;
 using IvanConnections_Travel.Messages;
-using IvanConnections_Travel.Platforms.Handlers;
-using IvanConnections_Travel.Shared.Cache;
 using IvanConnections_Travel.Utils;
 using IvanConnections_Travel.ViewModels;
-using Microsoft.Maui.Maps;
 using System.Diagnostics;
+using Microsoft.Maui.Maps;
+
+#if ANDROID
+using Android.Widget;
+#endif
 
 namespace IvanConnections_Travel
 {
     public partial class MainPage : ContentPage
     {
-
         private readonly MainPageViewModel _vm;
-        private CustomMapCallback? _customMapCallback;
 
         public MainPage()
         {
             InitializeComponent();
             _vm = new MainPageViewModel();
             BindingContext = _vm;
-            _customMapCallback = new CustomMapCallback(MyMap);
-            if (MyMap?.Handler?.PlatformView is MapView nativeMap)
-            {
-                MainThread.InvokeOnMainThreadAsync(() =>
-                {
-                    nativeMap.GetMapAsync(_customMapCallback);
-                });
-            }
-            WeakReferenceMessenger.Default.Register<PinsUpdatedMessage>(this, (r, m) =>
-            {
-                (MapPinCache.Pins, MapPinCache.Stops, MapPinCache.ShowStops) = m.Value;
-
-                if (MyMap?.Handler?.PlatformView is MapView nativeMap)
-                {
-                    MainThread.InvokeOnMainThreadAsync(() =>
-                    {
-                        nativeMap.GetMapAsync(_customMapCallback);
-                    });
-                }
-            });
-
-            _ = _vm.LoadPinsFromBackendAsync();
         }
+
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-
+            await _vm.InitializeAsync();
+            _vm.StartPeriodicRefresh();
             WeakReferenceMessenger.Default.Register<ShowToastMessage>(this, (r, m) =>
             {
 #if ANDROID
@@ -65,22 +43,20 @@ namespace IvanConnections_Travel
 
             Debug.WriteLine("Location permission granted.");
 
-            var location = await LocationManagement.GetLocationAsync(
-                GeolocationAccuracy.Lowest,
-                3,
-                updatedLocation =>
-                {
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        MyMap.MoveToRegion(MapSpan.FromCenterAndRadius(
-                            updatedLocation,
-                            Distance.FromKilometers(1)));
-                    });
-                });
+            var location = await LocationManagement.GetLocationAsync();
+            if (location != null)
+            {
+                MyMap.MoveToRegion(MapSpan.FromCenterAndRadius(
+                    location,
+                    Distance.FromKilometers(1)));
+            }
+        }
 
-            MyMap.MoveToRegion(MapSpan.FromCenterAndRadius(
-                location,
-                Distance.FromKilometers(1)));
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            _vm.StopPeriodicRefresh();
+            WeakReferenceMessenger.Default.Unregister<ShowToastMessage>(this);
         }
 
         public static async Task<PermissionStatus> CheckAndRequestLocationPermission()
@@ -95,16 +71,8 @@ namespace IvanConnections_Travel
                 return status;
             }
 
-            if (Permissions.ShouldShowRationale<Permissions.LocationWhenInUse>())
-            {
-                // Prompt the user with additional information as to why the permission is needed
-            }
-
             status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-
             return status;
         }
-
     }
-
 }

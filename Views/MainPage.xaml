@@ -5,40 +5,69 @@
              xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
              xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
              xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:local="clr-namespace:IvanConnections_Travel.Controls"
              Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:MainPageViewModel">
+
     <ContentPage.Behaviors>
         <xct:EventToCommandBehavior EventName="Appearing"
                                     Command="{Binding AppearingCommand}" />
         <xct:EventToCommandBehavior EventName="Disappearing"
                                     Command="{Binding DisappearingCommand}" />
     </ContentPage.Behaviors>
-    <Grid RowDefinitions="*"  
-         ColumnDefinitions="*">
-        <maps:Map x:Name="MyMap"
-                  IsShowingUser="True"
-                  Grid.Row="0"
-                  Grid.Column="0">
-        </maps:Map>
-        <Border Grid.Row="0"
-                Grid.Column="0"
-                Margin="10"
-                Padding="2"
-                MaximumWidthRequest="200"
-                BackgroundColor="White"
-                VerticalOptions="Start">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="20" />
-            </Border.StrokeShape>
-            <Entry x:Name="SearchBar"
-                   IsEnabled="{Binding IsSearchEnabled}"
-                   Placeholder="Caută o rută"
-                   xct:SetFocusOnEntryCompletedBehavior.NextElement="{x:Reference MyMap}"
-                   TextColor="Black"
-                   ReturnCommand="{Binding RefreshPinsCommand}"
-                   ReturnType="Search"
-                   Text="{Binding SearchText}"/>
-        </Border>
-    </Grid>  
+
+    <Grid>
+        <local:CustomMauiMap x:Name="MyMap"
+                             IsShowingUser="True"
+                             Vehicles="{Binding Pins}"
+                             Stops="{Binding AllStops}"
+                             ShowStops="{Binding ShowStopsOnMap}" />
+        <Grid>
+            <local:FancySearchBar Margin="10,15,10,10"
+                                  HorizontalOptions="Center"
+                                  VerticalOptions="Start"
+                                  WidthRequest="250"
+                                  Placeholder="Caută o rută"
+                                  Text="{Binding SearchText}" />
+
+            <Button VerticalOptions="End"
+                    HorizontalOptions="End"
+                    Margin="20"
+                    WidthRequest="60"
+                    HeightRequest="60"
+                    CornerRadius="30"
+                    Command="{Binding ToggleShowStopsCommand}">
+
+                <Button.ImageSource>
+                    <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                     Glyph="&#xe55f;"
+                                     Color="White" />
+                </Button.ImageSource>
+
+                <Button.Shadow>
+                    <Shadow Brush="Black"
+                            Offset="5,5"
+                            Radius="10"
+                            Opacity="0.5" />
+                </Button.Shadow>
+
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding ShowStopsOnMap}"
+                                 Value="True">
+                        <Setter Property="BackgroundColor"
+                                Value="#2196F3" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding ShowStopsOnMap}"
+                                 Value="False">
+                        <Setter Property="BackgroundColor"
+                                Value="#757575" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </Grid>
+    </Grid>
 </ContentPage>
