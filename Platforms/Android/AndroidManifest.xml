@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.ivanconnections.ivanconnectionstravel">
+	<application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:supportsRtl="true" android:usesCleartextTraffic="true" android:label="IC Travel">
+		<meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyDyBGbnRcSnZP6GrwY48vIqnpQiJxJcBEI" />
+	</application>
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.INTERNET" />
+</manifest>
