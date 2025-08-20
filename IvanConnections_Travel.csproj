@@ -17,11 +17,11 @@
 		<ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>1</ApplicationVersion>
+		<ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+		<ApplicationVersion>100</ApplicationVersion>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">31.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">35.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
@@ -74,6 +74,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <AndroidResource Update="Platforms\Android\Resources\drawable\ic.png">
+	    <BaseSize>256,256</BaseSize>
+	  </AndroidResource>
+	</ItemGroup>
+
+	<ItemGroup>
 		<MauiXaml Update="Controls\FancySearchBar.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -86,6 +92,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Update="Controls\FancySearchBar.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</None>
+		<None Update="Views\Popups\StopPopup.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</None>
 		<None Update="Views\Popups\VehiclePopup.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</None>

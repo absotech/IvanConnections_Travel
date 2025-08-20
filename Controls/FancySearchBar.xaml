@@ -29,7 +29,8 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
 
-        <Grid ColumnDefinitions="*, Auto">
+        <Grid ColumnDefinitions="*, Auto"
+              BackgroundColor="Transparent">
             <local:BorderlessEntry x:Name="SearchBar"
                                    Grid.Column="0"
                                    VerticalOptions="Center"

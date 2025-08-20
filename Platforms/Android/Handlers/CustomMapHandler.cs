@@ -2,7 +2,6 @@
 using Android.Gms.Maps;
 using Android.Gms.Maps.Model;
 using Android.Graphics;
-using Android.Nfc;
 using CommunityToolkit.Mvvm.Messaging;
 using IvanConnections_Travel.Controls;
 using IvanConnections_Travel.Messages;
@@ -25,7 +24,8 @@ namespace IvanConnections_Travel.Platforms.Handlers
             {
                 [nameof(CustomMauiMap.Vehicles)] = MapVehicles,
                 [nameof(CustomMauiMap.Stops)] = MapStops,
-                [nameof(CustomMauiMap.ShowStops)] = MapStops
+                [nameof(CustomMauiMap.ShowStops)] = MapStops,
+                [nameof(CustomMauiMap.MoveToLocation)] = MapMoveToLocation
             };
         private static void MapVehicles(CustomMapHandler handler, CustomMauiMap map)
     => handler.UpdateVehicleMarkers();
@@ -36,6 +36,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         private GoogleMap? _googleMap;
         private readonly CustomMapCallback _mapCallback;
+        private Location? _pendingLocation;
 
         private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> _bitmapCache = [];
 
@@ -61,6 +62,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
             {
                 _googleMap.TrafficEnabled = true;
                 _googleMap.UiSettings.ZoomControlsEnabled = false;
+                _googleMap.UiSettings.MyLocationButtonEnabled = false;
                 bool success = _googleMap.SetMapStyle(
                     MapStyleOptions.LoadRawResourceStyle(Platform.CurrentActivity ?? throw new InvalidOperationException("Context is null."), Resource.Raw.map_style));
                 if (!success)
@@ -163,7 +165,22 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 }
             }
         }
+        private static void MapMoveToLocation(CustomMapHandler handler, CustomMauiMap map)
+        {
+            handler._pendingLocation = map.MoveToLocation;
+            handler.ProcessMapMove();
+        }
 
+        internal void ProcessMapMove()
+        {
+            if (_googleMap != null && _pendingLocation != null)
+            {
+                var latLng = new LatLng(_pendingLocation.Latitude, _pendingLocation.Longitude);
+                var cameraUpdate = CameraUpdateFactory.NewLatLngZoom(latLng, 15);
+                _googleMap.AnimateCamera(cameraUpdate);
+                _pendingLocation = null;
+            }
+        }
         private void OnMarkerClick(object? sender, GoogleMap.MarkerClickEventArgs e)
         {
             if (VirtualView is not CustomMauiMap mauiMap || e.Marker?.Tag?.ToString() is not string tag)
@@ -236,6 +253,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
         public void OnMapReady(GoogleMap googleMap)
         {
             _handler.OnMapReady(googleMap);
+            _handler.ProcessMapMove();
         }
     }
 }

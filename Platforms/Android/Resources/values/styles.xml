@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+	<style name="CustomSplashTheme"
+		   parent="Maui.SplashTheme">
+		<item name="android:colorControlHighlight">@android:color/transparent</item>
+		<item name="windowNoTitle">true</item>
+		<item name="android:windowBackground">@drawable/maui_splash</item>
+		<item name="android:windowSplashScreenAnimatedIcon">@drawable/ic</item>
+	</style>
+</resources>

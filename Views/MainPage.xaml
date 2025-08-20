@@ -8,29 +8,67 @@
              xmlns:local="clr-namespace:IvanConnections_Travel.Controls"
              Shell.NavBarIsVisible="False"
              Shell.TabBarIsVisible="False"
+             x:Name="this"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:MainPageViewModel">
 
     <ContentPage.Behaviors>
         <xct:EventToCommandBehavior EventName="Appearing"
+                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference this}}"
                                     Command="{Binding AppearingCommand}" />
         <xct:EventToCommandBehavior EventName="Disappearing"
+                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference this}}"
                                     Command="{Binding DisappearingCommand}" />
     </ContentPage.Behaviors>
 
     <Grid>
         <local:CustomMauiMap x:Name="MyMap"
                              IsShowingUser="True"
+                             MoveToLocation="{Binding MapCenterLocation}"
                              Vehicles="{Binding Pins}"
                              Stops="{Binding AllStops}"
                              ShowStops="{Binding ShowStopsOnMap}" />
+
         <Grid>
-            <local:FancySearchBar Margin="10,15,10,10"
-                                  HorizontalOptions="Center"
-                                  VerticalOptions="Start"
-                                  WidthRequest="250"
-                                  Placeholder="Caută o rută"
-                                  Text="{Binding SearchText}" />
+            <Border HorizontalOptions="Center"
+                    VerticalOptions="Start"
+                    Margin="10,15,10,10"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 25"
+                    BackgroundColor="White"
+                    Padding="10,0,5,0">
+
+                <Border.Shadow>
+                    <Shadow Brush="Black"
+                            Offset="5,5"
+                            Radius="10"
+                            Opacity="0.3" />
+                </Border.Shadow>
+
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="5"
+                      VerticalOptions="Center">
+
+                    <local:FancySearchBar Grid.Column="0"
+                                          VerticalOptions="Center"
+                                          Placeholder="Caută o rută"
+                                          Text="{Binding SearchText}" />
+
+                    <Button Grid.Column="1"
+                            Command="{Binding CenterOnUserLocationCommand}"
+                            BackgroundColor="Transparent"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            CornerRadius="20"
+                            Padding="0">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                             Glyph="&#xe1b3;"
+                                             Color="{StaticResource Primary}" />
+                        </Button.ImageSource>
+                    </Button>
+                </Grid>
+            </Border>
 
             <Button VerticalOptions="End"
                     HorizontalOptions="End"
@@ -45,14 +83,12 @@
                                      Glyph="&#xe55f;"
                                      Color="White" />
                 </Button.ImageSource>
-
                 <Button.Shadow>
                     <Shadow Brush="Black"
                             Offset="5,5"
                             Radius="10"
                             Opacity="0.5" />
                 </Button.Shadow>
-
                 <Button.Triggers>
                     <DataTrigger TargetType="Button"
                                  Binding="{Binding ShowStopsOnMap}"
