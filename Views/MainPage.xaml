@@ -29,7 +29,7 @@
                              Stops="{Binding AllStops}"
                              ShowStops="{Binding ShowStopsOnMap}" />
 
-        <Grid>
+        <Grid BackgroundColor="Transparent">
             <Border HorizontalOptions="Center"
                     VerticalOptions="Start"
                     Margin="10,15,10,10"
@@ -50,6 +50,7 @@
                       VerticalOptions="Center">
 
                     <local:FancySearchBar Grid.Column="0"
+                                          BackgroundColor="Transparent"
                                           VerticalOptions="Center"
                                           Placeholder="Caută o rută"
                                           Text="{Binding SearchText}" />

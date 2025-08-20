@@ -41,7 +41,7 @@ namespace IvanConnections_Travel
                 if (view is BorderlessEntry)
                 {
 #if ANDROID
-                    handler.PlatformView.Background =
+                    handler.PlatformView.Background = 
             new Android.Graphics.Drawables.ColorDrawable(Android.Graphics.Color.Transparent);
 #elif IOS || MACCATALYST
                 handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
