@@ -1,13 +1,16 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using IvanConnections_Travel.Messages;
 using IvanConnections_Travel.Models;
+using IvanConnections_Travel.Utils;
+using IvanConnections_Travel.ViewModels.Popups;
+using Microsoft.Maui.Devices.Sensors;
+using Microsoft.Maui.Maps;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text.Json;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Maui.Core;
-using IvanConnections_Travel.ViewModels.Popups;
 
 namespace IvanConnections_Travel.ViewModels
 {
@@ -44,6 +47,11 @@ namespace IvanConnections_Travel.ViewModels
         [ObservableProperty]
         private bool _showStopsOnMap = true;
 
+        [ObservableProperty]
+        private Location mapCenterLocation;
+
+        [ObservableProperty]
+        private bool isBusy;
         public MainPageViewModel()
         {
             _popupService = DependencyService.Get<IPopupService>();
@@ -267,6 +275,32 @@ namespace IvanConnections_Travel.ViewModels
         }
 
         [RelayCommand]
+        private async Task CenterOnUserLocation()
+        {
+            if (IsBusy)
+                return;
+
+            try
+            {
+                IsBusy = true;
+                var location = await LocationManagement.GetCurrentLocationAsync();
+
+                if (location != null)
+                {
+                    MapCenterLocation  = new Location(location.Latitude, location.Longitude);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error centering on user location: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        [RelayCommand]
         void ToggleShowStops()
         {
             ShowStopsOnMap = !ShowStopsOnMap;
@@ -280,7 +314,21 @@ namespace IvanConnections_Travel.ViewModels
         [RelayCommand]
         private async Task Appearing()
         {
-            Debug.WriteLine("MainPageViewModel Appearing");
+            void updateMapAction(Location newLocation)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    MapCenterLocation = newLocation;
+                });
+            }
+            var cachedLocation = await LocationManagement.GetLocationAsync(
+                GeolocationAccuracy.Lowest,
+                2,
+                updateMapAction);
+            if (cachedLocation != null)
+            {
+                MapCenterLocation = cachedLocation;
+            }
         }
         [RelayCommand]
         private async Task Disappearing()

@@ -29,4 +29,14 @@ public class CustomMauiMap : Microsoft.Maui.Controls.Maps.Map
         get => (bool)GetValue(ShowStopsProperty);
         set => SetValue(ShowStopsProperty, value);
     }
+
+    public static readonly BindableProperty MoveToLocationProperty =
+        BindableProperty.Create(nameof(MoveToLocation), typeof(Location), typeof(CustomMauiMap), null);
+
+    public Location MoveToLocation
+    {
+        get => (Location)GetValue(MoveToLocationProperty);
+        set => SetValue(MoveToLocationProperty, value);
+    }
+
 }

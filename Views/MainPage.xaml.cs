@@ -43,13 +43,7 @@ namespace IvanConnections_Travel
 
             Debug.WriteLine("Location permission granted.");
 
-            var location = await LocationManagement.GetLocationAsync();
-            if (location != null)
-            {
-                MyMap.MoveToRegion(MapSpan.FromCenterAndRadius(
-                    location,
-                    Distance.FromKilometers(1)));
-            }
+            
         }
 
         protected override void OnDisappearing()
