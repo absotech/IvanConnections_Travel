@@ -11,6 +11,7 @@
                x:Class="IvanConnections_Travel.Views.Popups.StopPopup">
     <toolkit:Popup.Resources>
         <converters:VehicleTypeToStringConverter x:Key="VehicleTypeConverter" />
+        <converters:ArrivalTimeConverter x:Key="ArrivalTimeConverter" />
     </toolkit:Popup.Resources>
     <Border Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
             StrokeThickness="2"
@@ -48,15 +49,9 @@
                                 </Label.FormattedText>
                             </Label>
                             <Label Grid.Column="1"
-                                   FontSize="16">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding ArrivalTimeInMinutes}"
-                                              FontAttributes="Bold" />
-                                        <Span Text=" min" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
+                                   Text="{Binding ArrivalTimeInMinutes, Converter={StaticResource ArrivalTimeConverter}}"
+                                   FontAttributes="Bold"
+                                   FontSize="16" />
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

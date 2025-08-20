@@ -40,17 +40,19 @@
                                    Text="{Binding Path=Text, Source={x:Reference this}}"
                                    Placeholder="{Binding Path=Placeholder, Source={x:Reference this}}" />
 
-            <Image Grid.Column="1"
+            <Button Grid.Column="1"
+                   CornerRadius="20"
                    HeightRequest="20"
                    WidthRequest="20"
-                   Margin="0,0,10,0"
+                   BackgroundColor="Transparent"
+                   Margin="5,0,10,0"
                    VerticalOptions="Center">
-                <Image.Source>
+                <Button.ImageSource>
                     <FontImageSource FontFamily="MaterialSymbolsRounded"
                                      Glyph="&#xe8b6;"
                                      Color="#A9A9A9" />
-                </Image.Source>
-            </Image>
+                </Button.ImageSource>
+            </Button>
         </Grid>
     </Border>
 </ContentView>

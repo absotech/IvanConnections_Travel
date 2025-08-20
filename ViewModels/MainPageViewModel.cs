@@ -6,8 +6,6 @@ using IvanConnections_Travel.Messages;
 using IvanConnections_Travel.Models;
 using IvanConnections_Travel.Utils;
 using IvanConnections_Travel.ViewModels.Popups;
-using Microsoft.Maui.Devices.Sensors;
-using Microsoft.Maui.Maps;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text.Json;
@@ -72,7 +70,6 @@ namespace IvanConnections_Travel.ViewModels
                     SelectedId = null;
                     _ = LoadPinsFromBackendAsync();
                 }
-                //Debug.WriteLine($"SelectedId: {SelectedId}");
 #endif
             });
             WeakReferenceMessenger.Default.Register<StopClickMessage>(this, async (r, m) =>

@@ -35,9 +35,9 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
             var arrivalsData = await _apiService.GetArrivalsForStopAsync(stop.StopId);
 
-            if (arrivalsData != null && arrivalsData.Any())
+            if (arrivalsData != null && arrivalsData.Count != 0)
             {
-                foreach (var arrival in arrivalsData.OrderBy(a => a.ArrivalMinutes))
+                foreach (var arrival in arrivalsData.Where(a => a.ArrivalMinutes <= 25).OrderBy(a => a.ArrivalMinutes))
                 {
                     Arrivals.Add(arrival);
                 }
