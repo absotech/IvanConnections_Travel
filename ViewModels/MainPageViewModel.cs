@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using IvanConnections_Travel.Messages;
 using IvanConnections_Travel.Models;
+using IvanConnections_Travel.Services;
 using IvanConnections_Travel.Utils;
 using IvanConnections_Travel.ViewModels.Popups;
 using System.Collections.ObjectModel;
@@ -14,6 +15,7 @@ namespace IvanConnections_Travel.ViewModels
 {
     public partial class MainPageViewModel : ObservableObject, IDisposable
     {
+        private readonly ApiService _apiService;
         private readonly IPopupService _popupService;
         private static readonly HttpClient _httpClient = new();
         private readonly Dictionary<string, string> _etags = [];
@@ -52,6 +54,7 @@ namespace IvanConnections_Travel.ViewModels
         private bool isBusy;
         public MainPageViewModel()
         {
+            _apiService = new ApiService();
             _popupService = DependencyService.Get<IPopupService>();
             WeakReferenceMessenger.Default.Register<ClickMessage>(this, async (r, m) =>
             {
@@ -142,17 +145,6 @@ namespace IvanConnections_Travel.ViewModels
             }
         }
 
-        private string BuildApiUrl()
-        {
-            const string baseUrl = "http://server.ivanconnections.cloud:5000/ivanconnectionstravel/api/Vehicles";
-
-            if (!string.IsNullOrEmpty(SearchText) && Routes.Contains(SearchText, StringComparer.OrdinalIgnoreCase))
-            {
-                return $"{baseUrl}/valid/byroute/{Uri.EscapeDataString(SearchText)}";
-            }
-
-            return $"{baseUrl}/valid";
-        }
         private async Task LoadStopsFromBackendAsync()
         {
             try
@@ -162,24 +154,15 @@ namespace IvanConnections_Travel.ViewModels
                     AllStops = [];
                     return;
                 }
-                const string stopsUrl = "http://server.ivanconnections.cloud:5000/ivanconnectionstravel/api/Stops";
-                var response = await _httpClient.GetAsync(stopsUrl);
-                if (!response.IsSuccessStatusCode)
-                {
-                    Debug.WriteLine($"Failed to fetch stops: {response.StatusCode}");
-                    return;
-                }
+                var stops = await _apiService.GetStopsAsync();
 
-                var json = await response.Content.ReadAsStringAsync();
-                var stops = JsonSerializer.Deserialize<List<Stop>>(json, _jsonSerializerOptions);
-
-                if (stops != null)
+                if (stops.Any())
                 {
                     AllStops = stops;
                 }
                 else
                 {
-                    Debug.WriteLine("[Stops Loading] Deserialization resulted in a null list.");
+                    Debug.WriteLine("[Stops Loading] Service returned no stops.");
                 }
             }
             catch (Exception ex)
@@ -187,41 +170,26 @@ namespace IvanConnections_Travel.ViewModels
                 Debug.WriteLine($"[Stops Loading] A critical error occurred: {ex.Message}");
             }
         }
+
         public async Task LoadPinsFromBackendAsync()
         {
             try
             {
-#if DEBUG
-                if (!_httpClient.DefaultRequestHeaders.Contains("Accept"))
-                {
-                    _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-                }
-#endif
-                var apiUrl = BuildApiUrl();
-                using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-                if (_etags.TryGetValue(apiUrl, out var etag))
-                {
-                    request.Headers.Add("If-None-Match", etag);
-                }
-                using var response = await _httpClient.SendAsync(request);
-                if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
+                var routeToSearch = (!string.IsNullOrEmpty(SearchText) && Routes.Contains(SearchText, StringComparer.OrdinalIgnoreCase))
+                    ? SearchText
+                    : null;
+                var response = await _apiService.GetVehiclesAsync(routeToSearch);
+                if (response.IsNotModified)
                 {
                     return;
                 }
-                if (!response.IsSuccessStatusCode)
-                {
-                    Debug.WriteLine($"API error: {response.StatusCode} for {apiUrl}");
-                    return;
-                }
-                if (response.Headers.TryGetValues("ETag", out var etagHeaderValues))
-                {
-                    _etags[apiUrl] = etagHeaderValues.First();
-                }
-                var json = await response.Content.ReadAsStringAsync();
 
-                var vehicles = JsonSerializer.Deserialize<List<Vehicle>>(json, _jsonSerializerOptions);
+                var vehicles = response.Data;
                 if (vehicles == null)
+                {
+                    Debug.WriteLine("[Pins Loading] Service returned null vehicle list.");
                     return;
+                }
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     var newVehicleList = new List<Vehicle>();
@@ -236,13 +204,11 @@ namespace IvanConnections_Travel.ViewModels
                     }
                     else
                     {
-                        foreach (var vehicle in vehicles)
-                        {
-                            newVehicleList.Add(vehicle);
-                        }
+                        newVehicleList.AddRange(vehicles);
                     }
+
                     Pins = new ObservableCollection<Vehicle>(newVehicleList);
-                    if (vehicles.Count != 0 && Routes.Count == 0)
+                    if (vehicles.Any() && !Routes.Any())
                     {
                         var distinctRoutes = vehicles
                             .Select(v => v.RouteShortName)
@@ -256,7 +222,6 @@ namespace IvanConnections_Travel.ViewModels
                         {
                             Routes.Add(route);
                         }
-
                         Debug.WriteLine($"Updated routes collection with {Routes.Count} distinct routes");
                     }
                 });
@@ -264,10 +229,6 @@ namespace IvanConnections_Travel.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"Exception in LoadPinsFromBackendAsync: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
-                }
             }
         }
 
