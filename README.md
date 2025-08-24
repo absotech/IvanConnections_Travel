@@ -19,7 +19,7 @@
 ## 📦 Tech Stack
 
 - [.NET MAUI](https://learn.microsoft.com/en-us/dotnet/maui/) – for cross-platform UI
-- [Google Maps SDK](https://developers.google.com/maps/documentation)
+- [Google Maps SDK](https://developers.google.com/maps)
 - C# / XAML
 - JSON-based REST API
 
@@ -31,19 +31,48 @@
 
 ## 🚀 Getting Started
 
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/absotech/IvanConnections_Travel.git
-   cd IvanConnections_Travel
-2. Open in Visual Studio 2022.
+1.  Clone the repo:
+    ```bash
+    git clone [https://github.com/absotech/IvanConnections_Travel.git](https://github.com/absotech/IvanConnections_Travel.git)
+    cd IvanConnections_Travel
+    ```
+2.  Open the solution (`IvanConnections_Travel.sln`) in Visual Studio 2022.
 
-3. Set the Android project as startup.
+---
 
-4. Deploy to emulator or connected Android device.
+## 🔑 Configuration
+
+### Add Your Google Maps API Key
+
+Before you can build and run the app, you **must add your own Google Maps API Key**. The key included in the repository is a placeholder and will not work.
+
+1.  **Get a free API Key from Google Cloud:**
+    * Go to the [Google Cloud Console](https://console.cloud.google.com/).
+    * Create a new project or select an existing one.
+    * In the navigation menu, go to **APIs & Services > Library**.
+    * Search for and enable the **Maps SDK for Android**.
+    * Go to **APIs & Services > Credentials**.
+    * Click **Create Credentials** and select **API key**.
+    * Copy your new API key. It's highly recommended to restrict your key to your app's package name and SHA-1 certificate fingerprint for security.
+
+2.  **Add the key to the app:**
+    * In Visual Studio, open the `Platforms/Android/AndroidManifest.xml` file.
+    * Find the following `<meta-data>` line:
+        ```xml
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyA4c5kBPQtS-vpB04O6EegQK2zVuKd2G98" />
+        ```
+    * Replace the placeholder value `AIzaSyA...` with **your own API key**.
+
+3.  **Build and Run:**
+    * Set the Android project as the startup project.
+    * Deploy to an emulator or a connected Android device.
+
+---
+
 ## 🧩 API Format
 
 The app consumes data in this JSON format from a REST API:
-```bash
+```json
 [
   {
     "id": 111,
