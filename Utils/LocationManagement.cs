@@ -75,5 +75,18 @@
             }
             return new Location(47.1585, 27.6014);
         }
+        public static async Task<PermissionStatus> CheckAndRequestLocationPermission()
+        {
+            PermissionStatus status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+
+            if (status == PermissionStatus.Granted)
+                return status;
+            if (status == PermissionStatus.Denied && DeviceInfo.Platform == DevicePlatform.iOS)
+            {
+                return status;
+            }
+            status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            return status;
+        }
     }
 }

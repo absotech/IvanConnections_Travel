@@ -29,5 +29,6 @@ namespace IvanConnections_Travel.Models
         public bool IsElectricBus { get; set; }
 
         public bool IsNewTram { get; set; }
+        public bool IsTracked { get; set; } = false;
     }
 }

@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Maui.Core;
+﻿using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -9,295 +10,340 @@ using IvanConnections_Travel.Utils;
 using IvanConnections_Travel.ViewModels.Popups;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Text.Json;
 
-namespace IvanConnections_Travel.ViewModels
+namespace IvanConnections_Travel.ViewModels;
+
+public partial class MainPageViewModel : ObservableObject, IDisposable
 {
-    public partial class MainPageViewModel : ObservableObject, IDisposable
+    private readonly ApiService _apiService;
+    private readonly IPopupService _popupService;
+    private bool _isInitialized = false;
+    private CancellationTokenSource? _cts;
+    [ObservableProperty]
+    private bool isTracking;
+    private Vehicle _trackedVehicle;
+    public Vehicle TrackedVehicle
     {
-        private readonly ApiService _apiService;
-        private readonly IPopupService _popupService;
-        private static readonly HttpClient _httpClient = new();
-        private readonly Dictionary<string, string> _etags = [];
-        private readonly SemaphoreSlim _semaphore = new(1, 1);
-        private bool _isInitialized = false;
-        private CancellationTokenSource? _cts;
-        private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+        get => _trackedVehicle;
+        set
         {
-            PropertyNameCaseInsensitive = true
-        };
-        [ObservableProperty]
-        private int? _selectedId = null;
+            if (SetProperty(ref _trackedVehicle, value))
+            {
+                IsTracking = value != null;
+                SearchText = null;
+            }
+        }
+    }
 
-        [ObservableProperty]
-        private HashSet<string?> _routes = [];
+    [ObservableProperty]
+    private HashSet<string?> _routes = [];
 
-        [ObservableProperty]
-        private string? _searchText;
+    [ObservableProperty]
+    private string? _searchText;
 
-        [ObservableProperty]
-        private bool _isSearchEnabled = true;
+    [ObservableProperty]
+    private ObservableCollection<Vehicle> _pins = [];
 
-        [ObservableProperty]
-        private ObservableCollection<Vehicle> _pins = [];
+    [ObservableProperty]
+    private List<Stop> _allStops = [];
 
-        [ObservableProperty]
-        private List<Stop> _allStops = [];
+    [ObservableProperty]
+    private bool _showStopsOnMap = true;
 
-        [ObservableProperty]
-        private bool _showStopsOnMap = true;
+    [ObservableProperty]
+    private Location? _mapCenterLocation;
 
-        [ObservableProperty]
-        private Location mapCenterLocation;
+    [ObservableProperty]
+    private bool _isBusy;
 
-        [ObservableProperty]
-        private bool isBusy;
-        public MainPageViewModel()
+    public MainPageViewModel(ApiService apiService, IPopupService popupService)
+    {
+        _apiService = apiService;
+        _popupService = popupService;
+        WeakReferenceMessenger.Default.Register<ClickMessage>(this, (r, m) => HandleVehicleClickMessage(m));
+        WeakReferenceMessenger.Default.Register<StopClickMessage>(this, (r, m) => HandleStopClickMessage(m));
+    }
+
+    private async void HandleVehicleClickMessage(ClickMessage m)
+    {
+        if (m.Value is null)
         {
-            _apiService = new ApiService();
-            _popupService = DependencyService.Get<IPopupService>();
-            WeakReferenceMessenger.Default.Register<ClickMessage>(this, async (r, m) =>
-            {
-#if ANDROID
-                if (m.Value != null)
-                {
-                    var shouldTrackVehicle = await _popupService.ShowPopupAsync<VehiclePopupViewModel>(viewModel => viewModel.Load(m.Value));
-                    if ((bool?)shouldTrackVehicle == true)
-                    {
-                        SelectedId = m.Value.Id;
-                        _ = LoadPinsFromBackendAsync();
-                    }
-                }
-                else
-                {
-                    SelectedId = null;
-                    _ = LoadPinsFromBackendAsync();
-                }
-#endif
-            });
-            WeakReferenceMessenger.Default.Register<StopClickMessage>(this, async (r, m) =>
-            {
-#if ANDROID
-                if (m.Value != null)
-                {
-                    await _popupService.ShowPopupAsync<StopPopupViewModel>(async viewModel => await viewModel.LoadAsync(m.Value));
-                }
-#endif
-            });
+            //TrackedVehicle = null;
+            //await LoadPinsFromBackendAsync();
+            return;
         }
 
-        public async Task InitializeAsync()
-        {
-            if (_isInitialized)
-                return;
+        var newTrackingState = await _popupService.ShowPopupAsync<VehiclePopupViewModel>(vm => vm.Load(m.Value));
 
+        if (newTrackingState is bool shouldTrack)
+        {
+            TrackedVehicle = shouldTrack ? m.Value : null;
+            await LoadPinsFromBackendAsync(forced: true);
+        }
+    }
+
+    private async void HandleStopClickMessage(StopClickMessage m)
+    {
+        if (m.Value != null)
+        {
+            await _popupService.ShowPopupAsync<StopPopupViewModel>(async vm => await vm.LoadAsync(m.Value));
+        }
+    }
+
+    private async Task InitializeAsync()
+    {
+        if (_isInitialized) return;
+        IsBusy = true;
+        try
+        {
             await LoadStopsFromBackendAsync();
             await LoadPinsFromBackendAsync();
             _isInitialized = true;
         }
-        public void StartPeriodicRefresh()
+        finally
         {
-            if (_cts != null) return;
-
-            _cts = new CancellationTokenSource();
-            Task.Run(async () => await PeriodicRefreshLoopAsync(_cts.Token));
+            IsBusy = false;
         }
+    }
 
-        public void StopPeriodicRefresh()
+    [RelayCommand]
+    private async Task ShowSearchDisabledToast()
+    {
+        await Toast.Make("Căutarea este dezactivată în timpul urmăririi.", ToastDuration.Long, 14).Show();
+    }
+
+    [RelayCommand]
+    private async Task MarkerClicked(string? tag)
+    {
+        if (string.IsNullOrEmpty(tag)) return;
+
+        if (tag.StartsWith("vehicle_"))
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _cts = null;
-        }
-        private async Task PeriodicRefreshLoopAsync(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
+            var vehicleLabel = tag.Substring("vehicle_".Length);
+            var vehicleData = Pins.FirstOrDefault(p => p.Label == vehicleLabel);
+            if (vehicleData != null)
             {
-                await RefreshPinsAsync();
-                try
+                string vehicleTypeName = Translations.GetVehicleTypeNameInRomanian(vehicleData.VehicleType.Value);
+                string timeText = TimeFormatUtils.FormatTimeDifferenceInRomanian(vehicleData.LocalTimestamp.Value);
+                string message = $"Cod {vehicleTypeName}: {vehicleLabel}, actualizat acum {timeText}";
+
+                Toast.Make(message, ToastDuration.Long, 14).Show();
+                HandleVehicleClickMessage(new ClickMessage(vehicleData));
+            }
+        }
+        else if (tag.StartsWith("stop_"))
+        {
+            var stopIdString = tag.Substring("stop_".Length);
+            if (int.TryParse(stopIdString, out int stopId))
+            {
+                var stopData = AllStops.FirstOrDefault(s => s.StopId == stopId);
+                if (stopData != null)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(3), token);
-                }
-                catch (TaskCanceledException)
-                {
-                    break;
+                    HandleStopClickMessage(new StopClickMessage(stopData));
                 }
             }
         }
-
-        [RelayCommand]
-        private async Task RefreshPinsAsync()
+        else
         {
-            if (!await _semaphore.WaitAsync(0))
+            Toast.Make(tag, ToastDuration.Long, 14).Show();
+        }
+    }
+
+    [RelayCommand]
+    private void MapClicked()
+    {
+        HandleVehicleClickMessage(new ClickMessage(null));
+    }
+    private void StartPeriodicRefresh()
+    {
+        if (_cts != null) return;
+
+        _cts = new CancellationTokenSource();
+        Task.Run(async () =>
+        {
+            while (!_cts.Token.IsCancellationRequested)
+            {
+                await LoadPinsFromBackendAsync();
+
+                if (TrackedVehicle is not null)
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        MapCenterLocation = new Location(TrackedVehicle.Latitude.Value, TrackedVehicle.Longitude.Value);
+                    });
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(5), _cts.Token);
+            }
+        }, _cts.Token);
+    }
+
+    private void StopPeriodicRefresh()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+    }
+
+    private async Task LoadStopsFromBackendAsync()
+    {
+        if (!ShowStopsOnMap)
+        {
+            AllStops = [];
+            return;
+        }
+        try
+        {
+            var stops = await _apiService.GetStopsAsync();
+            AllStops = stops.Any() ? stops : [];
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Stops Loading] A critical error occurred: {ex.Message}");
+            AllStops = [];
+        }
+    }
+
+    private async Task LoadPinsFromBackendAsync(bool forced = false)
+    {
+        try
+        {
+            var routeToSearch = Routes.Contains(SearchText, StringComparer.OrdinalIgnoreCase) ? SearchText : null;
+            var response = await _apiService.GetVehiclesAsync(routeToSearch, forced);
+
+            if (response.IsNotModified || response.Data is null) return;
+
+            var vehicles = response.Data;
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                UpdateDisplayedPins(vehicles);
+                PopulateRoutesIfEmpty(vehicles);
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Exception in LoadPinsFromBackendAsync: {ex.Message}");
+        }
+    }
+
+    private void UpdateDisplayedPins(List<Vehicle> freshVehicles)
+    {
+        if (TrackedVehicle != null)
+        {
+            var updatedTrackedVehicle = freshVehicles.FirstOrDefault(v => v.Id == TrackedVehicle.Id);
+            if (updatedTrackedVehicle != null)
+            {
+                updatedTrackedVehicle.IsTracked = true;
+                TrackedVehicle = updatedTrackedVehicle;
+                Pins = new ObservableCollection<Vehicle> { TrackedVehicle };
+            }
+            else
+            {
+                TrackedVehicle = null;
+                Pins = new ObservableCollection<Vehicle>(freshVehicles);
+            }
+        }
+        else
+        {
+            Pins = new ObservableCollection<Vehicle>(freshVehicles);
+        }
+    }
+
+    private void PopulateRoutesIfEmpty(List<Vehicle> freshVehicles)
+    {
+        if (Routes.Any() || !freshVehicles.Any()) return;
+
+        var distinctRoutes = freshVehicles
+            .Select(v => v.RouteShortName)
+            .Where(r => !string.IsNullOrEmpty(r))
+            .Distinct()
+            .OrderBy(r => r);
+
+        foreach (var route in distinctRoutes)
+        {
+            Routes.Add(route);
+        }
+        Debug.WriteLine($"Updated routes collection with {Routes.Count} distinct routes");
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task RefreshAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            await LoadPinsFromBackendAsync(forced: true);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task CenterOnUserLocationAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            var permissionStatus = await LocationManagement.CheckAndRequestLocationPermission();
+            if (permissionStatus != PermissionStatus.Granted)
+            {
+                Toast.Make("Permisiunea pentru locație nu a fost acordată.", ToastDuration.Long, 14).Show();
+                Debug.WriteLine("Location permission not granted.");
                 return;
+            }
 
-            try
+            var location = await LocationManagement.GetCurrentLocationAsync();
+            if (location != null)
             {
-                LoadPinsFromBackendAsync();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Refresh error: {ex.Message}");
-            }
-            finally
-            {
-                _semaphore.Release();
+                MapCenterLocation = new Location(location.Latitude, location.Longitude);
             }
         }
-
-        private async Task LoadStopsFromBackendAsync()
+        catch (Exception ex)
         {
-            try
-            {
-                if (!ShowStopsOnMap)
-                {
-                    AllStops = [];
-                    return;
-                }
-                var stops = await _apiService.GetStopsAsync();
-
-                if (stops.Any())
-                {
-                    AllStops = stops;
-                }
-                else
-                {
-                    Debug.WriteLine("[Stops Loading] Service returned no stops.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[Stops Loading] A critical error occurred: {ex.Message}");
-            }
+            Debug.WriteLine($"Error centering on user location: {ex.Message}");
         }
-
-        public async Task LoadPinsFromBackendAsync()
+        finally
         {
-            try
-            {
-                var routeToSearch = (!string.IsNullOrEmpty(SearchText) && Routes.Contains(SearchText, StringComparer.OrdinalIgnoreCase))
-                    ? SearchText
-                    : null;
-                var response = await _apiService.GetVehiclesAsync(routeToSearch);
-                if (response.IsNotModified)
-                {
-                    return;
-                }
-
-                var vehicles = response.Data;
-                if (vehicles == null)
-                {
-                    Debug.WriteLine("[Pins Loading] Service returned null vehicle list.");
-                    return;
-                }
-                await MainThread.InvokeOnMainThreadAsync(() =>
-                {
-                    var newVehicleList = new List<Vehicle>();
-
-                    if (SelectedId.HasValue && SelectedId != 0)
-                    {
-                        var selectedVehicle = vehicles.FirstOrDefault(v => v.Id == SelectedId);
-                        if (selectedVehicle != null)
-                        {
-                            newVehicleList.Add(selectedVehicle);
-                        }
-                    }
-                    else
-                    {
-                        newVehicleList.AddRange(vehicles);
-                    }
-
-                    Pins = new ObservableCollection<Vehicle>(newVehicleList);
-                    if (vehicles.Any() && !Routes.Any())
-                    {
-                        var distinctRoutes = vehicles
-                            .Select(v => v.RouteShortName)
-                            .Where(r => !string.IsNullOrEmpty(r))
-                            .Distinct()
-                            .OrderBy(r => r)
-                            .ToList();
-
-                        Routes.Clear();
-                        foreach (var route in distinctRoutes)
-                        {
-                            Routes.Add(route);
-                        }
-                        Debug.WriteLine($"Updated routes collection with {Routes.Count} distinct routes");
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Exception in LoadPinsFromBackendAsync: {ex.Message}");
-            }
+            IsBusy = false;
         }
+    }
 
-        [RelayCommand]
-        private async Task CenterOnUserLocation()
+    [RelayCommand]
+    private void ToggleShowStops()
+    {
+        ShowStopsOnMap = !ShowStopsOnMap;
+        _ = LoadStopsFromBackendAsync();
+    }
+
+    [RelayCommand]
+    private async Task AppearingAsync()
+    {
+        await InitializeAsync();
+        StartPeriodicRefresh();
+
+        if (MapCenterLocation is null)
         {
-            if (IsBusy)
-                return;
-
-            try
-            {
-                IsBusy = true;
-                var location = await LocationManagement.GetCurrentLocationAsync();
-
-                if (location != null)
-                {
-                    MapCenterLocation  = new Location(location.Latitude, location.Longitude);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error centering on user location: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        [RelayCommand]
-        void ToggleShowStops()
-        {
-            ShowStopsOnMap = !ShowStopsOnMap;
-        }
-
-        [RelayCommand]
-        public async Task Search()
-        {
-            await RefreshPinsAsync();
-        }
-        [RelayCommand]
-        private async Task Appearing()
-        {
-            void updateMapAction(Location newLocation)
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    MapCenterLocation = newLocation;
-                });
-            }
-            var cachedLocation = await LocationManagement.GetLocationAsync(
-                GeolocationAccuracy.Lowest,
-                2,
-                updateMapAction);
+            var cachedLocation = await LocationManagement.GetLocationAsync();
             if (cachedLocation != null)
             {
                 MapCenterLocation = cachedLocation;
             }
         }
-        [RelayCommand]
-        private async Task Disappearing()
-        {
-            Dispose();
-        }
-        public void Dispose()
-        {
-            StopPeriodicRefresh();
-            _semaphore?.Dispose();
-            WeakReferenceMessenger.Default.UnregisterAll(this);
-        }
+    }
+
+    [RelayCommand]
+    private void Disappearing()
+    {
+        StopPeriodicRefresh();
+    }
+
+    public void Dispose()
+    {
+        StopPeriodicRefresh();
+        WeakReferenceMessenger.Default.UnregisterAll(this);
+        GC.SuppressFinalize(this);
     }
 }

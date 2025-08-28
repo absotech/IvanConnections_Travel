@@ -185,47 +185,16 @@ namespace IvanConnections_Travel.Platforms.Handlers
         {
             if (VirtualView is not CustomMauiMap mauiMap || e.Marker?.Tag?.ToString() is not string tag)
                 return;
-
-            if (tag.StartsWith("vehicle_"))
-            {
-                var vehicleLabel = tag.Substring("vehicle_".Length);
-                var vehicleData = mauiMap.Vehicles.FirstOrDefault(p => p.Label == vehicleLabel);
-                if (vehicleData != null)
-                {
-                    if (vehicleData.LocalTimestamp.HasValue && vehicleData.VehicleType.HasValue)
-                    {
-                        string vehicleTypeName = Translations.GetVehicleTypeNameInRomanian(vehicleData.VehicleType.Value);
-                        string timeText = TimeFormatUtils.FormatTimeDifferenceInRomanian(vehicleData.LocalTimestamp.Value);
-                        string message = $"Cod {vehicleTypeName}: {vehicleLabel}, actualizat acum {timeText}";
-
-                        WeakReferenceMessenger.Default.Send(new ClickMessage(vehicleData));
-                        WeakReferenceMessenger.Default.Send(new ShowToastMessage(message));
-                    }
-                }
-            }
-            else if (tag.StartsWith("stop_"))
-            {
-                var stopIdString = tag.Substring("stop_".Length);
-                if (int.TryParse(stopIdString, out int stopId))
-                {
-                    var stopData = mauiMap.Stops.FirstOrDefault(s => s.StopId == stopId);
-                    if (stopData != null)
-                    {
-                        WeakReferenceMessenger.Default.Send(new StopClickMessage(stopData));
-                    }
-                }
-            }
-            else
-            {
-                WeakReferenceMessenger.Default.Send(new ShowToastMessage(tag));
-            }
+            mauiMap.MarkerClickCommand?.Execute(tag);
 
             e.Handled = false;
         }
 
         private void OnMapClick(object? sender, GoogleMap.MapClickEventArgs e)
         {
-            WeakReferenceMessenger.Default.Send(new ClickMessage(null));
+            if (VirtualView is not CustomMauiMap mauiMap)
+                return;
+            mauiMap.MapClickCommand?.Execute(null);
         }
 
         public static void ClearBitmapCache()

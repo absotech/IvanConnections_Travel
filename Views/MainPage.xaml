@@ -6,12 +6,15 @@
              xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
              xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:local="clr-namespace:IvanConnections_Travel.Controls"
+             xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
              Shell.NavBarIsVisible="False"
              Shell.TabBarIsVisible="False"
              x:Name="this"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:MainPageViewModel">
-
+    <ContentPage.Resources>
+        <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+    </ContentPage.Resources>
     <ContentPage.Behaviors>
         <xct:EventToCommandBehavior EventName="Appearing"
                                     BindingContext="{Binding Path=BindingContext, Source={x:Reference this}}"
@@ -27,7 +30,10 @@
                              MoveToLocation="{Binding MapCenterLocation}"
                              Vehicles="{Binding Pins}"
                              Stops="{Binding AllStops}"
-                             ShowStops="{Binding ShowStopsOnMap}" />
+                             ShowStops="{Binding ShowStopsOnMap}"
+                             MarkerClickCommand="{Binding MarkerClickedCommand}"
+                             MapClickCommand="{Binding MapClickedCommand}">
+        </local:CustomMauiMap>
 
         <Grid BackgroundColor="Transparent">
             <Border HorizontalOptions="Center"
@@ -53,8 +59,16 @@
                                           BackgroundColor="Transparent"
                                           VerticalOptions="Center"
                                           Placeholder="Caută o rută"
+                                          IsEnabled="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
+                                          Opacity="{Binding IsTracking, Converter={StaticResource BoolToOpacityConverter}}"
                                           Text="{Binding SearchText}" />
-
+                    <BoxView BackgroundColor="Transparent"
+                             Grid.Column="0"
+                             IsVisible="{Binding IsTracking}">
+                        <BoxView.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowSearchDisabledToastCommand}" />
+                        </BoxView.GestureRecognizers>
+                    </BoxView>
                     <Button Grid.Column="1"
                             Command="{Binding CenterOnUserLocationCommand}"
                             BackgroundColor="Transparent"
@@ -68,6 +82,8 @@
                                              Color="{StaticResource Primary}" />
                         </Button.ImageSource>
                     </Button>
+
+
                 </Grid>
             </Border>
 

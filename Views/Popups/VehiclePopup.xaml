@@ -5,76 +5,79 @@
                xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels.Popups"
                CanBeDismissedByTappingOutsideOfPopup="True"
                x:DataType="vm:VehiclePopupViewModel"
-               Color="Transparent"
+               Color="#80000000"
                x:Class="IvanConnections_Travel.Views.Popups.VehiclePopup">
     <Border Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-            StrokeThickness="2"
+            StrokeThickness="1"
             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-            MinimumWidthRequest="250"
-            Padding="30">
+            MinimumWidthRequest="300"
+            MaximumWidthRequest="400"
+            Padding="20">
+        <Border.Shadow>
+            <Shadow Brush="Black"
+                    Offset="10,10"
+                    Radius="20"
+                    Opacity="0.3" />
+        </Border.Shadow>
         <Border.StrokeShape>
-            <RoundRectangle CornerRadius="20" />
+            <RoundRectangle CornerRadius="24" />
         </Border.StrokeShape>
-        <Grid RowDefinitions="auto, auto, auto, auto, auto">
-            <Label FontSize="20"
-                   Grid.Row="0"
+        <VerticalStackLayout Spacing="12">
+            <Label FontSize="22"
+                   FontAttributes="Bold"
                    HorizontalOptions="Center"
-                   Margin="0,0,0,10">
+                   TextColor="{AppThemeBinding Light=Black, Dark=White}">
                 <Label.FormattedText>
                     <FormattedString>
                         <Span Text="Traseu " />
-                        <Span Text="{Binding VehicleType}" />
+                        <Span Text="{Binding VehicleType}"
+                              FontAttributes="Bold" />
                         <Span Text=": " />
-                        <Span Text="{Binding Vehicle.RouteShortName}" />
+                        <Span Text="{Binding Vehicle.RouteShortName}"
+                              FontAttributes="Bold" />
                     </FormattedString>
                 </Label.FormattedText>
-            </Label> 
-            <Label FontSize="15"
-                   Grid.Row="1"
+            </Label>
+            <Label FontSize="16"
                    HorizontalOptions="Center"
-                   Margin="0,0,0,10">
+                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
                 <Label.FormattedText>
                     <FormattedString>
-                        <Span Text="{Binding Vehicle.PreviousStopName} " />
-                        <Span Text=" -> " />
+                        <Span Text="{Binding Vehicle.PreviousStopName}" />
+                        <Span Text=" → "
+                              FontAttributes="Bold" />
                         <Span Text="{Binding Vehicle.NextStop.StopName}" />
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
-            <Label FontSize="15"
-                   Grid.Row="2"
-                   HorizontalOptions="Center"
-                   Margin="0,0,0,10">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="Ajunge la " />
-                        <Span Text="{Binding TimeOfArrival, StringFormat='{0:HH:mm}'}" />
-                    </FormattedString>
-                </Label.FormattedText>
-            </Label>
+            <Grid ColumnDefinitions="Auto, *"
+                  HorizontalOptions="Center">
+                <Label Text="⏱ Ajunge la "
+                       FontSize="14"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                <Label Text="{Binding TimeOfArrival, StringFormat='{0:HH:mm}'}"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       Grid.Column="1" />
+            </Grid>
             <ActivityIndicator IsRunning="{Binding Loading}"
                                IsVisible="{Binding Loading}"
                                HorizontalOptions="Center"
-                               VerticalOptions="Center"
-                               HeightRequest="15"
-                               Grid.Row="2" />
+                               HeightRequest="24" />
             <Label HorizontalOptions="Center"
+                   FontSize="14"
+                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
                    Text="{Binding VehicleInfo}"
-                   IsVisible="{Binding VehicleInfo, Converter={toolkit:IsNotNullConverter}}"
-                   Grid.Row="3" />
-            <Label HorizontalOptions="Center"
-                   TextDecorations="Underline"
-                   Grid.Row="4">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="Urmărește " />
-                        <Span Text="{Binding VehicleType}" />
-                    </FormattedString>
-                </Label.FormattedText>
-                <Label.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding FollowCommand}" />
-                </Label.GestureRecognizers>
-            </Label>
-        </Grid>
+                   IsVisible="{Binding VehicleInfo, Converter={toolkit:IsNotNullConverter}}" />
+            <Button Text="{Binding FollowText}"
+                    Command="{Binding FollowCommand}"
+                    CornerRadius="20"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                    TextColor="White"
+                    WidthRequest="160"
+                    HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
     </Border>
 </toolkit:Popup>

@@ -1,32 +1,45 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IvanConnections_Travel.Models;
-using System.Text.Json;
+using IvanConnections_Travel.Services;
 
 namespace IvanConnections_Travel.ViewModels.Popups
 {
     public partial class VehiclePopupViewModel : ObservableObject
     {
+        private readonly ApiService _apiService;
         readonly WeakEventManager followVehicleManager = new();
-        public bool? ShouldFollow = null;
+        public bool ShouldFollow = false;
+
         public event EventHandler<bool?> FollowVehicle
         {
             add => followVehicleManager.AddEventHandler(value);
             remove => followVehicleManager.RemoveEventHandler(value);
         }
+
         [ObservableProperty]
         private Vehicle? vehicle;
+
         [ObservableProperty]
         private string vehicleType;
+
         [ObservableProperty]
         private string? vehicleInfo;
+
         [ObservableProperty]
         private DateTime? timeOfArrival;
+
         [ObservableProperty]
         private bool loading = true;
 
+        [ObservableProperty]
+        private string followText = "Urmărește ";
+        public VehiclePopupViewModel(ApiService apiService)
+        {
+            _apiService = apiService;
+        }
 
-        internal async void Load(Vehicle vehicle)
+        internal void Load(Vehicle vehicle)
         {
             Loading = true;
             if (vehicle == null)
@@ -35,6 +48,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
                 return;
             }
 
+            ShouldFollow = vehicle.IsTracked;
+            FollowText = ShouldFollow == true ? "Anulare urmărire " : "Urmărește ";
             Vehicle = vehicle;
             VehicleType = Utils.Translations.GetVehicleTypeNameInRomanian(vehicle.VehicleType.Value);
 
@@ -49,68 +64,37 @@ namespace IvanConnections_Travel.ViewModels.Popups
             {
                 _ = Task.Run(async () =>
                 {
-                    var duration = await GetDistanceWithTrafficAsync(vehicle.Latitude.Value, vehicle.Longitude.Value, vehicle.NextStop.StopLat, vehicle.NextStop.StopLon);
-                    Loading = false;
-                    var seconds = duration ?? 0;
-                    TimeOfArrival = vehicle.LocalTimestamp + TimeSpan.FromSeconds(seconds);
+                    var durationInSeconds = await _apiService.GetTravelDurationAsync(
+                        vehicle.Latitude.Value,
+                        vehicle.Longitude.Value,
+                        vehicle.NextStop.StopLat,
+                        vehicle.NextStop.StopLon);
+
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        Loading = false;
+                        if (durationInSeconds.HasValue)
+                        {
+                            TimeOfArrival = vehicle.LocalTimestamp + TimeSpan.FromSeconds(durationInSeconds.Value);
+                        }
+                        else
+                        {
+                            TimeOfArrival = null;
+                        }
+                    });
                 });
             }
             else
+            {
                 Loading = false;
-
-
+            }
         }
 
         [RelayCommand]
-        public async Task Follow()
+        public void Follow()
         {
-            ShouldFollow = true;
+            ShouldFollow = !ShouldFollow;
             followVehicleManager.HandleEvent(this, ShouldFollow, nameof(FollowVehicle));
-        }
-        public static async Task<int?> GetDistanceWithTrafficAsync(double originLat, double originLng, double destLat, double destLng)
-        {
-            var url = $"https://api.ivanconnections.com/ictravel/distance.php?" +
-                      $"origins={originLat},{originLng}" +
-                      $"&destinations={destLat},{destLng}" +
-                      $"&departure_time=now" +
-                      $"&mode=transit" +
-                      $"&traffic_model=best_guess";
-
-            using var client = new HttpClient();
-            try
-            {
-                var response = await client.GetStringAsync(url);
-
-                using var jsonDoc = JsonDocument.Parse(response);
-                var root = jsonDoc.RootElement;
-                var status = root.GetProperty("status").GetString();
-                if (status != "OK")
-                {
-                    Console.WriteLine($"API Error: {response}");
-                    return null;
-                }
-
-                var row = root.GetProperty("rows")[0];
-                var element = row.GetProperty("elements")[0];
-
-                var elementStatus = element.GetProperty("status").GetString();
-                if (elementStatus != "OK")
-                    return null;
-
-                var duration = element.GetProperty("duration").GetProperty("value").GetInt32();
-
-                return duration;
-            }
-            catch (HttpRequestException e)
-            {
-                Console.WriteLine($"Error calling the proxy API: {e.Message}");
-                return null;
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine($"Error parsing JSON response from proxy: {e.Message}");
-                return null;
-            }
         }
     }
 }

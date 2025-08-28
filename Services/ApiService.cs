@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace IvanConnections_Travel.Services;
 public record ApiResponse<T>(T? Data, bool IsNotModified = false);
@@ -12,6 +13,7 @@ public class ApiService
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly Dictionary<string, string> _etags = [];
     private const string BaseUrl = "https://server.ivanconnections.com/ivanconnectionstravel/api";
+    private const string DistanceApiBaseUrl = "https://api.ivanconnections.com/ictravel/distance.php";
 
     public ApiService()
     {
@@ -24,13 +26,46 @@ public class ApiService
             PropertyNameCaseInsensitive = true
         };
     }
+    /// <summary>
+    /// Fetches the estimated travel duration in seconds between two points.
+    /// </summary>
+    /// <returns>The duration in seconds, or null if an error occurs.</returns>
+    public async Task<int?> GetTravelDurationAsync(double originLat, double originLng, double destLat, double destLng)
+    {
+        var url = $"{DistanceApiBaseUrl}?" +
+                  $"origins={originLat},{originLng}" +
+                  $"&destinations={destLat},{destLng}" +
+                  $"&departure_time=now" +
+                  $"&mode=transit" +
+                  $"&traffic_model=best_guess";
+
+        try
+        {
+            var apiResponse = await _httpClient.GetFromJsonAsync<DistanceApiResponse>(url, _jsonSerializerOptions);
+
+            // Check for a valid response structure and status
+            var element = apiResponse?.Rows?.FirstOrDefault()?.Elements?.FirstOrDefault();
+            if (apiResponse?.Status == "OK" && element?.Status == "OK")
+            {
+                return element.Duration.Value;
+            }
+
+            Debug.WriteLine($"[ApiService] Distance API returned non-OK status: {apiResponse?.Status}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error fetching travel duration: {ex.Message}");
+            return null;
+        }
+    }
 
     /// <summary>
     /// Fetches the list of vehicles from the API. Handles caching via ETags.
     /// </summary>
     /// <param name="route">Optional route name to filter the vehicles.</param>
     /// <returns>An ApiResponse containing the list of vehicles or indicating the data was not modified.</returns>
-    public async Task<ApiResponse<List<Vehicle>>> GetVehiclesAsync(string? route = null)
+    public async Task<ApiResponse<List<Vehicle>>> GetVehiclesAsync(string? route = null, bool forced = false)
     {
         var apiUrl = string.IsNullOrEmpty(route)
             ? $"{BaseUrl}/Vehicles/valid"
@@ -39,7 +74,7 @@ public class ApiService
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-            if (_etags.TryGetValue(apiUrl, out var etag))
+            if (_etags.TryGetValue(apiUrl, out var etag) && !forced)
             {
                 request.Headers.Add("If-None-Match", etag);
             }
@@ -113,4 +148,22 @@ public class ApiService
             return [];
         }
     }
+
+    public record DistanceApiResponse(
+    [property: JsonPropertyName("rows")] List<Row> Rows,
+    [property: JsonPropertyName("status")] string Status
+);
+
+    public record Row(
+        [property: JsonPropertyName("elements")] List<Element> Elements
+    );
+
+    public record Element(
+        [property: JsonPropertyName("duration")] DurationInfo Duration,
+        [property: JsonPropertyName("status")] string Status
+    );
+
+    public record DurationInfo(
+        [property: JsonPropertyName("value")] int Value
+    );
 }

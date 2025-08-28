@@ -2,6 +2,8 @@
 using CommunityToolkit.Maui.Core;
 using IvanConnections_Travel.Controls;
 using IvanConnections_Travel.Platforms.Handlers;
+using IvanConnections_Travel.Services;
+using IvanConnections_Travel.ViewModels;
 using IvanConnections_Travel.ViewModels.Popups;
 using IvanConnections_Travel.Views.Popups;
 using Microsoft.Extensions.Logging;
@@ -26,15 +28,18 @@ namespace IvanConnections_Travel
                 {
                     handlers.AddHandler<CustomMauiMap, CustomMapHandler>();
                 })
-                .UseMauiCommunityToolkit();
+                .UseMauiCommunityToolkit()
+                .RegisterViews()
+                .RegisterViewModels();
 
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
-            DependencyService.Register<IPopupService, PopupService>();
+            builder.Services.AddSingleton<ApiService>();
             builder.Services.AddTransientPopup<VehiclePopup, VehiclePopupViewModel>();
             builder.Services.AddTransientPopup<StopPopup, StopPopupViewModel>();
 
+            DependencyService.Register<IPopupService, PopupService>();
 
             Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping(nameof(BorderlessEntry), (handler, view) =>
             {
@@ -53,6 +58,21 @@ namespace IvanConnections_Travel
             });
 
             return builder.Build();
+        }
+
+        public static MauiAppBuilder RegisterViewModels(this MauiAppBuilder mauiAppBuilder)
+        {
+            mauiAppBuilder.Services.AddTransient<MainPageViewModel>();
+
+            return mauiAppBuilder;
+        }
+        public static MauiAppBuilder RegisterViews(this MauiAppBuilder mauiAppBuilder)
+        {
+            mauiAppBuilder.Services.AddSingleton<AppShell>();
+
+            mauiAppBuilder.Services.AddTransient<MainPage>();
+
+            return mauiAppBuilder;
         }
     }
 }
