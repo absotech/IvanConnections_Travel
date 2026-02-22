@@ -35,58 +35,90 @@
                              MapClickCommand="{Binding MapClickedCommand}">
         </local:CustomMauiMap>
 
-        <Grid BackgroundColor="Transparent">
-            <Border HorizontalOptions="Center"
-                    VerticalOptions="Start"
-                    Margin="10,15,10,10"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 25"
-                    BackgroundColor="White"
-                    Padding="10,0,5,0">
+        <Grid>
+            <VerticalStackLayout>
+                <Border HorizontalOptions="Center"
+                        VerticalOptions="Start"
+                        Margin="10,15,10,10"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 25"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                        Padding="10,0,5,0">
 
-                <Border.Shadow>
-                    <Shadow Brush="Black"
-                            Offset="5,5"
-                            Radius="10"
-                            Opacity="0.3" />
-                </Border.Shadow>
+                    <Border.Shadow>
+                        <Shadow Brush="Black"
+                                Offset="5,5"
+                                Radius="10"
+                                Opacity="0.3" />
+                    </Border.Shadow>
 
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="5"
-                      VerticalOptions="Center">
-
-                    <local:FancySearchBar Grid.Column="0"
-                                          BackgroundColor="Transparent"
-                                          VerticalOptions="Center"
-                                          Placeholder="Caută o rută"
-                                          IsEnabled="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
-                                          Opacity="{Binding IsTracking, Converter={StaticResource BoolToOpacityConverter}}"
-                                          Text="{Binding SearchText}" />
-                    <BoxView BackgroundColor="Transparent"
-                             Grid.Column="0"
-                             IsVisible="{Binding IsTracking}">
-                        <BoxView.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ShowSearchDisabledToastCommand}" />
-                        </BoxView.GestureRecognizers>
-                    </BoxView>
-                    <Button Grid.Column="1"
-                            Command="{Binding CenterOnUserLocationCommand}"
-                            BackgroundColor="Transparent"
-                            WidthRequest="40"
-                            HeightRequest="40"
-                            CornerRadius="20"
-                            Padding="0">
-                        <Button.ImageSource>
-                            <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                             Glyph="&#xe1b3;"
-                                             Color="{StaticResource Primary}" />
-                        </Button.ImageSource>
-                    </Button>
-
-
-                </Grid>
-            </Border>
-
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="5"
+                          VerticalOptions="Center">
+                        
+                        <local:FancySearchBar Grid.Column="0"
+                                              BackgroundColor="Transparent"
+                                              VerticalOptions="Center"
+                                              Placeholder="Caută o rută"
+                                              IsEnabled="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
+                                              Opacity="{Binding IsTracking, Converter={StaticResource BoolToOpacityConverter}}"
+                                              Text="{Binding SearchText}" />
+                        <BoxView BackgroundColor="Transparent"
+                                 Grid.Column="0"
+                                 IsVisible="{Binding IsTracking}">
+                            <BoxView.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ShowSearchDisabledToastCommand}" />
+                            </BoxView.GestureRecognizers>
+                        </BoxView>
+                        <Button Grid.Column="1"
+                                Command="{Binding CenterOnUserLocationCommand}"
+                                BackgroundColor="Transparent"
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                CornerRadius="20"
+                                Padding="0">
+                            <Button.ImageSource>
+                                <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                                 Glyph="&#xe1b3;"
+                                                 Color="{StaticResource Primary}" />
+                            </Button.ImageSource>
+                        </Button>
+                    </Grid>
+                </Border>
+                <Border HorizontalOptions="Center"
+                        VerticalOptions="Start"
+                        Margin="10,15,10,10"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 25"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                        Opacity="0.8"
+                        IsVisible="{Binding IsTracking}"
+                        Padding="10">
+                    <Border.Shadow>
+                        <Shadow Brush="Black"
+                                Offset="5,5"
+                                Radius="10"
+                                Opacity="0.3" />
+                    </Border.Shadow>
+                    <Label>
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Urmăriți vehiculul "></Span>
+                                <Span Text="{Binding TrackedVehicle.Id}"></Span>
+                                <Span Text=", ruta "></Span>
+                                <Span Text="{Binding TrackedVehicle.RouteShortName}"></Span>
+                                <Span Text=". "></Span>
+                                <Span Text="Nu mai urmări."
+                                      TextDecorations="Underline">
+                                    <Span.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding StopTrackingCommand}" />
+                                    </Span.GestureRecognizers>
+                                </Span>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </Border>
+            </VerticalStackLayout>
             <Button VerticalOptions="End"
                     HorizontalOptions="End"
                     Margin="20"
@@ -121,6 +153,13 @@
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               VerticalOptions="Start"
+                               HorizontalOptions="End"
+                               Margin="15,20,15,15"
+                               WidthRequest="30"
+                               HeightRequest="30"
+                               IsRunning="{Binding IsBusy}"></ActivityIndicator>
         </Grid>
     </Grid>
 </ContentPage>

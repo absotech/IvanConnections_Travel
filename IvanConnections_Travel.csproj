@@ -1,106 +1,142 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFrameworks>net9.0-android35.0</TargetFrameworks>
+    <PropertyGroup>
+        <TargetFramework>net10.0-android36.0</TargetFramework>
+        <UseMaui>true</UseMaui>
+        <RootNamespace>IvanConnections_Travel</RootNamespace>
+        <SingleProject>true</SingleProject>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
 
-		<OutputType>Exe</OutputType>
-		<RootNamespace>IvanConnections_Travel</RootNamespace>
-		<UseMaui>true</UseMaui>
-		<SingleProject>true</SingleProject>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
+        <!-- Display name -->
+        <ApplicationTitle>IC Travel</ApplicationTitle>
 
-		<!-- Display name -->
-		<ApplicationTitle>IC Travel</ApplicationTitle>
+        <!-- App Identifier -->
+        <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
 
-		<!-- App Identifier -->
-		<ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
+        <!-- Versions -->
+        <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+        <ApplicationVersion>100</ApplicationVersion>
 
-		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
-		<ApplicationVersion>100</ApplicationVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">30.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+        <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+        <Title>Ivan Connections Travel</Title>
+        <Company>Ivan Connections</Company>
+        <UserSecretsId>db59a5e8-d335-4435-b0dc-7220afb8d17e</UserSecretsId>
+        <PackageIcon>ic_launcher.png</PackageIcon>
+        <AndroidSigningKeyStore>Ivan Connections.keystore</AndroidSigningKeyStore>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0-android36.0</TargetFramework>
+    </PropertyGroup>
 
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">35.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
-		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-		<Title>Ivan Connections Travel</Title>
-		<Company>Ivan Connections</Company>
-		<UserSecretsId>db59a5e8-d335-4435-b0dc-7220afb8d17e</UserSecretsId>
-	</PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android36.0|AnyCPU'">
+        <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
+        <ApplicationTitle>IC Travel</ApplicationTitle>
+        <AndroidKeyStore>False</AndroidKeyStore>
+        <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
+        <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
+        <AndroidSigningKeyPass>***REMOVED***</AndroidSigningKeyPass>
+    </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|AnyCPU'">
-		<ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
-		<ApplicationTitle>IC Travel</ApplicationTitle>
-	</PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android36.0|AnyCPU'">
+        <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
+        <ApplicationTitle>IC Travel</ApplicationTitle>
+        <AndroidPackageFormat>apk</AndroidPackageFormat>
+        <AndroidKeyStore>False</AndroidKeyStore>
+        <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
+        <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
+        <AndroidSigningKeyPass>***REMOVED***</AndroidSigningKeyPass>
+    </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android35.0|AnyCPU'">
-		<ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
-		<ApplicationTitle>IC Travel</ApplicationTitle>
-		<AndroidPackageFormat>apk</AndroidPackageFormat>
-	</PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <AndroidKeyStore>true</AndroidKeyStore>
+      <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\ic_launcher.png" BaseSize="128,128" />
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <AndroidKeyStore>true</AndroidKeyStore>
+      <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
+    </PropertyGroup>
 
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\ic.png" BaseSize="256,256" />
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
+      <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
+    </PropertyGroup>
 
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
+      <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
+    </PropertyGroup>
 
-		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-	</ItemGroup>
+    <ItemGroup>
+        <!-- App Icon -->
+        <MauiIcon Include="Resources\AppIcon\ic_launcher.png" BaseSize="128,128" />
 
-	<ItemGroup>
-		<None Remove="Platforms\Android\Resources\drawable\bus_icon.png" />
-		<None Remove="Platforms\Android\Resources\drawable\bus_stop.png" />
-		<None Remove="Platforms\Android\Resources\drawable\tram_icon.png" />
-		<None Remove="Platforms\Android\Resources\raw\map_style.json" />
-	</ItemGroup>
+        <!-- Splash Screen -->
+        <MauiSplashScreen Include="Resources\Splash\ic.png" BaseSize="256,256" />
 
-	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Maui" Version="11.2.0" />
-		<PackageReference Include="CommunityToolkit.Maui.Maps" Version="3.0.2" />
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.50" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.50" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.3" />
-		<PackageReference Include="Microsoft.Maui.Controls.Maps" Version="9.0.50" />
-		<PackageReference Include="Microsoft.Maui.Maps" Version="9.0.50" />
-	</ItemGroup>
+        <!-- Custom Fonts -->
+        <MauiFont Include="Resources\Fonts\*" />
 
-	<ItemGroup>
-	  <AndroidResource Update="Platforms\Android\Resources\drawable\ic.png">
-	    <BaseSize>256,256</BaseSize>
-	  </AndroidResource>
-	</ItemGroup>
+        <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+        <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<MauiXaml Update="Controls\FancySearchBar.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		</MauiXaml>
-		<MauiXaml Update="Views\Popups\StopPopup.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		</MauiXaml>
-		<MauiXaml Update="Views\Popups\VehiclePopup.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</MauiXaml>
-	</ItemGroup>
+    <ItemGroup>
+        <None Remove="Platforms\Android\Resources\drawable\bus_icon.png" />
+        <None Remove="Platforms\Android\Resources\drawable\bus_stop.png" />
+        <None Remove="Platforms\Android\Resources\drawable\tram_icon.png" />
+        <None Remove="Platforms\Android\Resources\raw\map_style.json" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<None Update="Controls\FancySearchBar.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		</None>
-		<None Update="Views\Popups\StopPopup.xaml">
-		  <Generator>MSBuild:Compile</Generator>
-		</None>
-		<None Update="Views\Popups\VehiclePopup.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</None>
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Maui" Version="11.2.0" />
+        <PackageReference Include="CommunityToolkit.Maui.Maps" Version="3.0.2" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.50" />
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.50" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.3" />
+        <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="9.0.50" />
+        <PackageReference Include="Microsoft.Maui.Maps" Version="9.0.50" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AndroidResource Update="Platforms\Android\Resources\drawable\ic.png">
+            <BaseSize>256,256</BaseSize>
+        </AndroidResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <MauiXaml Update="Controls\FancySearchBar.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Views\Popups\StopPopup.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Views\Popups\VehiclePopup.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Controls\FancySearchBar.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </None>
+        <None Update="Resources\AppIcon\aaa.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Update="Resources\AppIcon\ic_launcher.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Update="Views\Popups\StopPopup.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </None>
+        <None Update="Views\Popups\VehiclePopup.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </None>
+    </ItemGroup>
 
 </Project>

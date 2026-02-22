@@ -25,8 +25,7 @@
         <VerticalStackLayout Spacing="12">
             <Label FontSize="22"
                    FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   TextColor="{AppThemeBinding Light=Black, Dark=White}">
+                   HorizontalOptions="Center">
                 <Label.FormattedText>
                     <FormattedString>
                         <Span Text="Traseu " />
@@ -55,7 +54,7 @@
                 <Label Text="⏱ Ajunge la "
                        FontSize="14"
                        VerticalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                       TextColor="{AppThemeBinding Light=Black, Dark=LightGray}" />
                 <Label Text="{Binding TimeOfArrival, StringFormat='{0:HH:mm}'}"
                        FontSize="16"
                        FontAttributes="Bold"

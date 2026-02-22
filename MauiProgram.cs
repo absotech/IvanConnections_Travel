@@ -7,6 +7,7 @@ using IvanConnections_Travel.ViewModels;
 using IvanConnections_Travel.ViewModels.Popups;
 using IvanConnections_Travel.Views.Popups;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.LifecycleEvents;
 
 namespace IvanConnections_Travel
 {
@@ -30,7 +31,29 @@ namespace IvanConnections_Travel
                 })
                 .UseMauiCommunityToolkit()
                 .RegisterViews()
-                .RegisterViewModels();
+                .RegisterViewModels()
+
+                // 🔥 Add lifecycle events here
+                .ConfigureLifecycleEvents(events =>
+                {
+#if ANDROID
+                    events.AddAndroid(android =>
+                    {
+                        android.OnResume(activity =>
+                        {
+                            var page = (Application.Current?.MainPage as Shell)?.CurrentPage as MainPage;
+
+                            if (page?.BindingContext is MainPageViewModel vm && vm.CenterOnUserLocationCommand.CanExecute(null))
+                            {
+                                MainThread.BeginInvokeOnMainThread(async () =>
+                                {
+                                    await vm.CenterOnUserLocationCommand.ExecuteAsync(null);
+                                });
+                            }
+                        });
+                    });
+#endif
+                });
 
 #if DEBUG
             builder.Logging.AddDebug();
@@ -46,13 +69,13 @@ namespace IvanConnections_Travel
                 if (view is BorderlessEntry)
                 {
 #if ANDROID
-                    handler.PlatformView.Background = 
-            new Android.Graphics.Drawables.ColorDrawable(Android.Graphics.Color.Transparent);
+                    handler.PlatformView.Background =
+                        new Android.Graphics.Drawables.ColorDrawable(Android.Graphics.Color.Transparent);
 #elif IOS || MACCATALYST
-                handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
+                    handler.PlatformView.BorderStyle = UIKit.UITextBorderStyle.None;
 #elif WINDOWS
-                handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
-                handler.PlatformView.Background = null;
+                    handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+                    handler.PlatformView.Background = null;
 #endif
                 }
             });
@@ -63,15 +86,13 @@ namespace IvanConnections_Travel
         public static MauiAppBuilder RegisterViewModels(this MauiAppBuilder mauiAppBuilder)
         {
             mauiAppBuilder.Services.AddTransient<MainPageViewModel>();
-
             return mauiAppBuilder;
         }
+
         public static MauiAppBuilder RegisterViews(this MauiAppBuilder mauiAppBuilder)
         {
             mauiAppBuilder.Services.AddSingleton<AppShell>();
-
             mauiAppBuilder.Services.AddTransient<MainPage>();
-
             return mauiAppBuilder;
         }
     }

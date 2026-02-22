@@ -6,7 +6,7 @@
              x:Name="this">
     <Border StrokeThickness="1"
             HeightRequest="50"
-            BackgroundColor="White"
+            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
             Padding="15,0,5,0">
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="25" />
@@ -35,7 +35,7 @@
                                    Grid.Column="0"
                                    VerticalOptions="Center"
                                    PlaceholderColor="#A9A9A9"
-                                   TextColor="Black"
+                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
                                    ReturnType="Search"
                                    Text="{Binding Path=Text, Source={x:Reference this}}"
                                    Placeholder="{Binding Path=Placeholder, Source={x:Reference this}}" />

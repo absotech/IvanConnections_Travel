@@ -9,6 +9,7 @@ using IvanConnections_Travel.Models.Enums;
 using IvanConnections_Travel.Utils;
 using Microsoft.Maui.Maps.Handlers;
 using System.Collections.Concurrent;
+using Microsoft.Maui;
 
 namespace IvanConnections_Travel.Platforms.Handlers
 {

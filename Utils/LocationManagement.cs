@@ -1,4 +1,7 @@
-﻿namespace IvanConnections_Travel.Utils
+﻿using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Devices.Sensors;
+
+namespace IvanConnections_Travel.Utils
 {
     public static class LocationManagement
     {

@@ -49,8 +49,8 @@ namespace IvanConnections_Travel.Utils
 
         public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing)
         {
-            int baseIconSize = 128;
-            int overlaySize = 60;
+            int baseIconSize = 100;
+            int overlaySize = 48;
             int padding = 20;
 
             int resultWidth = baseIconSize + overlaySize + padding;

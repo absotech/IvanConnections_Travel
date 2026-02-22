@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Maui.Alerts;
+﻿using Android.Locations;
+using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,6 +11,8 @@ using IvanConnections_Travel.Utils;
 using IvanConnections_Travel.ViewModels.Popups;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Microsoft.Maui.ApplicationModel;
+using Location = Microsoft.Maui.Devices.Sensors.Location;
 
 namespace IvanConnections_Travel.ViewModels;
 
@@ -30,7 +33,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             if (SetProperty(ref _trackedVehicle, value))
             {
                 IsTracking = value != null;
-                SearchText = null;
+                SearchText = "";
             }
         }
     }
@@ -39,7 +42,9 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     private HashSet<string?> _routes = [];
 
     [ObservableProperty]
-    private string? _searchText;
+    private string _searchText = "";
+
+    private string _previousSearchText = "";
 
     [ObservableProperty]
     private ObservableCollection<Vehicle> _pins = [];
@@ -107,6 +112,13 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    public async Task StopTracking()
+    {
+        TrackedVehicle = null;
+        await LoadPinsFromBackendAsync(forced: true);
+    }
+
+    [RelayCommand]
     private async Task ShowSearchDisabledToast()
     {
         await Toast.Make("Căutarea este dezactivată în timpul urmăririi.", ToastDuration.Long, 14).Show();
@@ -163,6 +175,13 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         {
             while (!_cts.Token.IsCancellationRequested)
             {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    IsBusy = true;
+                });
+                if (SearchText != _previousSearchText)
+                    await LoadPinsFromBackendAsync(true);
+                _previousSearchText = SearchText;
                 await LoadPinsFromBackendAsync();
 
                 if (TrackedVehicle is not null)
@@ -172,8 +191,11 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
                         MapCenterLocation = new Location(TrackedVehicle.Latitude.Value, TrackedVehicle.Longitude.Value);
                     });
                 }
-
-                await Task.Delay(TimeSpan.FromSeconds(5), _cts.Token);
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    IsBusy = false;
+                });
+                await Task.Delay(TimeSpan.FromSeconds(3), _cts.Token);
             }
         }, _cts.Token);
     }
@@ -210,6 +232,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         {
             var routeToSearch = Routes.Contains(SearchText, StringComparer.OrdinalIgnoreCase) ? SearchText : null;
             var response = await _apiService.GetVehiclesAsync(routeToSearch, forced);
+            Debug.WriteLine(routeToSearch);
 
             if (response.IsNotModified || response.Data is null) return;
 

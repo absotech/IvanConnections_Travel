@@ -1,5 +1,8 @@
-﻿using IvanConnections_Travel.ViewModels;
+﻿using Android.Locations;
+using IvanConnections_Travel.ViewModels;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Maps;
+using Location = Microsoft.Maui.Devices.Sensors.Location;
 
 namespace IvanConnections_Travel
 {
@@ -13,6 +16,7 @@ namespace IvanConnections_Travel
             MapSpan mapSpan = new(location, 0.01, 0.01);
             MyMap.MoveToRegion(mapSpan);
             BindingContext = mainPageViewModel;
+
         }
     }
 }
