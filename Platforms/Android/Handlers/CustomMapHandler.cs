@@ -2,14 +2,12 @@
 using Android.Gms.Maps;
 using Android.Gms.Maps.Model;
 using Android.Graphics;
-using CommunityToolkit.Mvvm.Messaging;
 using IvanConnections_Travel.Controls;
-using IvanConnections_Travel.Messages;
 using IvanConnections_Travel.Models.Enums;
 using IvanConnections_Travel.Utils;
 using Microsoft.Maui.Maps.Handlers;
 using System.Collections.Concurrent;
-using Microsoft.Maui;
+using _Microsoft.Android.Resource.Designer;
 
 namespace IvanConnections_Travel.Platforms.Handlers
 {
@@ -20,7 +18,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
     /// </summary>
     public class CustomMapHandler : MapHandler
     {
-        public static readonly IPropertyMapper<CustomMauiMap, CustomMapHandler> CustomMapper =
+        private static readonly IPropertyMapper<CustomMauiMap, CustomMapHandler> CustomMapper =
             new PropertyMapper<CustomMauiMap, CustomMapHandler>(Mapper)
             {
                 [nameof(CustomMauiMap.Vehicles)] = MapVehicles,
@@ -28,8 +26,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 [nameof(CustomMauiMap.ShowStops)] = MapStops,
                 [nameof(CustomMauiMap.MoveToLocation)] = MapMoveToLocation
             };
+
         private static void MapVehicles(CustomMapHandler handler, CustomMauiMap map)
-    => handler.UpdateVehicleMarkers();
+            => handler.UpdateVehicleMarkers();
 
         private static void MapStops(CustomMapHandler handler, CustomMauiMap map)
             => handler.UpdateStopMarkers();
@@ -39,7 +38,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
         private readonly CustomMapCallback _mapCallback;
         private Location? _pendingLocation;
 
-        private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> _bitmapCache = [];
+        private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> BitmapCache = [];
 
         private readonly Dictionary<string, Marker> _vehicleMarkers = [];
         private readonly Dictionary<int, Marker> _stopMarkers = [];
@@ -64,8 +63,10 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 _googleMap.TrafficEnabled = true;
                 _googleMap.UiSettings.ZoomControlsEnabled = false;
                 _googleMap.UiSettings.MyLocationButtonEnabled = false;
-                bool success = _googleMap.SetMapStyle(
-                    MapStyleOptions.LoadRawResourceStyle(Platform.CurrentActivity ?? throw new InvalidOperationException("Context is null."), Resource.Raw.map_style));
+                var success = _googleMap.SetMapStyle(
+                    MapStyleOptions.LoadRawResourceStyle(
+                        Platform.CurrentActivity ?? throw new InvalidOperationException("Context is null."),
+                        ResourceConstant.Raw.map_style));
                 if (!success)
                 {
                     System.Diagnostics.Debug.WriteLine("Failed to apply map style.");
@@ -75,6 +76,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
             {
                 System.Diagnostics.Debug.WriteLine($"Map style resource not found: {e.Message}");
             }
+
             _googleMap.MarkerClick += OnMarkerClick;
             _googleMap.MapClick += OnMapClick;
 
@@ -92,32 +94,37 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 var vehicleInfo = new Dictionary<string, (LatLng Position, BitmapDescriptor Icon)>();
                 foreach (var v in mauiMap.Vehicles)
                 {
-                    if (!v.Latitude.HasValue || !v.Longitude.HasValue || !v.VehicleType.HasValue || v.Label is null) continue;
+                    if (!v.Latitude.HasValue || !v.Longitude.HasValue || !v.VehicleType.HasValue ||
+                        v.Label is null) continue;
 
-                    var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "", ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false);
-                    var bitmap = _bitmapCache.GetOrAdd(key, _ => MapBitmapFactory.CreateCustomPinBitmap(context, v.VehicleType.Value, v.RouteShortName, v.RouteColor, v.Direction));
+                    var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "",
+                        ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false);
+                    var bitmap = BitmapCache.GetOrAdd(key,
+                        _ => MapBitmapFactory.CreateCustomPinBitmap(context, v.VehicleType.Value, v.RouteShortName,
+                            v.RouteColor, v.Direction));
 
-                    vehicleInfo[v.Label] = (new LatLng(v.Latitude.Value, v.Longitude.Value), BitmapDescriptorFactory.FromBitmap(bitmap));
+                    vehicleInfo[v.Label] = (new LatLng(v.Latitude.Value, v.Longitude.Value),
+                        BitmapDescriptorFactory.FromBitmap(bitmap));
                 }
+
                 return vehicleInfo;
             });
 
             var visibleVehicleKeys = new HashSet<string>(_vehicleMarkers.Keys);
 
-            foreach (var vehicle in vehicleData)
+            foreach (var (vehicleId, value) in vehicleData)
             {
-                var vehicleId = vehicle.Key;
                 if (_vehicleMarkers.TryGetValue(vehicleId, out var existingMarker))
                 {
-                    existingMarker.Position = vehicle.Value.Position;
-                    existingMarker.SetIcon(vehicle.Value.Icon);
+                    existingMarker.Position = value.Position;
+                    existingMarker.SetIcon(value.Icon);
                     visibleVehicleKeys.Remove(vehicleId);
                 }
                 else
                 {
                     var markerOptions = new MarkerOptions()
-                        .SetPosition(vehicle.Value.Position)
-                        .SetIcon(vehicle.Value.Icon);
+                        .SetPosition(value.Position)
+                        .SetIcon(value.Icon);
 
                     var newMarker = _googleMap.AddMarker(markerOptions);
                     if (newMarker != null)
@@ -127,6 +134,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     }
                 }
             }
+
             foreach (var vehicleKeyToRemove in visibleVehicleKeys)
             {
                 if (_vehicleMarkers.TryGetValue(vehicleKeyToRemove, out var markerToRemove))
@@ -136,6 +144,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 }
             }
         }
+
         private void UpdateStopMarkers()
         {
             if (_googleMap is null || VirtualView is not CustomMauiMap mauiMap) return;
@@ -155,7 +164,8 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     .SetTitle($"Stație: {stop.StopName}");
 
                 var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStopIcon: true);
-                var bitmap = _bitmapCache.GetOrAdd(key, _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName));
+                var bitmap = BitmapCache.GetOrAdd(key,
+                    _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName));
                 markerOptions.SetIcon(BitmapDescriptorFactory.FromBitmap(bitmap));
 
                 var newMarker = _googleMap.AddMarker(markerOptions);
@@ -166,6 +176,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 }
             }
         }
+
         private static void MapMoveToLocation(CustomMapHandler handler, CustomMauiMap map)
         {
             handler._pendingLocation = map.MoveToLocation;
@@ -174,17 +185,16 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         internal void ProcessMapMove()
         {
-            if (_googleMap != null && _pendingLocation != null)
-            {
-                var latLng = new LatLng(_pendingLocation.Latitude, _pendingLocation.Longitude);
-                var cameraUpdate = CameraUpdateFactory.NewLatLngZoom(latLng, 15);
-                _googleMap.AnimateCamera(cameraUpdate);
-                _pendingLocation = null;
-            }
+            if (_googleMap == null || _pendingLocation == null) return;
+            var latLng = new LatLng(_pendingLocation.Latitude, _pendingLocation.Longitude);
+            var cameraUpdate = CameraUpdateFactory.NewLatLngZoom(latLng, 15);
+            _googleMap.AnimateCamera(cameraUpdate);
+            _pendingLocation = null;
         }
+
         private void OnMarkerClick(object? sender, GoogleMap.MarkerClickEventArgs e)
         {
-            if (VirtualView is not CustomMauiMap mauiMap || e.Marker?.Tag?.ToString() is not string tag)
+            if (VirtualView is not CustomMauiMap mauiMap || e.Marker.Tag?.ToString() is not { } tag)
                 return;
             mauiMap.MarkerClickCommand?.Execute(tag);
 
@@ -195,16 +205,17 @@ namespace IvanConnections_Travel.Platforms.Handlers
         {
             if (VirtualView is not CustomMauiMap mauiMap)
                 return;
-            mauiMap.MapClickCommand?.Execute(null);
+            mauiMap.MapClickCommand.Execute(null);
         }
 
         public static void ClearBitmapCache()
         {
-            foreach (var bitmap in _bitmapCache.Values)
+            foreach (var bitmap in BitmapCache.Values)
             {
-                bitmap?.Recycle();
+                bitmap.Recycle();
             }
-            _bitmapCache.Clear();
+
+            BitmapCache.Clear();
         }
     }
 

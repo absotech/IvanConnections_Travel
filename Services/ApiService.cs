@@ -43,8 +43,7 @@ public class ApiService
         {
             var apiResponse = await _httpClient.GetFromJsonAsync<DistanceApiResponse>(url, _jsonSerializerOptions);
 
-            // Check for a valid response structure and status
-            var element = apiResponse?.Rows?.FirstOrDefault()?.Elements?.FirstOrDefault();
+            var element = apiResponse?.Rows.FirstOrDefault()?.Elements.FirstOrDefault();
             if (apiResponse?.Status == "OK" && element?.Status == "OK")
             {
                 return element.Duration.Value;

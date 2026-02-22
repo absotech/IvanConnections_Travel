@@ -5,17 +5,13 @@ public class ArrivalTimeConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is int minutes)
+        if (value is not int minutes) return string.Empty;
+        return minutes switch
         {
-            if (minutes == -1)
-                return "PE CAPĂT";
-
-            if (minutes == 0)
-                return "Sosire";
-
-            return $"{minutes} min";
-        }
-        return string.Empty;
+            -1 => "PE CAPĂT",
+            0 => "Sosire",
+            _ => $"{minutes} min"
+        };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

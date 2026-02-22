@@ -59,6 +59,7 @@ namespace IvanConnections_Travel
             builder.Logging.AddDebug();
 #endif
             builder.Services.AddSingleton<ApiService>();
+            builder.Services.AddSingleton<IVehicleService, VehicleService>();
             builder.Services.AddTransientPopup<VehiclePopup, VehiclePopupViewModel>();
             builder.Services.AddTransientPopup<StopPopup, StopPopupViewModel>();
 

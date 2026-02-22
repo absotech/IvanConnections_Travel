@@ -8,13 +8,11 @@ namespace IvanConnections_Travel.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is VehicleType vehicleType)
+            if (value is not VehicleType vehicleType) return string.Empty;
+            var translatedName = Translations.GetVehicleTypeNameInRomanian(vehicleType);
+            if (!string.IsNullOrEmpty(translatedName))
             {
-                string translatedName = Translations.GetVehicleTypeNameInRomanian(vehicleType);
-                if (!string.IsNullOrEmpty(translatedName))
-                {
-                    return char.ToUpper(translatedName[0]) + translatedName[1..] + ' ';
-                }
+                return char.ToUpper(translatedName[0]) + translatedName[1..] + ' ';
             }
             return string.Empty;
         }

@@ -6,7 +6,7 @@ public partial class FancySearchBar : ContentView
         BindableProperty.Create(nameof(Text), typeof(string), typeof(FancySearchBar), default(string), BindingMode.TwoWay);
 
     public static readonly BindableProperty PlaceholderProperty =
-        BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(FancySearchBar), default(string));
+        BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(FancySearchBar));
 
     public string Text
     {
