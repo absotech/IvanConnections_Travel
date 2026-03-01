@@ -1,4 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="IvanConnections_Travel.MainPage"
@@ -35,131 +36,131 @@
                              MapClickCommand="{Binding MapClickedCommand}">
         </local:CustomMauiMap>
 
-        <Grid>
-            <VerticalStackLayout>
-                <Border HorizontalOptions="Center"
-                        VerticalOptions="Start"
+        <Grid ColumnDefinitions="*, Auto, Auto"
+              RowDefinitions="Auto, *">
+            <Border VerticalOptions="Center"
+                    Margin="10,15,10,10"
+                    StrokeThickness="1"
+                    Stroke="{StaticResource OffBlackBorder}"
+                    Grid.Column="0"
+                    StrokeShape="RoundRectangle 25"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                    Padding="10,0,5,0">
+                <Grid
+                    ColumnSpacing="5"
+                    VerticalOptions="Center">
+
+                    <local:FancySearchBar Grid.Column="0"
+                                          BorderThickness="0"
+                                          BackgroundColor="Transparent"
+                                          VerticalOptions="Center"
+                                          Placeholder="Caută o rută"
+                                          IsEnabled="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
+                                          Opacity="{Binding IsTracking, Converter={StaticResource BoolToOpacityConverter}}"
+                                          Text="{Binding SearchText}" />
+                    <BoxView BackgroundColor="Transparent"
+                             Grid.Column="0"
+                             IsVisible="{Binding IsTracking}">
+                        <BoxView.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowSearchDisabledToastCommand}" />
+                        </BoxView.GestureRecognizers>
+                    </BoxView>
+                </Grid>
+            </Border>
+                    <Button
+                        Command="{Binding ToggleShowStopsCommand}"
+                        HeightRequest="50"
+                        WidthRequest="50"
                         Margin="10,15,10,10"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 25"
+                        CornerRadius="30"
+                        Grid.Column="1"
                         BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                        Padding="10,0,5,0">
+                        BorderColor="{StaticResource OffBlackBorder}"
+                        BorderWidth="1">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                             Glyph="&#xe98f;"
+                                             Size="30"
+                                             Color="{StaticResource PrimaryDarkText}" />
+                        </Button.ImageSource>
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button"
+                                         Binding="{Binding ShowStopsOnMap}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor"
+                                        Value="#2196F3" />
+                            </DataTrigger>
 
-                    <Border.Shadow>
-                        <Shadow Brush="Black"
-                                Offset="5,5"
-                                Radius="10"
-                                Opacity="0.3" />
-                    </Border.Shadow>
-
-                    <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="5"
-                          VerticalOptions="Center">
-                        
-                        <local:FancySearchBar Grid.Column="0"
-                                              BackgroundColor="Transparent"
-                                              VerticalOptions="Center"
-                                              Placeholder="Caută o rută"
-                                              IsEnabled="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
-                                              Opacity="{Binding IsTracking, Converter={StaticResource BoolToOpacityConverter}}"
-                                              Text="{Binding SearchText}" />
-                        <BoxView BackgroundColor="Transparent"
-                                 Grid.Column="0"
-                                 IsVisible="{Binding IsTracking}">
-                            <BoxView.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ShowSearchDisabledToastCommand}" />
-                            </BoxView.GestureRecognizers>
-                        </BoxView>
-                        <Button Grid.Column="1"
-                                Command="{Binding CenterOnUserLocationCommand}"
-                                BackgroundColor="Transparent"
-                                WidthRequest="40"
-                                HeightRequest="40"
-                                CornerRadius="20"
-                                Padding="0">
-                            <Button.ImageSource>
-                                <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                                 Glyph="&#xe1b3;"
-                                                 Color="{StaticResource Primary}" />
-                            </Button.ImageSource>
-                        </Button>
-                    </Grid>
-                </Border>
-                <Border HorizontalOptions="Center"
-                        VerticalOptions="Start"
-                        Margin="10,15,10,10"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 25"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
-                        Opacity="0.8"
-                        IsVisible="{Binding IsTracking}"
-                        Padding="10">
-                    <Border.Shadow>
-                        <Shadow Brush="Black"
-                                Offset="5,5"
-                                Radius="10"
-                                Opacity="0.3" />
-                    </Border.Shadow>
-                    <Label>
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="Urmăriți vehiculul "></Span>
-                                <Span Text="{Binding TrackedVehicle.Id}"></Span>
-                                <Span Text=", ruta "></Span>
-                                <Span Text="{Binding TrackedVehicle.RouteShortName}"></Span>
-                                <Span Text=". "></Span>
-                                <Span Text="Nu mai urmări."
-                                      TextDecorations="Underline">
-                                    <Span.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding StopTrackingCommand}" />
-                                    </Span.GestureRecognizers>
-                                </Span>
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                </Border>
-            </VerticalStackLayout>
-            <Button VerticalOptions="End"
-                    HorizontalOptions="End"
-                    Margin="20"
-                    WidthRequest="60"
-                    HeightRequest="60"
-                    CornerRadius="30"
-                    Command="{Binding ToggleShowStopsCommand}">
-
-                <Button.ImageSource>
-                    <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                     Glyph="&#xe55f;"
-                                     Color="White" />
-                </Button.ImageSource>
-                <Button.Shadow>
+                        </Button.Triggers>
+                    </Button>
+            <Border HorizontalOptions="Center"
+                    Grid.ColumnSpan="2"
+                    Grid.Row="1"
+                    VerticalOptions="Start"
+                    Margin="10,0,10,10"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 25"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                    Opacity="0.8"
+                    IsVisible="{Binding IsTracking}"
+                    Padding="10">
+                <Border.Shadow>
                     <Shadow Brush="Black"
                             Offset="5,5"
                             Radius="10"
-                            Opacity="0.5" />
-                </Button.Shadow>
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button"
-                                 Binding="{Binding ShowStopsOnMap}"
-                                 Value="True">
-                        <Setter Property="BackgroundColor"
-                                Value="#2196F3" />
-                    </DataTrigger>
-                    <DataTrigger TargetType="Button"
-                                 Binding="{Binding ShowStopsOnMap}"
-                                 Value="False">
-                        <Setter Property="BackgroundColor"
-                                Value="#757575" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               VerticalOptions="Start"
-                               HorizontalOptions="End"
-                               Margin="15,20,15,15"
-                               WidthRequest="30"
-                               HeightRequest="30"
-                               IsRunning="{Binding IsBusy}"></ActivityIndicator>
+                            Opacity="0.3" />
+                </Border.Shadow>
+                <Label>
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Urmăriți vehiculul "></Span>
+                            <Span Text="{Binding TrackedVehicle.Id}"></Span>
+                            <Span Text=", ruta "></Span>
+                            <Span Text="{Binding TrackedVehicle.RouteShortName}"></Span>
+                            <Span Text=". "></Span>
+                            <Span Text="Nu mai urmări."
+                                  TextDecorations="Underline">
+                                <Span.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding StopTrackingCommand}" />
+                                </Span.GestureRecognizers>
+                            </Span>
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </Border>
+
         </Grid>
+        <Button VerticalOptions="End"
+                HorizontalOptions="End"
+                Margin="20"
+                WidthRequest="50"
+                BorderColor="{StaticResource OffBlackBorder}"
+                BorderWidth="1"
+                BackgroundColor="{StaticResource OffBlack}"
+                HeightRequest="50"
+                CornerRadius="30"
+                Command="{Binding CenterOnUserLocationCommand}">
+
+            <Button.ImageSource>
+                <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                 Glyph="&#xe1b3;"
+                                 Color="{StaticResource White}" />
+            </Button.ImageSource>
+            <Button.Shadow>
+                <Shadow Brush="Black"
+                        Offset="5,5"
+                        Radius="10"
+                        Opacity="0.5" />
+            </Button.Shadow>
+
+        </Button>
+        <ActivityIndicator IsVisible="{Binding IsBusy}"
+                           VerticalOptions="End"
+                           HorizontalOptions="Start"
+                           Margin="15,20,15,15"
+                           WidthRequest="10"
+                           HeightRequest="10"
+                           IsRunning="{Binding IsBusy}">
+        </ActivityIndicator>
     </Grid>
 </ContentPage>

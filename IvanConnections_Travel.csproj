@@ -44,7 +44,7 @@
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android36.0|AnyCPU'">
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
         <ApplicationTitle>IC Travel</ApplicationTitle>
-        <AndroidPackageFormat>apk</AndroidPackageFormat>
+        <AndroidPackageFormat>aab</AndroidPackageFormat>
         <AndroidKeyStore>False</AndroidKeyStore>
         <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
         <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
@@ -88,6 +88,7 @@
         <None Remove="Platforms\Android\Resources\drawable\bus_stop.png" />
         <None Remove="Platforms\Android\Resources\drawable\tram_icon.png" />
         <None Remove="Platforms\Android\Resources\raw\map_style.json" />
+        <None Include="Platforms\iOS\Utils\ColorManagement.cs" />
     </ItemGroup>
 
     <ItemGroup>

@@ -52,6 +52,22 @@ namespace IvanConnections_Travel
                             }
                         });
                     });
+#elif IOS || MACCATALYST
+                    events.AddiOS(ios =>
+                    {
+                        ios.OnActivated(application =>
+                        {
+                            var page = (Application.Current?.MainPage as Shell)?.CurrentPage as MainPage;
+
+                            if (page?.BindingContext is MainPageViewModel vm && vm.CenterOnUserLocationCommand.CanExecute(null))
+                            {
+                                MainThread.BeginInvokeOnMainThread(async () =>
+                                {
+                                    await vm.CenterOnUserLocationCommand.ExecuteAsync(null);
+                                });
+                            }
+                        });
+                    });
 #endif
                 });
 

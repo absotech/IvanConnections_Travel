@@ -7,6 +7,9 @@ public partial class FancySearchBar : ContentView
 
     public static readonly BindableProperty PlaceholderProperty =
         BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(FancySearchBar));
+    
+    public static readonly BindableProperty BorderThicknessProperty =
+        BindableProperty.Create(nameof(BorderThickness), typeof(double), typeof(FancySearchBar), 1.0);
 
     public string Text
     {
@@ -18,6 +21,12 @@ public partial class FancySearchBar : ContentView
     {
         get => (string)GetValue(PlaceholderProperty);
         set => SetValue(PlaceholderProperty, value);
+    }
+
+    public double BorderThickness
+    {
+        get => (double)GetValue(BorderThicknessProperty);
+        set => SetValue(BorderThicknessProperty, value);
     }
 
     public FancySearchBar()

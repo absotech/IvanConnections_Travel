@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:IvanConnections_Travel.Controls"
              x:Class="IvanConnections_Travel.Controls.FancySearchBar"
              x:Name="this">
-    <Border StrokeThickness="1"
+    <Border StrokeThickness="{Binding Path=BorderThickness, Source={x:Reference this}}"
             HeightRequest="50"
             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
             Padding="15,0,5,0">
@@ -14,12 +14,7 @@
 
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup x:Name="CommonStates">
-                <VisualState x:Name="Normal">
-                    <VisualState.Setters>
-                        <Setter Property="Stroke"
-                                Value="#CCCCCC" />
-                    </VisualState.Setters>
-                </VisualState>
+               
                 <VisualState x:Name="Focused">
                     <VisualState.Setters>
                         <Setter Property="Stroke"
@@ -40,19 +35,19 @@
                                    Text="{Binding Path=Text, Source={x:Reference this}}"
                                    Placeholder="{Binding Path=Placeholder, Source={x:Reference this}}" />
 
-            <Button Grid.Column="1"
-                   CornerRadius="20"
-                   HeightRequest="20"
-                   WidthRequest="20"
-                   BackgroundColor="Transparent"
-                   Margin="5,0,10,0"
-                   VerticalOptions="Center">
-                <Button.ImageSource>
-                    <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                     Glyph="&#xe8b6;"
-                                     Color="#A9A9A9" />
-                </Button.ImageSource>
-            </Button>
+            <!-- <Button Grid.Column="1" -->
+            <!--        CornerRadius="20" -->
+            <!--        HeightRequest="20" -->
+            <!--        WidthRequest="20" -->
+            <!--        BackgroundColor="Transparent" -->
+            <!--        Margin="5,0,10,0" -->
+            <!--        VerticalOptions="Center"> -->
+            <!--     <Button.ImageSource> -->
+            <!--         <FontImageSource FontFamily="MaterialSymbolsRounded" -->
+            <!--                          Glyph="&#xe8b6;" -->
+            <!--                          Color="#A9A9A9" /> -->
+            <!--     </Button.ImageSource> -->
+            <!-- </Button> -->
         </Grid>
     </Border>
 </ContentView>

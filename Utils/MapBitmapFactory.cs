@@ -14,6 +14,19 @@ namespace IvanConnections_Travel.Utils
 {
     public static class MapBitmapFactory
     {
+        #region Sizes and Proportions
+
+        public static int StopPinSize = 48;
+
+        public static int VehiclePinBaseSize = 60;
+        public static float VehiclePinOverlayScale = 0.48f;
+        public static float VehiclePinPaddingScale = 0.20f;
+        public static float VehiclePinTextScale = 0.40f;
+        public static float VehiclePinTextPaddingScale = 0.08f;
+        public static float VehiclePinCornerRadiusScale = 0.12f;
+
+        #endregion
+
         private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> _bitmapCache = new();
 
         public static void ClearBitmapCache()
@@ -26,9 +39,10 @@ namespace IvanConnections_Travel.Utils
         }
         public static Bitmap CreateStopPinBitmap(Context context, string label)
         {
-            int size = 64;
+            float density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
+            int size = (int)(StopPinSize * density);
             var baseBitmap = BitmapFactory.DecodeResource(context.Resources, Resource.Drawable.bus_stop)
-                ?? throw new InvalidOperationException($"Failed to decode resource for icon type: {Resource.Drawable.bus_stop}");
+                             ?? throw new InvalidOperationException($"Failed to decode resource for icon type: {Resource.Drawable.bus_stop}");
 
             var scaledBitmap = Bitmap.CreateScaledBitmap(baseBitmap, size, size, true);
             baseBitmap.Recycle();
@@ -49,9 +63,13 @@ namespace IvanConnections_Travel.Utils
 
         public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing)
         {
-            int baseIconSize = 100;
-            int overlaySize = 48;
-            int padding = 20;
+            float density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
+            int baseIconSize = (int)(VehiclePinBaseSize * density);
+            int overlaySize = (int)(baseIconSize * VehiclePinOverlayScale);
+            int padding = (int)(baseIconSize * VehiclePinPaddingScale);
+            int fontSize = (int)(baseIconSize * VehiclePinTextScale);
+            int textPadding = (int)(baseIconSize * VehiclePinTextPaddingScale);
+            int cornerRadius = (int)(baseIconSize * VehiclePinCornerRadiusScale);
 
             int resultWidth = baseIconSize + overlaySize + padding;
             int resultHeight = baseIconSize + overlaySize + padding;
@@ -66,7 +84,7 @@ namespace IvanConnections_Travel.Utils
             }
             catch { iconPaint.SetColorFilter(new PorterDuffColorFilter(Color.Black, PorterDuff.Mode.SrcIn)); }
 
-            var textPaint = new Paint { Color = ColorManagement.IsColorDark(iconPaint.Color) ? Color.Yellow : Color.White, TextSize = 40, AntiAlias = true, TextAlign = Paint.Align.Center };
+            var textPaint = new Paint { Color = ColorManagement.IsColorDark(iconPaint.Color) ? Color.Yellow : Color.White, TextSize = fontSize, AntiAlias = true, TextAlign = Paint.Align.Center };
             var bgPaint = new Paint { Color = Color.Argb(170, 0, 0, 0), AntiAlias = true };
             int iconResId = iconType == VehicleType.Bus ? Resource.Drawable.bus_icon : Resource.Drawable.tram_icon;
             using (var baseBitmap = BitmapFactory.DecodeResource(context.Resources, iconResId))
@@ -81,9 +99,8 @@ namespace IvanConnections_Travel.Utils
             Rect textBounds = new();
             textPaint.GetTextBounds(label, 0, label.Length, textBounds);
 
-            int textPadding = 8;
             var bgRect = new RectF(textX - textBounds.Width() / 2f - textPadding, textY + textBounds.Top - textPadding, textX + textBounds.Width() / 2f + textPadding, textY + textBounds.Bottom + textPadding);
-            canvas.DrawRoundRect(bgRect, 12, 12, bgPaint);
+            canvas.DrawRoundRect(bgRect, cornerRadius, cornerRadius, bgPaint);
             canvas.DrawText(label, textX, textY, textPaint);
 
             bool isStopped = !bearing.HasValue || bearing.Value < 0;
