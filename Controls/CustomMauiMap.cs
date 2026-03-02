@@ -65,4 +65,21 @@ public class CustomMauiMap : Microsoft.Maui.Controls.Maps.Map
         set => SetValue(MapBearingProperty, value);
     }
 
+    public static readonly BindableProperty StopPinSizeProperty =
+        BindableProperty.Create(nameof(StopPinSize), typeof(int), typeof(CustomMauiMap), 15);
+
+    public int StopPinSize
+    {
+        get => (int)GetValue(StopPinSizeProperty);
+        set => SetValue(StopPinSizeProperty, value);
+    }
+
+    public static readonly BindableProperty VehiclePinSizeProperty =
+        BindableProperty.Create(nameof(VehiclePinSize), typeof(int), typeof(CustomMauiMap), 25);
+
+    public int VehiclePinSize
+    {
+        get => (int)GetValue(VehiclePinSizeProperty);
+        set => SetValue(VehiclePinSizeProperty, value);
+    }
 }

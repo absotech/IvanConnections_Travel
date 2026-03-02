@@ -4,12 +4,35 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:IvanConnections_Travel"
-    Shell.FlyoutBehavior="Disabled"
+    FlyoutBehavior="Flyout"
     Title="IvanConnections_Travel">
+    <Shell.Resources>
+        <x:String x:Key="IconMap">&#xe55b;</x:String>
+        <x:String x:Key="IconSettings">&#xe8b8;</x:String>
+    </Shell.Resources>
+    <Shell.FlyoutHeader>
+        <Grid HeightRequest="50" BackgroundColor="Transparent">
+        </Grid>
+    </Shell.FlyoutHeader>
+    <FlyoutItem Title="Hartă">
+        <FlyoutItem.Icon>
+            <FontImageSource 
+                FontFamily="MaterialSymbolsRounded" 
+                Glyph="{StaticResource IconMap}" 
+                Size="24" 
+                Color="Gray" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    </FlyoutItem>
 
-    <ShellContent
-        Title="Hartă"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
-
+    <FlyoutItem Title="Setări">
+        <FlyoutItem.Icon>
+            <FontImageSource 
+                FontFamily="MaterialSymbolsRounded" 
+                Glyph="{StaticResource IconSettings}" 
+                Size="24" 
+                Color="Gray" />
+        </FlyoutItem.Icon>
+        <ShellContent />
+    </FlyoutItem>
 </Shell>

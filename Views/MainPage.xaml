@@ -28,11 +28,13 @@
     <Grid>
         <local:CustomMauiMap x:Name="MyMap"
                              IsShowingUser="True"
+                             IsTrafficEnabled="{Binding IsTrafficEnabled}"
                              MoveToLocation="{Binding MapCenterLocation}"
                              MapBearing="{Binding MapBearing, Mode=TwoWay}"
                              Vehicles="{Binding Pins}"
                              Stops="{Binding AllStops}"
                              ShowStops="{Binding ShowStopsOnMap}"
+                             StopPinSize="5"
                              MarkerClickCommand="{Binding MarkerClickedCommand}"
                              MapClickCommand="{Binding MapClickedCommand}">
         </local:CustomMauiMap>
@@ -49,9 +51,21 @@
                     Padding="10,0,5,0">
                 <Grid
                     ColumnSpacing="5"
-                    VerticalOptions="Center">
-
-                    <local:FancySearchBar Grid.Column="0"
+                    ColumnDefinitions="Auto, Auto">
+                    <Button
+                        Grid.Column="0"
+                        Clicked="OnMenuClicked"
+                        HeightRequest="25"
+                        WidthRequest="25"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                             Glyph="&#xe5d2;"
+                                             Size="30"
+                                             Color="{StaticResource PrimaryDarkText}" />
+                        </Button.ImageSource>
+                        </Button>
+                    <local:FancySearchBar Grid.Column="1"
                                           BorderThickness="0"
                                           BackgroundColor="Transparent"
                                           VerticalOptions="Center"
@@ -60,7 +74,7 @@
                                           Opacity="{Binding IsTracking, Converter={StaticResource BoolToOpacityConverter}}"
                                           Text="{Binding SearchText}" />
                     <BoxView BackgroundColor="Transparent"
-                             Grid.Column="0"
+                             Grid.Column="1"
                              IsVisible="{Binding IsTracking}">
                         <BoxView.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ShowSearchDisabledToastCommand}" />
@@ -80,7 +94,7 @@
                         BorderWidth="1">
                         <Button.ImageSource>
                             <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                             Glyph="&#xe98f;"
+                                             Glyph="&#xe55f;"
                                              Size="30"
                                              Color="{StaticResource PrimaryDarkText}" />
                         </Button.ImageSource>
@@ -94,8 +108,33 @@
 
                         </Button.Triggers>
                     </Button>
+                    <Button
+                        Command="{Binding ToggleTrafficCommand}"
+                        HeightRequest="50"
+                        WidthRequest="50"
+                        Margin="10,15,10,10"
+                        CornerRadius="30"
+                        Grid.Column="2"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                        BorderColor="{StaticResource OffBlackBorder}"
+                        BorderWidth="1">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                             Glyph="&#xe565;"
+                                             Size="30"
+                                             Color="{StaticResource PrimaryDarkText}" />
+                        </Button.ImageSource>
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button"
+                                         Binding="{Binding IsTrafficEnabled}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor"
+                                        Value="#2196F3" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
             <Border HorizontalOptions="Center"
-                    Grid.ColumnSpan="2"
+                    Grid.ColumnSpan="3"
                     Grid.Row="1"
                     VerticalOptions="Start"
                     Margin="10,0,10,10"
@@ -129,7 +168,6 @@
                     </Label.FormattedText>
                 </Label>
             </Border>
-
         </Grid>
         <Button VerticalOptions="End"
                 HorizontalOptions="End"

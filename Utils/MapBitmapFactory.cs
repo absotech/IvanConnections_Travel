@@ -15,39 +15,36 @@ namespace IvanConnections_Travel.Utils
     public static class MapBitmapFactory
     {
         #region Sizes and Proportions
-
-        public static int StopPinSize = 15;
-
-        public static int VehiclePinBaseSize = 25;
-        public static float VehiclePinOverlayScale = 0.48f;
-        public static float VehiclePinPaddingScale = 0.20f;
-        public static float VehiclePinTextScale = 0.40f;
-        public static float VehiclePinTextPaddingScale = 0.08f;
-        public static float VehiclePinCornerRadiusScale = 0.12f;
+        
+        private static float VehiclePinOverlayScale = 0.48f;
+        private static float VehiclePinPaddingScale = 0.20f;
+        private static float VehiclePinTextScale = 0.40f;
+        private static float VehiclePinTextPaddingScale = 0.08f;
+        private static float VehiclePinCornerRadiusScale = 0.12f;
 
         #endregion
 
-        private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> _bitmapCache = new();
+        private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> BitmapCache = new();
 
         public static void ClearBitmapCache()
         {
-            foreach (var bitmap in _bitmapCache.Values)
+            foreach (var bitmap in BitmapCache.Values)
             {
                 bitmap?.Recycle();
             }
-            _bitmapCache.Clear();
+            BitmapCache.Clear();
         }
-        public static Bitmap CreateStopPinBitmap(Context context, string label)
+        public static Bitmap CreateStopPinBitmap(Context context, string label, int stopPinSize)
         {
-            float density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
-            int size = (int)(StopPinSize * density);
+            var density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
+            var size = (int)(stopPinSize * density);
             var baseBitmap = BitmapFactory.DecodeResource(context.Resources, Resource.Drawable.bus_stop)
                              ?? throw new InvalidOperationException($"Failed to decode resource for icon type: {Resource.Drawable.bus_stop}");
 
             var scaledBitmap = Bitmap.CreateScaledBitmap(baseBitmap, size, size, true);
             baseBitmap.Recycle();
-            int resultWidth = scaledBitmap.Width;
-            int resultHeight = scaledBitmap.Height;
+            var resultWidth = scaledBitmap.Width;
+            var resultHeight = scaledBitmap.Height;
 
             var resultBitmap = Bitmap.CreateBitmap(resultWidth, resultHeight, Bitmap.Config.Argb8888);
 
@@ -61,18 +58,18 @@ namespace IvanConnections_Travel.Utils
             return resultBitmap;
         }
 
-        public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing)
+        public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing, int vehiclePinSize)
         {
-            float density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
-            int baseIconSize = (int)(VehiclePinBaseSize * density);
-            int overlaySize = (int)(baseIconSize * VehiclePinOverlayScale);
-            int padding = (int)(baseIconSize * VehiclePinPaddingScale);
-            int fontSize = (int)(baseIconSize * VehiclePinTextScale);
-            int textPadding = (int)(baseIconSize * VehiclePinTextPaddingScale);
-            int cornerRadius = (int)(baseIconSize * VehiclePinCornerRadiusScale);
+            var density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
+            var baseIconSize = (int)(vehiclePinSize * density);
+            var overlaySize = (int)(baseIconSize * VehiclePinOverlayScale);
+            var padding = (int)(baseIconSize * VehiclePinPaddingScale);
+            var fontSize = (int)(baseIconSize * VehiclePinTextScale);
+            var textPadding = (int)(baseIconSize * VehiclePinTextPaddingScale);
+            var cornerRadius = (int)(baseIconSize * VehiclePinCornerRadiusScale);
 
-            int resultWidth = baseIconSize + overlaySize + padding;
-            int resultHeight = baseIconSize + overlaySize + padding;
+            var resultWidth = baseIconSize + overlaySize + padding;
+            var resultHeight = baseIconSize + overlaySize + padding;
 
             var resultBitmap = Bitmap.CreateBitmap(resultWidth, resultHeight, Bitmap.Config.Argb8888);
             using var canvas = new Canvas(resultBitmap);
@@ -86,16 +83,16 @@ namespace IvanConnections_Travel.Utils
 
             var textPaint = new Paint { Color = ColorManagement.IsColorDark(iconPaint.Color) ? Color.Yellow : Color.White, TextSize = fontSize, AntiAlias = true, TextAlign = Paint.Align.Center };
             var bgPaint = new Paint { Color = Color.Argb(170, 0, 0, 0), AntiAlias = true };
-            int iconResId = iconType == VehicleType.Bus ? Resource.Drawable.bus_icon : Resource.Drawable.tram_icon;
+            var iconResId = iconType == VehicleType.Bus ? Resource.Drawable.bus_icon : Resource.Drawable.tram_icon;
             using (var baseBitmap = BitmapFactory.DecodeResource(context.Resources, iconResId))
             using (var scaledBitmap = Bitmap.CreateScaledBitmap(baseBitmap, baseIconSize, baseIconSize, true))
             {
-                float iconX = (resultWidth - baseIconSize) / 2f;
-                float iconY = (resultHeight - baseIconSize) / 2f;
+                var iconX = (resultWidth - baseIconSize) / 2f;
+                var iconY = (resultHeight - baseIconSize) / 2f;
                 canvas.DrawBitmap(scaledBitmap, iconX, iconY, iconPaint);
             }
-            float textX = resultWidth / 2f;
-            float textY = resultHeight / 2f - ((textPaint.Descent() + textPaint.Ascent()) / 2);
+            var textX = resultWidth / 2f;
+            var textY = resultHeight / 2f - ((textPaint.Descent() + textPaint.Ascent()) / 2);
             Rect textBounds = new();
             textPaint.GetTextBounds(label, 0, label.Length, textBounds);
 
@@ -103,16 +100,16 @@ namespace IvanConnections_Travel.Utils
             canvas.DrawRoundRect(bgRect, cornerRadius, cornerRadius, bgPaint);
             canvas.DrawText(label, textX, textY, textPaint);
 
-            bool isStopped = !bearing.HasValue || bearing.Value < 0;
-            int overlayResId = isStopped ? Resource.Drawable.stop_icon : Resource.Drawable.arrow_icon_notfilled;
+            var isStopped = bearing is null or < 0;
+            var overlayResId = isStopped ? Resource.Drawable.stop_icon : Resource.Drawable.arrow_icon_notfilled;
             var overlayPaint = new Paint { AntiAlias = true };
             overlayPaint.SetColorFilter(new PorterDuffColorFilter(isStopped ? Color.Red : Color.White, PorterDuff.Mode.SrcIn));
 
             using (var overlayBase = BitmapFactory.DecodeResource(context.Resources, overlayResId))
             using (var scaledOverlay = Bitmap.CreateScaledBitmap(overlayBase, overlaySize, overlaySize, true))
             {
-                float overlayX = 0;
-                float overlayY = 0;
+                const float overlayX = 0;
+                const float overlayY = 0;
 
                 if (!isStopped)
                 {
@@ -133,14 +130,15 @@ namespace IvanConnections_Travel.Utils
 
     public readonly struct BitmapCacheKey : IEquatable<BitmapCacheKey>
     {
-        public VehicleType VehicleType { get; }
-        public string RouteShortName { get; }
-        public string ColorValue { get; }
-        public int RoundedBearing { get; }
-        public bool IsStopped { get; }
-        public bool IsStopIcon { get; }
+        private VehicleType VehicleType { get; }
+        private string RouteShortName { get; }
+        private string ColorValue { get; }
+        private int RoundedBearing { get; }
+        private bool IsStopped { get; }
+        private bool IsStopIcon { get; }
+        private int Size { get; }
 
-        public BitmapCacheKey(VehicleType vehicleType, string routeShortName, string colorValue, double? bearing, bool isStopIcon)
+        public BitmapCacheKey(VehicleType vehicleType, string routeShortName, string colorValue, double? bearing, bool isStopIcon, int size)
         {
             VehicleType = vehicleType;
             RouteShortName = routeShortName ?? string.Empty;
@@ -148,9 +146,10 @@ namespace IvanConnections_Travel.Utils
             IsStopIcon = isStopIcon;
             IsStopped = !bearing.HasValue || bearing.Value < 0;
             RoundedBearing = IsStopped ? -1 : (int)Math.Round(bearing!.Value);
+            Size = size;
         }
 
-        public override int GetHashCode() => HashCode.Combine(VehicleType, RouteShortName, ColorValue, RoundedBearing, IsStopped, IsStopIcon);
+        public override int GetHashCode() => HashCode.Combine(VehicleType, RouteShortName, ColorValue, RoundedBearing, IsStopped, IsStopIcon, Size);
 
         public bool Equals(BitmapCacheKey other)
         {
@@ -159,7 +158,8 @@ namespace IvanConnections_Travel.Utils
                    ColorValue == other.ColorValue &&
                    RoundedBearing == other.RoundedBearing &&
                    IsStopIcon == other.IsStopIcon &&
-                   IsStopped == other.IsStopped;
+                   IsStopped == other.IsStopped &&
+                   Size == other.Size;
         }
 
         public override bool Equals(object? obj) => obj is BitmapCacheKey key && Equals(key);

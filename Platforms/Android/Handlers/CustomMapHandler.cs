@@ -25,14 +25,29 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 [nameof(CustomMauiMap.Stops)] = MapStops,
                 [nameof(CustomMauiMap.ShowStops)] = MapStops,
                 [nameof(CustomMauiMap.MoveToLocation)] = MapMoveToLocation,
-                [nameof(CustomMauiMap.MapBearing)] = MapMapBearing
+                [nameof(CustomMauiMap.MapBearing)] = MapMapBearing,
+                [nameof(CustomMauiMap.StopPinSize)] = MapStopPinSize,
+                [nameof(CustomMauiMap.VehiclePinSize)] = MapVehiclePinSize,
+                [nameof(Microsoft.Maui.Maps.IMap.IsTrafficEnabled)] = MapIsTrafficEnabled
             };
+
+        private static void MapIsTrafficEnabled(CustomMapHandler handler, CustomMauiMap map)
+        {
+            if (handler._googleMap is null) return;
+            handler._googleMap.TrafficEnabled = map.IsTrafficEnabled;
+        }
 
         private static void MapVehicles(CustomMapHandler handler, CustomMauiMap map)
             => handler.UpdateVehicleMarkers();
 
         private static void MapStops(CustomMapHandler handler, CustomMauiMap map)
             => handler.UpdateStopMarkers();
+
+        private static void MapStopPinSize(CustomMapHandler handler, CustomMauiMap map)
+            => handler.UpdateStopMarkers();
+
+        private static void MapVehiclePinSize(CustomMapHandler handler, CustomMauiMap map)
+            => handler.UpdateVehicleMarkers();
 
         private static void MapMapBearing(CustomMapHandler handler, CustomMauiMap map)
         {
@@ -75,7 +90,10 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
             try
             {
-                _googleMap.TrafficEnabled = true;
+                if (VirtualView is CustomMauiMap mauiMap)
+                {
+                    _googleMap.TrafficEnabled = mauiMap.IsTrafficEnabled;
+                }
                 _googleMap.UiSettings.ZoomControlsEnabled = false;
                 _googleMap.UiSettings.MyLocationButtonEnabled = false;
                 _googleMap.UiSettings.CompassEnabled = false;
@@ -121,10 +139,10 @@ namespace IvanConnections_Travel.Platforms.Handlers
                         v.Label is null) continue;
 
                     var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "",
-                        ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false);
+                        ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false, mauiMap.VehiclePinSize);
                     var bitmap = BitmapCache.GetOrAdd(key,
                         _ => MapBitmapFactory.CreateCustomPinBitmap(context, v.VehicleType.Value, v.RouteShortName,
-                            v.RouteColor, v.Direction));
+                            v.RouteColor, v.Direction, mauiMap.VehiclePinSize));
 
                     vehicleInfo[v.Label] = (new LatLng(v.Latitude.Value, v.Longitude.Value),
                         BitmapDescriptorFactory.FromBitmap(bitmap));
@@ -186,9 +204,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     .SetPosition(new LatLng(stop.StopLat, stop.StopLon))
                     .SetTitle($"Stație: {stop.StopName}");
 
-                var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStopIcon: true);
+                var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStopIcon: true, mauiMap.StopPinSize);
                 var bitmap = BitmapCache.GetOrAdd(key,
-                    _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName));
+                    _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName, mauiMap.StopPinSize));
                 markerOptions.SetIcon(BitmapDescriptorFactory.FromBitmap(bitmap));
 
                 var newMarker = _googleMap.AddMarker(markerOptions);

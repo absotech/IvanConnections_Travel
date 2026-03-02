@@ -67,6 +67,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private bool _showStopsOnMap = true;
 
+    [ObservableProperty] private bool _isTrafficEnabled = true;
+
     [ObservableProperty] private Location? _mapCenterLocation;
 
     [ObservableProperty] 
@@ -268,6 +270,12 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private void ToggleTraffic()
+    {
+        IsTrafficEnabled = !IsTrafficEnabled;
     }
 
     [RelayCommand]
