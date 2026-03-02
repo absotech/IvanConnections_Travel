@@ -5,6 +5,7 @@ using IvanConnections_Travel.Platforms.Handlers;
 using IvanConnections_Travel.Services;
 using IvanConnections_Travel.ViewModels;
 using IvanConnections_Travel.ViewModels.Popups;
+using IvanConnections_Travel.Views;
 using IvanConnections_Travel.Views.Popups;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.LifecycleEvents;
@@ -33,7 +34,6 @@ namespace IvanConnections_Travel
                 .RegisterViews()
                 .RegisterViewModels()
 
-                // 🔥 Add lifecycle events here
                 .ConfigureLifecycleEvents(events =>
                 {
 #if ANDROID
@@ -76,6 +76,9 @@ namespace IvanConnections_Travel
 #endif
             builder.Services.AddSingleton<ApiService>();
             builder.Services.AddSingleton<IVehicleService, VehicleService>();
+#if ANDROID
+            builder.Services.AddSingleton<IWidgetService, IvanConnections_Travel.Platforms.Android.WidgetService>();
+#endif
             builder.Services.AddTransientPopup<VehiclePopup, VehiclePopupViewModel>();
             builder.Services.AddTransientPopup<StopPopup, StopPopupViewModel>();
 
@@ -103,6 +106,7 @@ namespace IvanConnections_Travel
         public static MauiAppBuilder RegisterViewModels(this MauiAppBuilder mauiAppBuilder)
         {
             mauiAppBuilder.Services.AddTransient<MainPageViewModel>();
+            mauiAppBuilder.Services.AddSingleton<SettingsViewModel>();
             return mauiAppBuilder;
         }
 
@@ -110,6 +114,7 @@ namespace IvanConnections_Travel
         {
             mauiAppBuilder.Services.AddSingleton<AppShell>();
             mauiAppBuilder.Services.AddTransient<MainPage>();
+            mauiAppBuilder.Services.AddSingleton<SettingsPage>();
             return mauiAppBuilder;
         }
     }

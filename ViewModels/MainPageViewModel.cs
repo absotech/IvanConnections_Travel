@@ -65,9 +65,9 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private List<Stop> _allStops = [];
 
-    [ObservableProperty] private bool _showStopsOnMap = true;
+    [ObservableProperty] private bool _showStopsOnMap;
 
-    [ObservableProperty] private bool _isTrafficEnabled = true;
+    [ObservableProperty] private bool _isTrafficEnabled;
 
     [ObservableProperty] private Location? _mapCenterLocation;
 
@@ -90,8 +90,18 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         _vehicleService = vehicleService;
         _apiService = apiService;
         _popupService = popupService;
+
+        IsTrafficEnabled = Microsoft.Maui.Storage.Preferences.Default.Get("IsTrafficEnabled", true);
+        ShowStopsOnMap = Microsoft.Maui.Storage.Preferences.Default.Get("ShowStopsOnMap", true);
+
         WeakReferenceMessenger.Default.Register<ClickMessage>(this, (r, m) => HandleVehicleClickMessage(m));
         WeakReferenceMessenger.Default.Register<StopClickMessage>(this, (r, m) => HandleStopClickMessage(m));
+        WeakReferenceMessenger.Default.Register<TrafficPreferenceChangedMessage>(this, (r, m) => IsTrafficEnabled = m.Value);
+        WeakReferenceMessenger.Default.Register<StopsPreferenceChangedMessage>(this, (r, m) =>
+        {
+            ShowStopsOnMap = m.Value;
+            _ = LoadStopsFromBackendAsync();
+        });
 
         _vehicleService.PropertyChanged += (s, e) =>
         {

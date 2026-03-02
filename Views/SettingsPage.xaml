@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
+             x:DataType="vm:SettingsViewModel"
+             x:Class="IvanConnections_Travel.Views.SettingsPage"
+             Shell.NavBarIsVisible="False"
+             Title="Setări">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24,32" Spacing="24">
+            <!-- Header -->
+            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                <Button Clicked="OnMenuClicked"
+                        HeightRequest="36"
+                        WidthRequest="36"
+                        BackgroundColor="Transparent"
+                        VerticalOptions="Center">
+                    <Button.ImageSource>
+                        <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                         Glyph="&#xe5d2;"
+                                         Size="30"
+                                         Color="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+                    </Button.ImageSource>
+                </Button>
+                <Label Text="Setări"
+                       FontSize="26"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+            </HorizontalStackLayout>
+
+            <!-- Traffic section -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                    Padding="20,16">
+                <Border.Shadow>
+                    <Shadow Brush="{AppThemeBinding Light=Black, Dark=Black}"
+                            Offset="0,2"
+                            Radius="8"
+                            Opacity="0.08" />
+                </Border.Shadow>
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="*, Auto"
+                      RowDefinitions="Auto, Auto"
+                      ColumnSpacing="16">
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Text="Trafic"
+                           FontSize="17"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="Afișează traficul în timp real pe hartă"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                           VerticalOptions="Center" />
+                    <Switch Grid.Row="0" Grid.Column="1"
+                            Grid.RowSpan="2"
+                            IsToggled="{Binding IsTrafficEnabled}"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End" />
+                </Grid>
+            </Border>
+
+            <!-- Bus stops section -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                    Padding="20,16">
+                <Border.Shadow>
+                    <Shadow Brush="{AppThemeBinding Light=Black, Dark=Black}"
+                            Offset="0,2"
+                            Radius="8"
+                            Opacity="0.08" />
+                </Border.Shadow>
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="*, Auto"
+                      RowDefinitions="Auto, Auto"
+                      ColumnSpacing="16">
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Text="Stații de autobuz"
+                           FontSize="17"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="Afișează stațiile de autobuz pe hartă"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                           VerticalOptions="Center" />
+                    <Switch Grid.Row="0" Grid.Column="1"
+                            Grid.RowSpan="2"
+                            IsToggled="{Binding ShowStopsOnMap}"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End" />
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

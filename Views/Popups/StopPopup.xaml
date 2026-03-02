@@ -62,6 +62,12 @@
                    HorizontalOptions="Center"
                    TextColor="Gray" />
 
+            <Button Text="Adaugă widget"
+                    Command="{Binding PinWidgetCommand}"
+                    BackgroundColor="#2196F3"
+                    TextColor="White"
+                    Margin="0,10,0,0" />
+
             <Button Text="Închide"
                     Margin="0,10,0,0"
                     Clicked="CloseButton_Clicked" />

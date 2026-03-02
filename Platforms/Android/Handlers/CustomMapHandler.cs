@@ -128,7 +128,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
         private async void UpdateVehicleMarkers()
         {
             if (_googleMap is null || VirtualView is not CustomMauiMap mauiMap) return;
-            var context = Platform.CurrentActivity ?? Android.App.Application.Context;
+            var context = Platform.CurrentActivity;
 
             var vehicleData = await Task.Run(() =>
             {
@@ -195,7 +195,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
             if (!mauiMap.ShowStops) return;
 
-            var context = Platform.CurrentActivity ?? Android.App.Application.Context;
+            var context = Platform.CurrentActivity ;
             foreach (var stop in mauiMap.Stops)
             {
                 if (string.IsNullOrWhiteSpace(stop.StopName)) continue;

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using IvanConnections_Travel.Models;
 using IvanConnections_Travel.Services;
 using System.Collections.ObjectModel;
@@ -8,6 +9,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
     public partial class StopPopupViewModel : ObservableObject
     {
         private readonly ApiService _apiService;
+        private readonly IWidgetService? _widgetService;
 
         [ObservableProperty]
         private Stop? stop;
@@ -20,10 +22,21 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
         public ObservableCollection<StopArrival> Arrivals { get; } = new();
 
-        public StopPopupViewModel()
+        public StopPopupViewModel(ApiService apiService, IWidgetService? widgetService = null)
         {
-            _apiService = new ApiService();
+            _apiService = apiService;
+            _widgetService = widgetService;
         }
+
+        [RelayCommand]
+        private async Task PinWidgetAsync()
+        {
+            if (Stop != null && _widgetService != null)
+            {
+                await _widgetService.PinWidgetAsync(Stop.StopId, Stop.StopName);
+            }
+        }
+
         public async Task LoadAsync(Stop stop)
         {
             if (stop == null) return;
