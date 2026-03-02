@@ -69,6 +69,20 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private Location? _mapCenterLocation;
 
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(CompassRotation))]
+    [NotifyPropertyChangedFor(nameof(IsCompassVisible))]
+    private double _mapBearing;
+
+    public double CompassRotation => -MapBearing;
+    public bool IsCompassVisible => Math.Abs(MapBearing) > 0.1;
+
+    [RelayCommand]
+    private void ResetBearing()
+    {
+        MapBearing = 0;
+    }
+
     public MainPageViewModel(IVehicleService vehicleService, ApiService apiService, IPopupService popupService)
     {
         _vehicleService = vehicleService;

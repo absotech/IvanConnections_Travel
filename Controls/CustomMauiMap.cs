@@ -56,4 +56,13 @@ public class CustomMauiMap : Microsoft.Maui.Controls.Maps.Map
         set => SetValue(MoveToLocationProperty, value);
     }
 
+    public static readonly BindableProperty MapBearingProperty =
+        BindableProperty.Create(nameof(MapBearing), typeof(double), typeof(CustomMauiMap), 0.0);
+
+    public double MapBearing
+    {
+        get => (double)GetValue(MapBearingProperty);
+        set => SetValue(MapBearingProperty, value);
+    }
+
 }

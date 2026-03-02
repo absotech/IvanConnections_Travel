@@ -16,9 +16,9 @@ namespace IvanConnections_Travel.Utils
     {
         #region Sizes and Proportions
 
-        public static int StopPinSize = 48;
+        public static int StopPinSize = 15;
 
-        public static int VehiclePinBaseSize = 60;
+        public static int VehiclePinBaseSize = 25;
         public static float VehiclePinOverlayScale = 0.48f;
         public static float VehiclePinPaddingScale = 0.20f;
         public static float VehiclePinTextScale = 0.40f;

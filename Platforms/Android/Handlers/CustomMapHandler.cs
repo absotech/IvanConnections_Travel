@@ -24,7 +24,8 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 [nameof(CustomMauiMap.Vehicles)] = MapVehicles,
                 [nameof(CustomMauiMap.Stops)] = MapStops,
                 [nameof(CustomMauiMap.ShowStops)] = MapStops,
-                [nameof(CustomMauiMap.MoveToLocation)] = MapMoveToLocation
+                [nameof(CustomMauiMap.MoveToLocation)] = MapMoveToLocation,
+                [nameof(CustomMauiMap.MapBearing)] = MapMapBearing
             };
 
         private static void MapVehicles(CustomMapHandler handler, CustomMauiMap map)
@@ -32,6 +33,20 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         private static void MapStops(CustomMapHandler handler, CustomMauiMap map)
             => handler.UpdateStopMarkers();
+
+        private static void MapMapBearing(CustomMapHandler handler, CustomMauiMap map)
+        {
+            if (handler._googleMap is null) return;
+            var currentBearing = handler._googleMap.CameraPosition.Bearing;
+            if (Math.Abs(currentBearing - (float)map.MapBearing) > 0.1)
+            {
+                var cameraUpdate = CameraUpdateFactory.NewCameraPosition(
+                    new CameraPosition.Builder(handler._googleMap.CameraPosition)
+                        .Bearing((float)map.MapBearing)
+                        .Build());
+                handler._googleMap.AnimateCamera(cameraUpdate);
+            }
+        }
 
 
         private GoogleMap? _googleMap;
@@ -63,6 +78,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 _googleMap.TrafficEnabled = true;
                 _googleMap.UiSettings.ZoomControlsEnabled = false;
                 _googleMap.UiSettings.MyLocationButtonEnabled = false;
+                _googleMap.UiSettings.CompassEnabled = false;
                 var success = _googleMap.SetMapStyle(
                     MapStyleOptions.LoadRawResourceStyle(
                         Platform.CurrentActivity ?? throw new InvalidOperationException("Context is null."),
@@ -79,6 +95,13 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
             _googleMap.MarkerClick += OnMarkerClick;
             _googleMap.MapClick += OnMapClick;
+            _googleMap.CameraMove += (s, e) =>
+            {
+                if (VirtualView is CustomMauiMap mauiMap)
+                {
+                    mauiMap.MapBearing = _googleMap.CameraPosition.Bearing;
+                }
+            };
 
             UpdateVehicleMarkers();
             UpdateStopMarkers();
