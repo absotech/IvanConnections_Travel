@@ -20,7 +20,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
         [ObservableProperty]
         private string? errorMessage;
 
-        public ObservableCollection<StopArrival> Arrivals { get; } = new();
+        public ObservableCollection<StopArrival> Arrivals { get; } = [];
 
         public StopPopupViewModel(ApiService apiService, IWidgetService? widgetService = null)
         {
@@ -39,8 +39,6 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
         public async Task LoadAsync(Stop stop)
         {
-            if (stop == null) return;
-
             Stop = stop;
             IsLoading = true;
             ErrorMessage = null;
@@ -48,9 +46,14 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
             var arrivalsData = await _apiService.GetArrivalsForStopAsync(stop.StopId);
 
-            if (arrivalsData != null && arrivalsData.Count != 0)
+            if (arrivalsData.Count != 0)
             {
-                foreach (var arrival in arrivalsData.Where(a => a.ArrivalMinutes <= 25).OrderBy(a => a.ArrivalMinutes))
+                var filteredArrivals = arrivalsData
+                    .Where(a => a.ArrivalMinutes <= 25)
+                    .OrderBy(a => a.ArrivalMinutes == -1)
+                    .ThenBy(a => a.ArrivalMinutes);
+
+                foreach (var arrival in filteredArrivals)
                 {
                     Arrivals.Add(arrival);
                 }

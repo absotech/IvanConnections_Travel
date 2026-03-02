@@ -9,7 +9,7 @@ namespace IvanConnections_Travel.Utils
         /// </summary>
         /// <param name="vehicleType">The vehicle type enum value</param>
         /// <returns>Romanian name for the vehicle type</returns>
-        public static string GetVehicleTypeNameInRomanian(VehicleType vehicleType)
+        public static string GetVehicleTypeNameInRomanian(VehicleType? vehicleType)
         {
             return vehicleType switch
             {

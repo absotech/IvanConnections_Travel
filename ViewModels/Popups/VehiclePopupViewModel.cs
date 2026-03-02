@@ -42,16 +42,11 @@ namespace IvanConnections_Travel.ViewModels.Popups
         internal void Load(Vehicle vehicle)
         {
             Loading = true;
-            if (vehicle == null)
-            {
-                Loading = false;
-                return;
-            }
 
             ShouldFollow = vehicle.IsTracked;
-            FollowText = ShouldFollow == true ? "Anulare urmărire " : "Urmărește ";
+            FollowText = ShouldFollow ? "Anulare urmărire " : "Urmărește ";
             Vehicle = vehicle;
-            VehicleType = Utils.Translations.GetVehicleTypeNameInRomanian(vehicle.VehicleType.Value);
+            VehicleType = Utils.Translations.GetVehicleTypeNameInRomanian(vehicle.VehicleType);
 
             if (vehicle.IsElectricBus)
                 VehicleInfo = "Autobuz electric";
@@ -91,7 +86,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
         }
 
         [RelayCommand]
-        public void Follow()
+        private void Follow()
         {
             ShouldFollow = !ShouldFollow;
             followVehicleManager.HandleEvent(this, ShouldFollow, nameof(FollowVehicle));

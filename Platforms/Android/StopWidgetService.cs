@@ -43,7 +43,8 @@ namespace IvanConnections_Travel.Platforms.Android
             task.Wait();
             _arrivals = task.Result
                 .Where(a => a.ArrivalMinutes <= 25)
-                .OrderBy(a => a.ArrivalMinutes)
+                .OrderBy(a => a.ArrivalMinutes == -1)
+                .ThenBy(a => a.ArrivalMinutes)
                 .ToList();
         }
 

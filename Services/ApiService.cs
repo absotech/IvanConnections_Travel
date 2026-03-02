@@ -139,7 +139,7 @@ public class ApiService
         {
             var url = $"{BaseUrl}/Stops/{stopId}/arrivals";
             var arrivals = await _httpClient.GetFromJsonAsync<List<StopArrival>>(url, _jsonSerializerOptions);
-            return arrivals ?? new List<StopArrival>();
+            return arrivals ?? [];
         }
         catch (Exception ex)
         {
