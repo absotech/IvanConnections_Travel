@@ -36,9 +36,6 @@
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
         <ApplicationTitle>IC Travel</ApplicationTitle>
         <AndroidKeyStore>False</AndroidKeyStore>
-        <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
-        <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
-        <AndroidSigningKeyPass>***REMOVED***</AndroidSigningKeyPass>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android36.0|AnyCPU'">
@@ -46,28 +43,9 @@
         <ApplicationTitle>IC Travel</ApplicationTitle>
         <AndroidPackageFormat>aab</AndroidPackageFormat>
         <AndroidKeyStore>False</AndroidKeyStore>
-        <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
-        <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
-        <AndroidSigningKeyPass>***REMOVED***</AndroidSigningKeyPass>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <AndroidKeyStore>true</AndroidKeyStore>
-      <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <AndroidKeyStore>true</AndroidKeyStore>
-      <AndroidSigningKeyAlias>***REMOVED***</AndroidSigningKeyAlias>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
-      <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
-      <AndroidSigningStorePass>***REMOVED***</AndroidSigningStorePass>
-    </PropertyGroup>
+    
 
     <ItemGroup>
         <!-- App Icon -->
