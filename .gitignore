@@ -366,3 +366,4 @@ MapsApiKey.txt
 
 .idea/
 *.keystore
+/Platforms/Android/Resources/values/secrets.xml
