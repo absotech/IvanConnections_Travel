@@ -101,6 +101,20 @@
                             HorizontalOptions="End" />
                 </Grid>
             </Border>
+            
+            
+            
+            <Label
+                VerticalOptions="End"
+                HorizontalOptions="Center"
+                >
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Versiune: " />
+                        <Span Text="{Binding AppVersion}"></Span>
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

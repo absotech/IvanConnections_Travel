@@ -15,7 +15,10 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showStopsOnMap;
-
+    
+    [ObservableProperty]
+    private string _appVersion = AppInfo.VersionString;
+    
     public SettingsViewModel()
     {
         IsTrafficEnabled = Preferences.Default.Get(PrefTrafficKey, true);
