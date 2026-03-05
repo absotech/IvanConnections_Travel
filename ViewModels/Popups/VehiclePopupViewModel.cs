@@ -8,6 +8,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
     public partial class VehiclePopupViewModel : ObservableObject
     {
         private readonly ApiService _apiService;
+        private TimeZoneInfo _timeZoneInfo;
         readonly WeakEventManager followVehicleManager = new();
         public bool ShouldFollow = false;
 
@@ -37,6 +38,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
         public VehiclePopupViewModel(ApiService apiService)
         {
             _apiService = apiService;
+            _timeZoneInfo = TimeZoneInfo.Local;
         }
 
         internal void Load(Vehicle vehicle)
@@ -70,7 +72,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
                         Loading = false;
                         if (durationInSeconds.HasValue)
                         {
-                            TimeOfArrival = vehicle.LocalTimestamp + TimeSpan.FromSeconds(durationInSeconds.Value);
+                            TimeOfArrival = TimeZoneInfo.ConvertTimeFromUtc(vehicle.Timestamp.Value + TimeSpan.FromSeconds(durationInSeconds.Value), _timeZoneInfo);
                         }
                         else
                         {

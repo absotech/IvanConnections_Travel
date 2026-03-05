@@ -5,14 +5,11 @@ namespace IvanConnections_Travel.Models
 {
     public class StopArrival
     {
+        // [JsonPropertyName("vehicleId")]
+        // public string VehicleId { get; set; }
+        
         [JsonPropertyName("vehicleLabel")]
         public string VehicleLabel { get; set; }
-
-        [JsonPropertyName("tripId")]
-        public string TripId { get; set; }
-
-        [JsonPropertyName("routeId")]
-        public int RouteId { get; set; }
 
         [JsonPropertyName("arrivalMinutes")]
         public double ArrivalMinutes { get; set; }
@@ -20,6 +17,5 @@ namespace IvanConnections_Travel.Models
         [JsonPropertyName("vehicleType")]
         public VehicleType VehicleType { get; set; }
 
-        public int ArrivalTimeInMinutes => (int)Math.Ceiling(ArrivalMinutes);
     }
 }

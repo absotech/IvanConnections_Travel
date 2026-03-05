@@ -11,6 +11,8 @@ using IvanConnections_Travel.Utils;
 using IvanConnections_Travel.ViewModels.Popups;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using IvanConnections_Travel.Views.Popups;
+using Microsoft.Maui.Controls.Maps;
 using Location = Microsoft.Maui.Devices.Sensors.Location;
 
 namespace IvanConnections_Travel.ViewModels;
@@ -305,6 +307,16 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         {
             var cachedLocation = await LocationManagement.GetLocationAsync();
             MapCenterLocation = cachedLocation;
+        }
+
+        switch (Pins.Count)
+        {
+            case 0:
+                await MessagePopup.ShowAsync("Eroare", "A apărut o eroare la încărcarea vehiculelor.", MessagePopupType.Error, MessagePopupButtons.Ok);
+                break;
+            case <= 5:
+                await MessagePopup.ShowAsync("Info", "E posibil ca agenția să nu trimită date.\nMajoritatea vehiculelor nu circulă între orele 23:30 si 04:30", MessagePopupType.Warning, MessagePopupButtons.Ok);
+                break;
         }
     }
 

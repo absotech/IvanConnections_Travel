@@ -81,6 +81,7 @@ namespace IvanConnections_Travel
 #endif
             builder.Services.AddTransientPopup<VehiclePopup, VehiclePopupViewModel>();
             builder.Services.AddTransientPopup<StopPopup, StopPopupViewModel>();
+            builder.Services.AddTransient<MessagePopup>();
 
             DependencyService.Register<IPopupService, PopupService>();
 

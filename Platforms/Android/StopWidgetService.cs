@@ -67,11 +67,11 @@ namespace IvanConnections_Travel.Platforms.Android
             
             views.SetTextViewText(IvanConnections_Travel.Resource.Id.item_vehicle_label, $"{capitalizedVehicleType}{arrival.VehicleLabel}");
             
-            var arrivalText = arrival.ArrivalTimeInMinutes switch
+            var arrivalText = arrival.ArrivalMinutes switch
             {
                 -1 => "PE CAPĂT",
                 0 => "Sosire",
-                _ => $"{arrival.ArrivalTimeInMinutes} min"
+                _ => $"{arrival.ArrivalMinutes} min"
             };
             views.SetTextViewText(IvanConnections_Travel.Resource.Id.item_arrival_time, arrivalText);
 

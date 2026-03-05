@@ -5,7 +5,7 @@ public class ArrivalTimeConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is not int minutes) return string.Empty;
+        if (value is not double minutes) return string.Empty;
         return minutes switch
         {
             -1 => "PE CAPĂT",

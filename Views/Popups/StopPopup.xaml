@@ -49,7 +49,7 @@
                                 </Label.FormattedText>
                             </Label>
                             <Label Grid.Column="1"
-                                   Text="{Binding ArrivalTimeInMinutes, Converter={StaticResource ArrivalTimeConverter}}"
+                                   Text="{Binding ArrivalMinutes, Converter={StaticResource ArrivalTimeConverter}}"
                                    FontAttributes="Bold"
                                    FontSize="16" />
                         </Grid>
