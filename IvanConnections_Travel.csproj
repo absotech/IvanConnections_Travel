@@ -15,8 +15,8 @@
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
 
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.0.2</ApplicationDisplayVersion>
-        <ApplicationVersion>102</ApplicationVersion>
+        <ApplicationDisplayVersion>1.0.5</ApplicationDisplayVersion>
+        <ApplicationVersion>105</ApplicationVersion>
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">30.0</SupportedOSPlatformVersion>
@@ -84,6 +84,22 @@
         <AndroidResource Update="Platforms\Android\Resources\drawable\ic.png">
             <BaseSize>256,256</BaseSize>
         </AndroidResource>
+        <AndroidResource Update="Platforms\Android\Resources\layout-night\stop_arrival_item.xml">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </AndroidResource>
+        <AndroidResource Update="Platforms\Android\Resources\layout-night\stop_configure.xml">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </AndroidResource>
+        <AndroidResource Update="Platforms\Android\Resources\layout-night\stop_widget.xml">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </AndroidResource>
+        <AndroidResource Update="Platforms\Android\Resources\values-night\colors.xml">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </AndroidResource>
     </ItemGroup>
 
     <ItemGroup>
@@ -94,6 +110,9 @@
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
         <MauiXaml Update="Views\Popups\VehiclePopup.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Views\Popups\MessagePopup.xaml">
             <Generator>MSBuild:Compile</Generator>
         </MauiXaml>
     </ItemGroup>
@@ -114,6 +133,9 @@
             <Generator>MSBuild:Compile</Generator>
         </None>
         <None Update="Views\Popups\VehiclePopup.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </None>
+        <None Update="Views\Popups\MessagePopup.xaml">
             <Generator>MSBuild:Compile</Generator>
         </None>
     </ItemGroup>
