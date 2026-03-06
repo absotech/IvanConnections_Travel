@@ -22,6 +22,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     private readonly IVehicleService _vehicleService;
     private readonly ApiService _apiService;
     private readonly IPopupService _popupService;
+    private readonly TimeZoneInfo _timeZoneInfo;
+    
     private bool _isInitialized = false;
 
     [ObservableProperty] private bool _isTracking;
@@ -93,7 +95,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         _vehicleService = vehicleService;
         _apiService = apiService;
         _popupService = popupService;
-
+        _timeZoneInfo = TimeZoneInfo.Local;
         IsTrafficEnabled = Microsoft.Maui.Storage.Preferences.Default.Get("IsTrafficEnabled", true);
         ShowStopsOnMap = Microsoft.Maui.Storage.Preferences.Default.Get("ShowStopsOnMap", true);
 
@@ -190,7 +192,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             if (vehicleData != null)
             {
                 var vehicleTypeName = Translations.GetVehicleTypeNameInRomanian(vehicleData.VehicleType.Value);
-                var timeText = TimeFormatUtils.FormatTimeDifferenceInRomanian(vehicleData.LocalTimestamp.Value);
+                var localTimestamp = TimeZoneInfo.ConvertTimeFromUtc(vehicleData.LocalTimestamp.Value, _timeZoneInfo);
+                var timeText = TimeFormatUtils.FormatTimeDifferenceInRomanian(localTimestamp);
                 var message = $"Cod {vehicleTypeName}: {vehicleLabel}, actualizat acum {timeText}";
 
                 Toast.Make(message, ToastDuration.Long, 14).Show();
