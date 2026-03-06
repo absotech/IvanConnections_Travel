@@ -148,6 +148,26 @@ public class ApiService
         }
     }
 
+    /// <summary>
+    /// Fetches shapes for a specific route.
+    /// </summary>
+    /// <param name="routeId">The ID of the route.</param>
+    /// <returns>A list of shapes, or an empty list if an error occurs.</returns>
+    public async Task<List<Shape>> GetShapesAsync(int routeId)
+    {
+        try
+        {
+            var url = $"{BaseUrl}/Shapes?routeId={routeId}";
+            var shapes = await _httpClient.GetFromJsonAsync<List<Shape>>(url, _jsonSerializerOptions);
+            return shapes ?? [];
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error fetching shapes: {ex.Message}");
+            return [];
+        }
+    }
+
     public record DistanceApiResponse(
     [property: JsonPropertyName("rows")] List<Row> Rows,
     [property: JsonPropertyName("status")] string Status

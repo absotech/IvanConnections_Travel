@@ -32,6 +32,7 @@
                              MoveToLocation="{Binding MapCenterLocation}"
                              MapBearing="{Binding MapBearing, Mode=TwoWay}"
                              Vehicles="{Binding Pins}"
+                             Shapes="{Binding Shapes}"
                              Stops="{Binding AllStops}"
                              ShowStops="{Binding ShowStopsOnMap}"
                              MarkerClickCommand="{Binding MarkerClickedCommand}"
@@ -50,7 +51,7 @@
                     Padding="10,0,5,0">
                 <Grid
                     ColumnSpacing="5"
-                    ColumnDefinitions="Auto, Auto">
+                    ColumnDefinitions="Auto, *">
                     <Button
                         Grid.Column="0"
                         Clicked="OnMenuClicked"

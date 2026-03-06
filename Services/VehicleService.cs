@@ -9,7 +9,6 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
 {
     private readonly ApiService _apiService;
     private CancellationTokenSource? _cts;
-    private string? _previousSearchText;
 
     [ObservableProperty]
     private ObservableCollection<Vehicle> _vehicles = [];
@@ -25,6 +24,12 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
 
     [ObservableProperty]
     private string? _searchText;
+
+    [ObservableProperty]
+    private ObservableCollection<Shape> _shapes = [];
+
+    private int? _previousRouteId;
+    private List<Vehicle> _allVehicles = [];
 
     public VehicleService(ApiService apiService)
     {
@@ -51,16 +56,7 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
         {
             try
             {
-                var searchChanged = SearchText != _previousSearchText;
-                if (searchChanged)
-                {
-                    _previousSearchText = SearchText;
-                    await RefreshAsync(forced: true);
-                }
-                else
-                {
-                    await RefreshAsync(forced: false);
-                }
+                await RefreshAsync(forced: false);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -81,20 +77,18 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
         IsBusy = true;
         try
         {
-            string? routeToSearch = null;
-            if (!string.IsNullOrWhiteSpace(SearchText) && AvailableRoutes.Contains(SearchText))
-            {
-                routeToSearch = SearchText;
-            }
-
-            var (freshVehicles, isNotModified) = await _apiService.GetVehiclesAsync(routeToSearch, forced);
+            var (freshVehicles, isNotModified) = await _apiService.GetVehiclesAsync(null, forced);
 
             if (isNotModified || freshVehicles is null) return;
 
+            _allVehicles = freshVehicles;
+
+            await UpdateShapesInternalAsync();
+
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                UpdateVehiclesInternal(freshVehicles);
-                PopulateRoutes(freshVehicles);
+                PopulateRoutes(_allVehicles);
+                UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles));
             });
         }
         catch (Exception ex)
@@ -140,9 +134,53 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
             .Distinct()
             .ToList();
 
-        foreach (var route in uniqueRoutes)
+        var routesSet = new HashSet<string>();
+        foreach (var route in uniqueRoutes.OfType<string>())
         {
-            if (route != null) AvailableRoutes.Add(route);
+            routesSet.Add(route);
+        }
+        AvailableRoutes = routesSet;
+    }
+
+    partial void OnSearchTextChanged(string? value)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles));
+        });
+        _ = UpdateShapesInternalAsync();
+    }
+
+    private List<Vehicle> GetFilteredVehicles(List<Vehicle> allVehicles)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText) || !AvailableRoutes.Contains(SearchText))
+        {
+            return allVehicles;
+        }
+
+        return allVehicles
+            .Where(v => v.RouteShortName?.Equals(SearchText, StringComparison.OrdinalIgnoreCase) == true)
+            .ToList();
+    }
+
+    private async Task UpdateShapesInternalAsync()
+    {
+        var currentRouteId = !string.IsNullOrWhiteSpace(SearchText) && _allVehicles.Count > 0
+            ? _allVehicles.FirstOrDefault(v => v.RouteShortName?.Equals(SearchText, StringComparison.OrdinalIgnoreCase) == true && v.RouteId.HasValue)?.RouteId
+            : null;
+
+        if (currentRouteId != _previousRouteId)
+        {
+            _previousRouteId = currentRouteId;
+            if (currentRouteId != null)
+            {
+                var shapesList = await _apiService.GetShapesAsync(currentRouteId.Value);
+                MainThread.BeginInvokeOnMainThread(() => Shapes = new ObservableCollection<Shape>(shapesList));
+            }
+            else
+            {
+                MainThread.BeginInvokeOnMainThread(() => Shapes = []);
+            }
         }
     }
 

@@ -30,6 +30,13 @@ public class CustomMauiMap : Microsoft.Maui.Controls.Maps.Map
         get => (ObservableCollection<Vehicle>)GetValue(VehiclesProperty);
         set => SetValue(VehiclesProperty, value);
     }
+    public static readonly BindableProperty ShapesProperty =
+        BindableProperty.Create(nameof(Shapes), typeof(ObservableCollection<Shape>), typeof(CustomMauiMap), new ObservableCollection<Shape>());
+    public ObservableCollection<Shape> Shapes
+    {
+        get => (ObservableCollection<Shape>)GetValue(ShapesProperty);
+        set => SetValue(ShapesProperty, value);
+    }
     public static readonly BindableProperty StopsProperty =
         BindableProperty.Create(nameof(Stops), typeof(List<Stop>), typeof(CustomMauiMap), new List<Stop>());
 

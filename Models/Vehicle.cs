@@ -21,6 +21,7 @@ namespace IvanConnections_Travel.Models
         public double? Direction { get; set; }
         public DateTime? LocalTimestamp { get; set; }
         public string? RouteShortName { get; set; }
+        public int? RouteId { get; set; }
         public string? TripHeadsign { get; set; }
         public string? RouteColor { get; set; }
         public string? PreviousStopName { get; set; }

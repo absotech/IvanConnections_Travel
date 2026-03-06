@@ -7,6 +7,7 @@ namespace IvanConnections_Travel.Services;
 public interface IVehicleService : INotifyPropertyChanged
 {
     ObservableCollection<Vehicle> Vehicles { get; }
+    ObservableCollection<Shape> Shapes { get; }
     HashSet<string> AvailableRoutes { get; }
     bool IsBusy { get; set; }
     Vehicle? TrackedVehicle { get; set; }

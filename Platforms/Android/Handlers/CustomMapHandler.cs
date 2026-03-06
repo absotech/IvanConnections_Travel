@@ -8,6 +8,7 @@ using IvanConnections_Travel.Utils;
 using Microsoft.Maui.Maps.Handlers;
 using System.Collections.Concurrent;
 using _Microsoft.Android.Resource.Designer;
+using Color = Android.Graphics.Color;
 
 namespace IvanConnections_Travel.Platforms.Handlers
 {
@@ -22,6 +23,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
             new PropertyMapper<CustomMauiMap, CustomMapHandler>(Mapper)
             {
                 [nameof(CustomMauiMap.Vehicles)] = MapVehicles,
+                [nameof(CustomMauiMap.Shapes)] = MapShapes,
                 [nameof(CustomMauiMap.Stops)] = MapStops,
                 [nameof(CustomMauiMap.ShowStops)] = MapStops,
                 [nameof(CustomMauiMap.MoveToLocation)] = MapMoveToLocation,
@@ -33,12 +35,14 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         private static void MapIsTrafficEnabled(CustomMapHandler handler, CustomMauiMap map)
         {
-            if (handler._googleMap is null) return;
-            handler._googleMap.TrafficEnabled = map.IsTrafficEnabled;
+            handler._googleMap?.TrafficEnabled = map.IsTrafficEnabled;
         }
 
         private static void MapVehicles(CustomMapHandler handler, CustomMauiMap map)
             => handler.UpdateVehicleMarkers();
+
+        private static void MapShapes(CustomMapHandler handler, CustomMauiMap map)
+            => handler.UpdateShapes();
 
         private static void MapStops(CustomMapHandler handler, CustomMauiMap map)
             => handler.UpdateStopMarkers();
@@ -53,18 +57,17 @@ namespace IvanConnections_Travel.Platforms.Handlers
         {
             if (handler._googleMap is null) return;
             var currentBearing = handler._googleMap.CameraPosition.Bearing;
-            if (Math.Abs(currentBearing - (float)map.MapBearing) > 0.1)
-            {
-                var cameraUpdate = CameraUpdateFactory.NewCameraPosition(
-                    new CameraPosition.Builder(handler._googleMap.CameraPosition)
-                        .Bearing((float)map.MapBearing)
-                        .Build());
-                handler._googleMap.AnimateCamera(cameraUpdate);
-            }
+            if (!(Math.Abs(currentBearing - (float)map.MapBearing) > 0.1)) return;
+            var cameraUpdate = CameraUpdateFactory.NewCameraPosition(
+                new CameraPosition.Builder(handler._googleMap.CameraPosition)
+                    .Bearing((float)map.MapBearing)
+                    .Build());
+            handler._googleMap.AnimateCamera(cameraUpdate);
         }
 
 
         private GoogleMap? _googleMap;
+        private readonly List<Polyline> _activeRoutePolylines = [];
         private readonly CustomMapCallback _mapCallback;
         private Location? _pendingLocation;
 
@@ -123,6 +126,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
             UpdateVehicleMarkers();
             UpdateStopMarkers();
+            UpdateShapes();
         }
 
         private async void UpdateVehicleMarkers()
@@ -168,21 +172,17 @@ namespace IvanConnections_Travel.Platforms.Handlers
                         .SetIcon(value.Icon);
 
                     var newMarker = _googleMap.AddMarker(markerOptions);
-                    if (newMarker != null)
-                    {
-                        newMarker.Tag = $"vehicle_{vehicleId}";
-                        _vehicleMarkers[vehicleId] = newMarker;
-                    }
+                    if (newMarker == null) continue;
+                    newMarker.Tag = $"vehicle_{vehicleId}";
+                    _vehicleMarkers[vehicleId] = newMarker;
                 }
             }
 
             foreach (var vehicleKeyToRemove in visibleVehicleKeys)
             {
-                if (_vehicleMarkers.TryGetValue(vehicleKeyToRemove, out var markerToRemove))
-                {
-                    markerToRemove.Remove();
-                    _vehicleMarkers.Remove(vehicleKeyToRemove);
-                }
+                if (!_vehicleMarkers.TryGetValue(vehicleKeyToRemove, out var markerToRemove)) continue;
+                markerToRemove.Remove();
+                _vehicleMarkers.Remove(vehicleKeyToRemove);
             }
         }
 
@@ -210,11 +210,51 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 markerOptions.SetIcon(BitmapDescriptorFactory.FromBitmap(bitmap));
 
                 var newMarker = _googleMap.AddMarker(markerOptions);
-                if (newMarker != null)
+                if (newMarker == null) continue;
+                newMarker.Tag = $"stop_{stop.StopId.ToString()}";
+                _stopMarkers[stop.StopId] = newMarker;
+            }
+        }
+
+        private void UpdateShapes()
+        {
+            if (_googleMap is null || VirtualView is not CustomMauiMap mauiMap) return;
+            foreach (var poly in _activeRoutePolylines)
+            {
+                poly.Remove();
+            }
+            _activeRoutePolylines.Clear();
+            if (mauiMap.Shapes.Count == 0) return;
+
+            var firstVehicle = mauiMap.Vehicles.FirstOrDefault();
+            var routeColorHex =  ColorManagement.NormalizeColorHex(firstVehicle?.RouteColor ?? "#4A90E2");
+            int color;
+            try
+            {
+                color = Color.ParseColor(routeColorHex.StartsWith('#') ? routeColorHex : '#' + routeColorHex);
+            }
+            catch
+            {
+                color = Color.Blue;
+            }
+            var shapeGroups = mauiMap.Shapes
+                .GroupBy(s => s.ShapeId)
+                .ToList();
+
+            foreach (var group in shapeGroups)
+            {
+                var options = new PolylineOptions()
+                    .InvokeWidth(10f)
+                    .InvokeColor(color)
+                    .InvokeZIndex(1);
+                var sortedPoints = group.OrderBy(s => s.ShapePtSequence);
+
+                foreach (var shape in sortedPoints)
                 {
-                    newMarker.Tag = $"stop_{stop.StopId.ToString()}";
-                    _stopMarkers[stop.StopId] = newMarker;
+                    options.Add(new LatLng(shape.ShapePtLat, shape.ShapePtLon));
                 }
+                var polyline = _googleMap.AddPolyline(options);
+                _activeRoutePolylines.Add(polyline);
             }
         }
 

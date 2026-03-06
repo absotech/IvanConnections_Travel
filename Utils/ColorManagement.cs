@@ -6,9 +6,9 @@ namespace IvanConnections_Travel.Utils
     {
         public static bool IsColorDark(Color color)
         {
-            double brightness = (0.299 * Color.GetRedComponent(color) +
-                                0.587 * Color.GetGreenComponent(color) +
-                                0.114 * Color.GetBlueComponent(color)) / 255;
+            var brightness = (0.299 * Color.GetRedComponent(color) +
+                              0.587 * Color.GetGreenComponent(color) +
+                              0.114 * Color.GetBlueComponent(color)) / 255;
 
             return brightness < 0.5;
         }
@@ -17,8 +17,8 @@ namespace IvanConnections_Travel.Utils
             if (string.IsNullOrEmpty(colorHex))
                 return "#FFFFFF";
 
-            if (!colorHex.StartsWith("#"))
-                colorHex = "#" + colorHex;
+            if (!colorHex.StartsWith('#'))
+                colorHex = '#' + colorHex;
 
             if (colorHex.Length == 4)
             {
@@ -27,13 +27,11 @@ namespace IvanConnections_Travel.Utils
                 var b = colorHex[3];
                 colorHex = $"#{r}{r}{g}{g}{b}{b}";
             }
-            if (colorHex.Length != 7)
-            {
-                System.Diagnostics.Debug.WriteLine($"Invalid color format: {colorHex}, defaulting to #000000");
-                return "#000000";
-            }
 
-            return colorHex;
+            if (colorHex.Length == 7) return colorHex;
+            System.Diagnostics.Debug.WriteLine($"Invalid color format: {colorHex}, defaulting to #000000");
+            return "#000000";
+
         }
     }
 }

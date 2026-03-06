@@ -53,6 +53,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     }
 
     public ObservableCollection<Vehicle> Pins => _vehicleService.Vehicles;
+    public ObservableCollection<Shape> Shapes => _vehicleService.Shapes;
 
     public bool IsBusy
     {
@@ -112,6 +113,9 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
                 case nameof(IVehicleService.Vehicles):
                     OnPropertyChanged(nameof(Pins));
                     UpdateTrackedVehicleLocation();
+                    break;
+                case nameof(IVehicleService.Shapes):
+                    OnPropertyChanged(nameof(Shapes));
                     break;
                 case nameof(IVehicleService.IsBusy):
                     OnPropertyChanged(nameof(IsBusy));
