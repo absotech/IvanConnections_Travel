@@ -57,6 +57,45 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     public ObservableCollection<Vehicle> Pins => _vehicleService.Vehicles;
     public ObservableCollection<Shape> Shapes => _vehicleService.Shapes;
 
+    public string? ShapeFilter
+    {
+        get => _vehicleService.ShapeFilter;
+        set
+        {
+            if (_vehicleService.ShapeFilter == value) return;
+            _vehicleService.ShapeFilter = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public Models.Enums.VehicleType? VehicleTypeFilter
+    {
+        get => _vehicleService.VehicleTypeFilter;
+        set
+        {
+            if (_vehicleService.VehicleTypeFilter == value) return;
+            _vehicleService.VehicleTypeFilter = value;
+            OnPropertyChanged();
+        }
+    }
+
+    [RelayCommand]
+    private void SetShapeFilter(string? filter)
+    {
+        ShapeFilter = ShapeFilter == filter ? null : filter;
+    }
+
+    [RelayCommand]
+    private void SetVehicleTypeFilter(string? type)
+    {
+        if (type == "Autobuz")
+            VehicleTypeFilter = VehicleTypeFilter == Models.Enums.VehicleType.Bus ? null : Models.Enums.VehicleType.Bus;
+        else if (type == "tramvai")
+            VehicleTypeFilter = VehicleTypeFilter == Models.Enums.VehicleType.Tram ? null : Models.Enums.VehicleType.Tram;
+        else
+            VehicleTypeFilter = null;
+    }
+
     public bool IsBusy
     {
         get => _vehicleService.IsBusy;
@@ -118,6 +157,12 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
                     break;
                 case nameof(IVehicleService.Shapes):
                     OnPropertyChanged(nameof(Shapes));
+                    break;
+                case nameof(IVehicleService.ShapeFilter):
+                    OnPropertyChanged(nameof(ShapeFilter));
+                    break;
+                case nameof(IVehicleService.VehicleTypeFilter):
+                    OnPropertyChanged(nameof(VehicleTypeFilter));
                     break;
                 case nameof(IVehicleService.IsBusy):
                     OnPropertyChanged(nameof(IsBusy));

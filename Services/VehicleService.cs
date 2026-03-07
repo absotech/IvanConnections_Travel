@@ -26,9 +26,16 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
     private string? _searchText;
 
     [ObservableProperty]
+    private string? _shapeFilter;
+
+    [ObservableProperty]
+    private Models.Enums.VehicleType? _vehicleTypeFilter;
+
+    [ObservableProperty]
     private ObservableCollection<Shape> _shapes = [];
 
     private int? _previousRouteId;
+    private string? _previousShapeFilter;
     private List<Vehicle> _allVehicles = [];
 
     public VehicleService(ApiService apiService)
@@ -151,16 +158,37 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
         _ = UpdateShapesInternalAsync();
     }
 
+    partial void OnShapeFilterChanged(string? value)
+    {
+        _ = UpdateShapesInternalAsync();
+    }
+
+    partial void OnVehicleTypeFilterChanged(Models.Enums.VehicleType? value)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles));
+        });
+    }
+
     private List<Vehicle> GetFilteredVehicles(List<Vehicle> allVehicles)
     {
-        if (string.IsNullOrWhiteSpace(SearchText) || !AvailableRoutes.Contains(SearchText))
+        var filtered = allVehicles;
+        if (!string.IsNullOrWhiteSpace(SearchText) && AvailableRoutes.Contains(SearchText))
         {
-            return allVehicles;
+            filtered = filtered
+                .Where(v => v.RouteShortName?.Equals(SearchText, StringComparison.OrdinalIgnoreCase) == true)
+                .ToList();
         }
 
-        return allVehicles
-            .Where(v => v.RouteShortName?.Equals(SearchText, StringComparison.OrdinalIgnoreCase) == true)
-            .ToList();
+        if (VehicleTypeFilter.HasValue)
+        {
+            filtered = filtered
+                .Where(v => v.VehicleType == VehicleTypeFilter.Value)
+                .ToList();
+        }
+
+        return filtered;
     }
 
     private async Task UpdateShapesInternalAsync()
@@ -169,12 +197,20 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
             ? _allVehicles.FirstOrDefault(v => v.RouteShortName?.Equals(SearchText, StringComparison.OrdinalIgnoreCase) == true && v.RouteId.HasValue)?.RouteId
             : null;
 
-        if (currentRouteId != _previousRouteId)
+        if (currentRouteId != _previousRouteId || ShapeFilter != _previousShapeFilter)
         {
             _previousRouteId = currentRouteId;
+            _previousShapeFilter = ShapeFilter;
+            
             if (currentRouteId != null)
             {
                 var shapesList = await _apiService.GetShapesAsync(currentRouteId.Value);
+
+                if (!string.IsNullOrEmpty(ShapeFilter))
+                {
+                    shapesList = shapesList.Where(s => s.ShapeId.EndsWith(ShapeFilter)).ToList();
+                }
+
                 MainThread.BeginInvokeOnMainThread(() => Shapes = new ObservableCollection<Shape>(shapesList));
             }
             else

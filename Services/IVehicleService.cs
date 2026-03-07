@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using IvanConnections_Travel.Models;
+using IvanConnections_Travel.Models.Enums;
 
 namespace IvanConnections_Travel.Services;
 
@@ -12,6 +13,8 @@ public interface IVehicleService : INotifyPropertyChanged
     bool IsBusy { get; set; }
     Vehicle? TrackedVehicle { get; set; }
     string? SearchText { get; set; }
+    string? ShapeFilter { get; set; }
+    VehicleType? VehicleTypeFilter { get; set; }
 
     void StartPeriodicRefresh();
     void StopPeriodicRefresh();

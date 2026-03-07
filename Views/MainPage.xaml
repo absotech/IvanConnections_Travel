@@ -15,6 +15,14 @@
              x:DataType="vm:MainPageViewModel">
     <ContentPage.Resources>
         <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+        <Style TargetType="Button" x:Key="FilterButtonStyle">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="BorderColor" Value="{StaticResource OffBlackBorder}" />
+            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
     </ContentPage.Resources>
     <ContentPage.Behaviors>
         <xct:EventToCommandBehavior EventName="Appearing"
@@ -40,7 +48,7 @@
         </local:CustomMauiMap>
 
         <Grid ColumnDefinitions="*, Auto, Auto"
-              RowDefinitions="Auto, *">
+              RowDefinitions="Auto, Auto, *">
             <Border VerticalOptions="Center"
                     Margin="10,15,10,10"
                     StrokeThickness="1"
@@ -168,6 +176,139 @@
                     </Label.FormattedText>
                 </Label>
             </Border>
+
+            <xct:Expander Grid.Row="1"
+                          Grid.ColumnSpan="3"
+                          VerticalOptions="Start"
+                          Margin="10,0,10,10"
+                          x:Name="FilterExpander"
+                          IsExpanded="False"
+                          ExpandedChanged="OnFilterExpanderExpandedChanged">
+                <xct:Expander.Header>
+                    <Border StrokeThickness="1"
+                            Stroke="{StaticResource OffBlackBorder}"
+                            StrokeShape="RoundRectangle 25"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                            Padding="15,10"
+                            HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="Opțiuni filtrare"
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                            <Image Source="{FontImageSource FontFamily=MaterialSymbolsRounded, Glyph=&#xe5cf;, Color={AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}, Size=20}"
+                                   x:Name="FilterIcon" />
+                        </HorizontalStackLayout>
+                    </Border>
+                </xct:Expander.Header>
+                <xct:Expander.Content>
+                    <Border StrokeThickness="1"
+                            x:Name="FilterExpanderContent"
+                            Opacity="0"
+                            TranslationY="-10"
+                            Stroke="{StaticResource OffBlackBorder}"
+                            StrokeShape="RoundRectangle 20"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                            Padding="15"
+                            Margin="0,5,0,0"
+                            HorizontalOptions="Center">
+                        <VerticalStackLayout Spacing="15">
+                            <Label Text="Direcție (numai pentru ruta selectată):" 
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                            <HorizontalStackLayout Spacing="10"
+                                                   HorizontalOptions="Center">
+                                <Button Text="Tur"
+                                        Style="{StaticResource FilterButtonStyle}"
+                                        Command="{Binding SetShapeFilterCommand}"
+                                        CommandParameter="_0"
+                                        WidthRequest="100"
+                                        CornerRadius="15">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button"
+                                                     Binding="{Binding ShapeFilter}"
+                                                     Value="_0">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="BorderWidth" Value="0" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                                <Button Text="Retur"
+                                        Style="{StaticResource FilterButtonStyle}"
+                                        Command="{Binding SetShapeFilterCommand}"
+                                        CommandParameter="_1"
+                                        WidthRequest="100"
+                                        CornerRadius="15">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button"
+                                                     Binding="{Binding ShapeFilter}"
+                                                     Value="_1">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="BorderWidth" Value="0" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </HorizontalStackLayout>
+
+                            <Label Text="Tip vehicul:"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                            <HorizontalStackLayout Spacing="10"
+                                                   HorizontalOptions="Center">
+                                <Button Text="Autobuz"
+                                        Style="{StaticResource FilterButtonStyle}"
+                                        Command="{Binding SetVehicleTypeFilterCommand}"
+                                        CommandParameter="Autobuz"
+                                        WidthRequest="85"
+                                        CornerRadius="15">
+                                     <Button.Triggers>
+                                        <DataTrigger TargetType="Button"
+                                                     Binding="{Binding VehicleTypeFilter}"
+                                                     Value="Bus">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="BorderWidth" Value="0" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                                <Button Text="Tramvai"
+                                        Style="{StaticResource FilterButtonStyle}"
+                                        Command="{Binding SetVehicleTypeFilterCommand}"
+                                        CommandParameter="tramvai"
+                                        WidthRequest="85"
+                                        CornerRadius="15">
+                                     <Button.Triggers>
+                                        <DataTrigger TargetType="Button"
+                                                     Binding="{Binding VehicleTypeFilter}"
+                                                     Value="Tram">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="BorderWidth" Value="0" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                                <Button Text="Toate"
+                                        Style="{StaticResource FilterButtonStyle}"
+                                        Command="{Binding SetVehicleTypeFilterCommand}"
+                                        CommandParameter="toate"
+                                        WidthRequest="85"
+                                        CornerRadius="15">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button"
+                                                     Binding="{Binding VehicleTypeFilter}"
+                                                     Value="{x:Null}">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="BorderWidth" Value="0" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </xct:Expander.Content>
+            </xct:Expander>
         </Grid>
         <Button VerticalOptions="End"
                 HorizontalOptions="End"
