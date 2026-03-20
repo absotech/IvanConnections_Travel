@@ -50,15 +50,14 @@
         <Grid ColumnDefinitions="*, Auto, Auto"
               RowDefinitions="Auto, Auto, *">
             <Border VerticalOptions="Center"
-                    Margin="10,15,10,10"
+                    Margin="5,15,5,10"
                     StrokeThickness="1"
                     Stroke="{StaticResource OffBlackBorder}"
                     Grid.Column="0"
                     StrokeShape="RoundRectangle 25"
                     BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                    Padding="10,0,5,0">
+                    Padding="5,0,5,0">
                 <Grid
-                    ColumnSpacing="5"
                     ColumnDefinitions="Auto, *">
                     <Button
                         Grid.Column="0"
@@ -94,7 +93,7 @@
                         Command="{Binding ToggleShowStopsCommand}"
                         HeightRequest="50"
                         WidthRequest="50"
-                        Margin="10,15,10,10"
+                        Margin="5,15,5,10"
                         CornerRadius="30"
                         Grid.Column="1"
                         BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
@@ -120,7 +119,7 @@
                         Command="{Binding ToggleTrafficCommand}"
                         HeightRequest="50"
                         WidthRequest="50"
-                        Margin="10,15,10,10"
+                        Margin="5,15,5,10"
                         CornerRadius="30"
                         Grid.Column="2"
                         BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"

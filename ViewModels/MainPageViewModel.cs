@@ -109,6 +109,10 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private List<Stop> _allStops = [];
 
+    [ObservableProperty] private bool _isLoggedIn;
+    [ObservableProperty] private string _userDisplayName = string.Empty;
+    [ObservableProperty] private string _userAvatarUrl = string.Empty;
+
     [ObservableProperty] private bool _showStopsOnMap;
 
     [ObservableProperty] private bool _isTrafficEnabled;
@@ -209,6 +213,39 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         finally
         {
             IsBusy = false;
+        }
+
+        _ = LoginAsync();
+    }
+
+    [RelayCommand]
+    private async Task LoginAsync()
+    {
+        try
+        {
+            var deviceId = await SecureStorage.Default.GetAsync("device_id");
+            if (string.IsNullOrEmpty(deviceId))
+            {
+                deviceId = Guid.NewGuid().ToString();
+                await SecureStorage.Default.SetAsync("device_id", deviceId);
+            }
+
+            var user = await _apiService.LoginAsync(deviceId);
+            if (user is not null)
+            {
+                UserDisplayName = user.DisplayName;
+                UserAvatarUrl = user.AvatarUrl;
+                IsLoggedIn = true;
+                Debug.WriteLine($"[Login] Logged in as {user.DisplayName}");
+            }
+            else
+            {
+                Debug.WriteLine("[Login] Login returned null.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Login] Error: {ex.Message}");
         }
     }
 

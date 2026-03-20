@@ -108,6 +108,7 @@ namespace IvanConnections_Travel
         {
             mauiAppBuilder.Services.AddTransient<MainPageViewModel>();
             mauiAppBuilder.Services.AddSingleton<SettingsViewModel>();
+            mauiAppBuilder.Services.AddSingleton<AppShellViewModel>();
             return mauiAppBuilder;
         }
 

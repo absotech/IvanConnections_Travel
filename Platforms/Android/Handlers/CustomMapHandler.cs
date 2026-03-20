@@ -8,6 +8,7 @@ using IvanConnections_Travel.Utils;
 using Microsoft.Maui.Maps.Handlers;
 using System.Collections.Concurrent;
 using _Microsoft.Android.Resource.Designer;
+using Android.Content;
 using Color = Android.Graphics.Color;
 
 namespace IvanConnections_Travel.Platforms.Handlers
@@ -32,6 +33,26 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 [nameof(CustomMauiMap.VehiclePinSize)] = MapVehiclePinSize,
                 [nameof(Microsoft.Maui.Maps.IMap.IsTrafficEnabled)] = MapIsTrafficEnabled
             };
+
+        private static class BitmapCache
+        {
+            private static readonly ConcurrentDictionary<BitmapCacheKey, BitmapDescriptor> _descriptorCache = new();
+            public static BitmapDescriptor GetOrAddDescriptor(BitmapCacheKey key, Func<BitmapCacheKey, Bitmap> factory)
+            {
+                return _descriptorCache.GetOrAdd(key, k => 
+                {
+                    using var bitmap = factory(k);
+                    var descriptor = BitmapDescriptorFactory.FromBitmap(bitmap);
+                    if (bitmap != null && !bitmap.IsRecycled)
+                    {
+                        bitmap.Recycle();
+                    }
+                    return descriptor;
+                });
+            }
+        }
+
+        private readonly Dictionary<string, BitmapCacheKey> _markerIconKeys = new();
 
         private static void MapIsTrafficEnabled(CustomMapHandler handler, CustomMauiMap map)
         {
@@ -71,8 +92,6 @@ namespace IvanConnections_Travel.Platforms.Handlers
         private readonly CustomMapCallback _mapCallback;
         private Location? _pendingLocation;
 
-        private static readonly ConcurrentDictionary<BitmapCacheKey, Bitmap> BitmapCache = [];
-
         private readonly Dictionary<string, Marker> _vehicleMarkers = [];
         private readonly Dictionary<int, Marker> _stopMarkers = [];
 
@@ -97,6 +116,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 {
                     _googleMap.TrafficEnabled = mauiMap.IsTrafficEnabled;
                 }
+
                 _googleMap.UiSettings.ZoomControlsEnabled = false;
                 _googleMap.UiSettings.MyLocationButtonEnabled = false;
                 _googleMap.UiSettings.CompassEnabled = false;
@@ -131,58 +151,85 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         private async void UpdateVehicleMarkers()
         {
-            if (_googleMap is null || VirtualView is not CustomMauiMap mauiMap) return;
-            var context = Platform.CurrentActivity;
+            if ( _googleMap is null || VirtualView is not CustomMauiMap mauiMap) return;
 
-            var vehicleData = await Task.Run(() =>
+            try
             {
-                var vehicleInfo = new Dictionary<string, (LatLng Position, BitmapDescriptor Icon)>();
-                foreach (var v in mauiMap.Vehicles)
+                var context = Platform.CurrentActivity;
+
+                var vehicleData = await Task.Run(() =>
                 {
-                    if (!v.Latitude.HasValue || !v.Longitude.HasValue || !v.VehicleType.HasValue ||
-                        v.Label is null) continue;
+                    var info = new List<(string Label, LatLng Pos, BitmapDescriptor Icon, BitmapCacheKey Key)>();
+                    foreach (var v in mauiMap.Vehicles)
+                    {
+                        if (!v.Latitude.HasValue || !v.Longitude.HasValue || v.Label is null) continue;
 
-                    var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "",
-                        ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false, mauiMap.VehiclePinSize);
-                    var bitmap = BitmapCache.GetOrAdd(key,
-                        _ => MapBitmapFactory.CreateCustomPinBitmap(context, v.VehicleType.Value, v.RouteShortName,
-                            v.RouteColor, v.Direction, mauiMap.VehiclePinSize));
+                        var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "",
+                            ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false,
+                            mauiMap.VehiclePinSize);
+                        var descriptor = BitmapCache.GetOrAddDescriptor(key, _ => 
+                            MapBitmapFactory.CreateCustomPinBitmap(
+                                context,
+                                v.VehicleType.Value, 
+                                v.RouteShortName, 
+                                v.RouteColor, 
+                                v.Direction, 
+                                mauiMap.VehiclePinSize));
 
-                    vehicleInfo[v.Label] = (new LatLng(v.Latitude.Value, v.Longitude.Value),
-                        BitmapDescriptorFactory.FromBitmap(bitmap));
+                        info.Add((v.Label, new LatLng(v.Latitude.Value, v.Longitude.Value), descriptor, key));
+                    }
+
+                    return info;
+                });
+
+                var visibleVehicleKeys = new HashSet<string>(_vehicleMarkers.Keys);
+
+                foreach (var (vehicleId, pos, icon, key) in vehicleData)
+                {
+                    string expectedTag = $"vehicle_{vehicleId}";
+
+                    if (_vehicleMarkers.TryGetValue(vehicleId, out var existingMarker))
+                    {
+                        existingMarker.Position = pos;
+        
+                        if (existingMarker.Tag == null) 
+                            existingMarker.Tag = expectedTag;
+
+                        if (!_markerIconKeys.TryGetValue(vehicleId, out var oldKey) || !oldKey.Equals(key))
+                        {
+                            existingMarker.SetIcon(icon);
+                            _markerIconKeys[vehicleId] = key;
+                        }
+                        visibleVehicleKeys.Remove(vehicleId);
+                    }
+                    else
+                    {
+                        var markerOptions = new MarkerOptions()
+                            .SetPosition(pos)
+                            .SetIcon(icon);
+
+                        var newMarker = _googleMap.AddMarker(markerOptions);
+                        if (newMarker == null) continue;
+        
+                        // Setting the tag here for new markers
+                        newMarker.Tag = expectedTag;
+        
+                        _vehicleMarkers[vehicleId] = newMarker;
+                        _markerIconKeys[vehicleId] = key;
+                    }
                 }
 
-                return vehicleInfo;
-            });
-
-            var visibleVehicleKeys = new HashSet<string>(_vehicleMarkers.Keys);
-
-            foreach (var (vehicleId, value) in vehicleData)
-            {
-                if (_vehicleMarkers.TryGetValue(vehicleId, out var existingMarker))
+                // Cleanup removed vehicles
+                foreach (var keyToRemove in visibleVehicleKeys)
                 {
-                    existingMarker.Position = value.Position;
-                    existingMarker.SetIcon(value.Icon);
-                    visibleVehicleKeys.Remove(vehicleId);
-                }
-                else
-                {
-                    var markerOptions = new MarkerOptions()
-                        .SetPosition(value.Position)
-                        .SetIcon(value.Icon);
-
-                    var newMarker = _googleMap.AddMarker(markerOptions);
-                    if (newMarker == null) continue;
-                    newMarker.Tag = $"vehicle_{vehicleId}";
-                    _vehicleMarkers[vehicleId] = newMarker;
+                    _vehicleMarkers[keyToRemove].Remove();
+                    _vehicleMarkers.Remove(keyToRemove);
+                    _markerIconKeys.Remove(keyToRemove);
                 }
             }
-
-            foreach (var vehicleKeyToRemove in visibleVehicleKeys)
+            catch (Exception e)
             {
-                if (!_vehicleMarkers.TryGetValue(vehicleKeyToRemove, out var markerToRemove)) continue;
-                markerToRemove.Remove();
-                _vehicleMarkers.Remove(vehicleKeyToRemove);
+                System.Diagnostics.Debug.WriteLine($"Error updating vehicle markers: {e.Message}");
             }
         }
 
@@ -190,28 +237,53 @@ namespace IvanConnections_Travel.Platforms.Handlers
         {
             if (_googleMap is null || VirtualView is not CustomMauiMap mauiMap) return;
 
-            foreach (var marker in _stopMarkers.Values) marker.Remove();
-            _stopMarkers.Clear();
+            // 1. Handle the "Hide Stops" case efficiently
+            if (!mauiMap.ShowStops)
+            {
+                foreach (var marker in _stopMarkers.Values) 
+                {
+                    marker.Remove();
+                    marker.Dispose();
+                }
+                _stopMarkers.Clear();
+                return;
+            }
 
-            if (!mauiMap.ShowStops) return;
+            var context = Platform.CurrentActivity;
+    
+            // 2. Track which stops should be visible
+            var currentStopIds = mauiMap.Stops.Select(s => s.StopId).ToHashSet();
 
-            var context = Platform.CurrentActivity ;
+            // 3. Remove markers that are no longer in the data
+            var idsToRemove = _stopMarkers.Keys.Where(id => !currentStopIds.Contains(id)).ToList();
+            foreach (var id in idsToRemove)
+            {
+                _stopMarkers[id].Remove();
+                _stopMarkers[id].Dispose();
+                _stopMarkers.Remove(id);
+            }
+
+            // 4. Add ONLY new markers
             foreach (var stop in mauiMap.Stops)
             {
+                if (_stopMarkers.ContainsKey(stop.StopId)) continue; // Already on map
                 if (string.IsNullOrWhiteSpace(stop.StopName)) continue;
+
+                var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStopIcon: true, mauiMap.StopPinSize);
+        
+                // Get the DESCRIPTOR directly from the cache
+                var descriptor = BitmapCache.GetOrAddDescriptor(key, 
+                    _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName, mauiMap.StopPinSize));
 
                 var markerOptions = new MarkerOptions()
                     .SetPosition(new LatLng(stop.StopLat, stop.StopLon))
-                    .SetTitle($"Stație: {stop.StopName}");
-
-                var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStopIcon: true, mauiMap.StopPinSize);
-                var bitmap = BitmapCache.GetOrAdd(key,
-                    _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName, mauiMap.StopPinSize));
-                markerOptions.SetIcon(BitmapDescriptorFactory.FromBitmap(bitmap));
+                    .SetTitle($"Stație: {stop.StopName}")
+                    .SetIcon(descriptor); // Use the descriptor directly!
 
                 var newMarker = _googleMap.AddMarker(markerOptions);
                 if (newMarker == null) continue;
-                newMarker.Tag = $"stop_{stop.StopId.ToString()}";
+        
+                newMarker.Tag = $"stop_{stop.StopId}";
                 _stopMarkers[stop.StopId] = newMarker;
             }
         }
@@ -223,11 +295,12 @@ namespace IvanConnections_Travel.Platforms.Handlers
             {
                 poly.Remove();
             }
+
             _activeRoutePolylines.Clear();
             if (mauiMap.Shapes.Count == 0) return;
 
             var firstVehicle = mauiMap.Vehicles.FirstOrDefault();
-            var routeColorHex =  ColorManagement.NormalizeColorHex(firstVehicle?.RouteColor ?? "#4A90E2");
+            var routeColorHex = ColorManagement.NormalizeColorHex(firstVehicle?.RouteColor ?? "#4A90E2");
             int color;
             try
             {
@@ -237,6 +310,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
             {
                 color = Color.Blue;
             }
+
             var shapeGroups = mauiMap.Shapes
                 .GroupBy(s => s.ShapeId)
                 .ToList();
@@ -253,6 +327,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 {
                     options.Add(new LatLng(shape.ShapePtLat, shape.ShapePtLon));
                 }
+
                 var polyline = _googleMap.AddPolyline(options);
                 _activeRoutePolylines.Add(polyline);
             }
@@ -287,16 +362,6 @@ namespace IvanConnections_Travel.Platforms.Handlers
             if (VirtualView is not CustomMauiMap mauiMap)
                 return;
             mauiMap.MapClickCommand.Execute(null);
-        }
-
-        public static void ClearBitmapCache()
-        {
-            foreach (var bitmap in BitmapCache.Values)
-            {
-                bitmap.Recycle();
-            }
-
-            BitmapCache.Clear();
         }
     }
 

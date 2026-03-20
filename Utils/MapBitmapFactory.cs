@@ -163,6 +163,7 @@ namespace IvanConnections_Travel.Utils
         }
 
         public override bool Equals(object? obj) => obj is BitmapCacheKey key && Equals(key);
+        
     }
 
 }

@@ -168,6 +168,33 @@ public class ApiService
         }
     }
 
+    /// <summary>
+    /// Logs in or registers a user by device ID. Creates the user if not found.
+    /// </summary>
+    /// <param name="deviceId">The unique device identifier.</param>
+    /// <returns>The user object, or null if an error occurs.</returns>
+    public async Task<Models.User?> LoginAsync(string deviceId)
+    {
+        try
+        {
+            var url = $"{BaseUrl}/Users";
+            var payload = new { deviceId };
+            using var response = await _httpClient.PostAsJsonAsync(url, payload, _jsonSerializerOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                Debug.WriteLine($"[ApiService] Login error: {response.StatusCode}");
+                return null;
+            }
+            var user = await response.Content.ReadFromJsonAsync<Models.User>(_jsonSerializerOptions);
+            return user;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Exception in LoginAsync: {ex.Message}");
+            return null;
+        }
+    }
+
     public record DistanceApiResponse(
     [property: JsonPropertyName("rows")] List<Row> Rows,
     [property: JsonPropertyName("status")] string Status
