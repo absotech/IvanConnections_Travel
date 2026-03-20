@@ -2,6 +2,8 @@
 using CommunityToolkit.Mvvm.Input;
 using IvanConnections_Travel.Models;
 using IvanConnections_Travel.Services;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace IvanConnections_Travel.ViewModels.Popups
 {
@@ -11,6 +13,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private TimeZoneInfo _timeZoneInfo;
         readonly WeakEventManager followVehicleManager = new();
         public bool ShouldFollow = false;
+        private string? _deviceId;
 
         public event EventHandler<bool?> FollowVehicle
         {
@@ -35,6 +38,25 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
         [ObservableProperty]
         private string followText = "Urmărește ";
+
+        // Chat
+        [ObservableProperty]
+        private bool isChatExpanded = false;
+
+        [ObservableProperty]
+        private bool isChatLoading = false;
+
+        [ObservableProperty]
+        private bool isSending = false;
+
+        [ObservableProperty]
+        private string messageText = string.Empty;
+
+        [ObservableProperty]
+        private bool hasChatError = false;
+
+        public ObservableCollection<ChatMessage> Messages { get; } = new();
+
         public VehiclePopupViewModel(ApiService apiService)
         {
             _apiService = apiService;
@@ -85,6 +107,20 @@ namespace IvanConnections_Travel.ViewModels.Popups
             {
                 Loading = false;
             }
+
+            _ = LoadDeviceIdAsync();
+        }
+
+        private async Task LoadDeviceIdAsync()
+        {
+            try
+            {
+                _deviceId = await SecureStorage.Default.GetAsync("device_id");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[VehiclePopupViewModel] Error loading device id: {ex.Message}");
+            }
         }
 
         [RelayCommand]
@@ -92,6 +128,80 @@ namespace IvanConnections_Travel.ViewModels.Popups
         {
             ShouldFollow = !ShouldFollow;
             followVehicleManager.HandleEvent(this, ShouldFollow, nameof(FollowVehicle));
+        }
+
+        [RelayCommand]
+        private async Task ToggleChatAsync()
+        {
+            IsChatExpanded = !IsChatExpanded;
+            if (IsChatExpanded && Messages.Count == 0)
+            {
+                await LoadMessagesAsync();
+            }
+        }
+
+        [RelayCommand]
+        private async Task RefreshMessagesAsync()
+        {
+            await LoadMessagesAsync();
+        }
+
+        private async Task LoadMessagesAsync()
+        {
+            if (Vehicle is null) return;
+            IsChatLoading = true;
+            HasChatError = false;
+            try
+            {
+                var history = await _apiService.GetMessageHistoryAsync(Vehicle.Id.ToString());
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    Messages.Clear();
+                    foreach (var msg in history.AsEnumerable().Reverse())
+                        Messages.Add(msg);
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[VehiclePopupViewModel] Error loading messages: {ex.Message}");
+                MainThread.BeginInvokeOnMainThread(() => HasChatError = true);
+            }
+            finally
+            {
+                MainThread.BeginInvokeOnMainThread(() => IsChatLoading = false);
+            }
+        }
+
+        [RelayCommand]
+        private async Task SendMessageAsync()
+        {
+            if (string.IsNullOrWhiteSpace(MessageText) || Vehicle is null || IsSending) return;
+            if (string.IsNullOrEmpty(_deviceId)) return;
+
+            var text = MessageText.Trim();
+            IsSending = true;
+            MessageText = string.Empty;
+            try
+            {
+                var success = await _apiService.SendMessageAsync(Vehicle.Id.ToString(), text, _deviceId);
+                if (success)
+                {
+                    await LoadMessagesAsync();
+                }
+                else
+                {
+                    MessageText = text;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[VehiclePopupViewModel] Error sending message: {ex.Message}");
+                MessageText = text;
+            }
+            finally
+            {
+                IsSending = false;
+            }
         }
     }
 }

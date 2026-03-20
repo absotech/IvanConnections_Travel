@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels.Popups"
+               xmlns:models="clr-namespace:IvanConnections_Travel.Models"
                CanBeDismissedByTappingOutsideOfPopup="True"
                x:DataType="vm:VehiclePopupViewModel"
                Color="#80000000"
@@ -23,6 +24,7 @@
             <RoundRectangle CornerRadius="24" />
         </Border.StrokeShape>
         <VerticalStackLayout Spacing="12">
+            <!-- Vehicle info -->
             <Label FontSize="22"
                    FontAttributes="Bold"
                    HorizontalOptions="Center">
@@ -76,6 +78,197 @@
                     TextColor="White"
                     WidthRequest="160"
                     HorizontalOptions="Center" />
+
+            <!-- Chat toggle button -->
+            <Button Command="{Binding ToggleChatCommand}"
+                    CornerRadius="20"
+                    BackgroundColor="Transparent"
+                    BorderColor="{StaticResource OffBlackBorder}"
+                    BorderWidth="1"
+                    HeightRequest="36"
+                    HorizontalOptions="Center"
+                    Padding="16,0">
+                <Button.ImageSource>
+                    <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                     Glyph="&#xe0bf;"
+                                     Size="18"
+                                     Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                </Button.ImageSource>
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding IsChatExpanded}"
+                                 Value="False">
+                        <Setter Property="Text" Value="Chat vehicul" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding IsChatExpanded}"
+                                 Value="True">
+                        <Setter Property="Text" Value="Închide chat" />
+                        <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                        <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <!-- Chat panel -->
+            <Border IsVisible="{Binding IsChatExpanded}"
+                    StrokeThickness="1"
+                    Stroke="{StaticResource OffBlackBorder}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark=#1a2233}"
+                    Padding="0">
+
+                <Grid RowDefinitions="*, Auto"
+                      HeightRequest="280">
+
+                    <!-- Messages list -->
+                    <Grid RowDefinitions="*, Auto, Auto">
+                        <!-- Loading indicator -->
+                        <ActivityIndicator IsRunning="{Binding IsChatLoading}"
+                                           IsVisible="{Binding IsChatLoading}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           HeightRequest="32" />
+
+                        <!-- Error state -->
+                        <VerticalStackLayout IsVisible="{Binding HasChatError}"
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Center"
+                                             Spacing="8">
+                            <Label Text="Nu s-au putut încărca mesajele."
+                                   HorizontalOptions="Center"
+                                   FontSize="13"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            <Button Text="Reîncearcă"
+                                    Command="{Binding RefreshMessagesCommand}"
+                                    CornerRadius="12"
+                                    FontSize="12"
+                                    HeightRequest="32"
+                                    BackgroundColor="{StaticResource Primary}"
+                                    TextColor="White"
+                                    HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+
+                        <!-- Empty state -->
+                        <Label Text="Niciun mesaj încă. Fii primul!"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               FontSize="13"
+                               IsVisible="False"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
+                            <Label.Triggers>
+                                <MultiTrigger TargetType="Label">
+                                    <MultiTrigger.Conditions>
+                                        <BindingCondition Binding="{Binding IsChatLoading}" Value="False" />
+                                        <BindingCondition Binding="{Binding HasChatError}" Value="False" />
+                                        <BindingCondition Binding="{Binding Messages.Count}" Value="0" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter Property="IsVisible" Value="True" />
+                                </MultiTrigger>
+                            </Label.Triggers>
+                        </Label>
+
+                        <CollectionView ItemsSource="{Binding Messages}"
+                                        x:Name="MessagesCollection"
+                                        Margin="0"
+                                        IsVisible="{Binding IsChatLoading, Converter={toolkit:InvertedBoolConverter}}">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Vertical"
+                                                   ItemSpacing="4" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:ChatMessage">
+                                    <Grid ColumnDefinitions="40, *"
+                                          Padding="8,4"
+                                          ColumnSpacing="8">
+                                        <!-- Avatar -->
+                                        <Border StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 20"
+                                                HeightRequest="36"
+                                                WidthRequest="36"
+                                                VerticalOptions="Start"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
+                                            <Image Source="{Binding AvatarUrl}"
+                                                   HeightRequest="36"
+                                                   WidthRequest="36"
+                                                   Aspect="AspectFill" />
+                                        </Border>
+                                        <!-- Message bubble -->
+                                        <VerticalStackLayout Grid.Column="1"
+                                                             Spacing="2">
+                                            <Grid ColumnDefinitions="*, Auto">
+                                                <Label Text="{Binding DisplayName}"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource Primary}"
+                                                       LineBreakMode="TailTruncation" />
+                                                <Label Text="{Binding FormattedTime}"
+                                                       Grid.Column="1"
+                                                       FontSize="10"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}"
+                                                       VerticalOptions="Center" />
+                                            </Grid>
+                                            <Border StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 12"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark=#253047}"
+                                                    Padding="10,6">
+                                                <Label Text="{Binding Text}"
+                                                       FontSize="13"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                                                       LineBreakMode="WordWrap" />
+                                            </Border>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </Grid>
+
+                    <!-- Send bar -->
+                    <Border Grid.Row="1"
+                            StrokeThickness="1"
+                            Stroke="{StaticResource OffBlackBorder}"
+                            StrokeShape="RoundRectangle 0,0,16,16"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                            Padding="8,6">
+                        <Grid ColumnDefinitions="*, Auto"
+                              ColumnSpacing="6">
+                            <Entry Placeholder="Scrie un mesaj..."
+                                   Text="{Binding MessageText}"
+                                   FontSize="13"
+                                   VerticalOptions="Center"
+                                   ReturnCommand="{Binding SendMessageCommand}"
+                                   ReturnType="Send"
+                                   BackgroundColor="Transparent"
+                                   PlaceholderColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}"
+                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                            <Button Grid.Column="1"
+                                    Command="{Binding SendMessageCommand}"
+                                    IsEnabled="{Binding IsSending, Converter={toolkit:InvertedBoolConverter}}"
+                                    CornerRadius="18"
+                                    HeightRequest="36"
+                                    WidthRequest="36"
+                                    Padding="0"
+                                    BackgroundColor="{StaticResource Primary}">
+                                <Button.ImageSource>
+                                    <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                                     Glyph="&#xe163;"
+                                                     Size="20"
+                                                     Color="White" />
+                                </Button.ImageSource>
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button"
+                                                 Binding="{Binding IsSending}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Gray400}" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
 
         </VerticalStackLayout>
     </Border>

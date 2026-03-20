@@ -195,6 +195,43 @@ public class ApiService
         }
     }
 
+    /// <summary>
+    /// Fetches chat message history for a specific vehicle.
+    /// </summary>
+    public async Task<List<ChatMessage>> GetMessageHistoryAsync(string vehicleId)
+    {
+        try
+        {
+            var url = $"{BaseUrl}/Message/history/{Uri.EscapeDataString(vehicleId)}";
+            var messages = await _httpClient.GetFromJsonAsync<List<ChatMessage>>(url, _jsonSerializerOptions);
+            return messages ?? [];
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error fetching message history: {ex.Message}");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Sends a chat message for a specific vehicle.
+    /// </summary>
+    public async Task<bool> SendMessageAsync(string vehicleId, string text, string deviceId)
+    {
+        try
+        {
+            var url = $"{BaseUrl}/Message";
+            var payload = new { vehicleId, text, deviceId };
+            using var response = await _httpClient.PostAsJsonAsync(url, payload, _jsonSerializerOptions);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error sending message: {ex.Message}");
+            return false;
+        }
+    }
+
     public record DistanceApiResponse(
     [property: JsonPropertyName("rows")] List<Row> Rows,
     [property: JsonPropertyName("status")] string Status
