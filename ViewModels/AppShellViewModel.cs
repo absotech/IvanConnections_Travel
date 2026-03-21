@@ -11,14 +11,11 @@ public partial class AppShellViewModel : ObservableObject
     private readonly ApiService _apiService;
     private const string DeviceIdKey = "device_id";
 
-    [ObservableProperty]
-    private User? _currentUser;
+    [ObservableProperty] private User? _currentUser;
 
-    [ObservableProperty]
-    private bool _isLoggedIn;
+    [ObservableProperty] private bool _isLoggedIn;
 
-    [ObservableProperty]
-    private bool _isLoggingIn;
+    [ObservableProperty] private bool _isLoggingIn;
 
     public AppShellViewModel(ApiService apiService)
     {
@@ -32,8 +29,7 @@ public partial class AppShellViewModel : ObservableObject
             var deviceId = await SecureStorage.GetAsync(DeviceIdKey);
             if (string.IsNullOrEmpty(deviceId))
             {
-                deviceId = Guid.NewGuid().ToString();
-                await SecureStorage.SetAsync(DeviceIdKey, deviceId);
+                return;
             }
             await PerformLoginAsync(deviceId);
         }
@@ -56,6 +52,7 @@ public partial class AppShellViewModel : ObservableObject
                 deviceId = Guid.NewGuid().ToString();
                 await SecureStorage.SetAsync(DeviceIdKey, deviceId);
             }
+
             await PerformLoginAsync(deviceId);
         }
         catch (Exception ex)

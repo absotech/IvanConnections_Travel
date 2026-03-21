@@ -79,6 +79,7 @@ namespace IvanConnections_Travel
 #if ANDROID
             builder.Services.AddSingleton<IWidgetService, IvanConnections_Travel.Platforms.Android.WidgetService>();
 #endif
+            builder.Services.AddTransient<ChatHubService>();
             builder.Services.AddTransientPopup<VehiclePopup, VehiclePopupViewModel>();
             builder.Services.AddTransientPopup<StopPopup, StopPopupViewModel>();
             builder.Services.AddTransient<MessagePopup>();

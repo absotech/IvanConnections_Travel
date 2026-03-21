@@ -48,10 +48,10 @@
                     TextColor="{AppThemeBinding Light=Black, Dark=White}" />
             </HorizontalStackLayout>
 
-            <!-- Logged-out state: login button -->
+            <!-- Logged-out state: login button -->[
             <Button
                 Grid.Row="0"
-                Text="Login"
+                Text="Activează chatul!"
                 Command="{Binding LoginCommand}"
                 IsVisible="{Binding IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
                 HorizontalOptions="Start"

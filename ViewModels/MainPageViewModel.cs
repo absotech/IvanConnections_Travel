@@ -112,6 +112,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isLoggedIn;
     [ObservableProperty] private string _userDisplayName = string.Empty;
     [ObservableProperty] private string _userAvatarUrl = string.Empty;
+    [ObservableProperty] private string _userAvatarSeed = string.Empty;
 
     [ObservableProperty] private bool _showStopsOnMap;
 
@@ -185,7 +186,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var newTrackingState = await _popupService.ShowPopupAsync<VehiclePopupViewModel>(vm => vm.Load(m.Value));
+        var newTrackingState = await _popupService.ShowPopupAsync<VehiclePopupViewModel>(vm => vm.Load(m.Value, UserDisplayName, UserAvatarSeed));
 
         if (newTrackingState is not bool shouldTrack) return;
         TrackedVehicle = shouldTrack ? m.Value : null;
@@ -235,6 +236,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             {
                 UserDisplayName = user.DisplayName;
                 UserAvatarUrl = user.AvatarUrl;
+                UserAvatarSeed = user.AvatarSeed;
                 IsLoggedIn = true;
                 Debug.WriteLine($"[Login] Logged in as {user.DisplayName}");
             }
@@ -248,6 +250,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             Debug.WriteLine($"[Login] Error: {ex.Message}");
         }
     }
+
+    
 
     [RelayCommand]
     private async Task StopTracking()

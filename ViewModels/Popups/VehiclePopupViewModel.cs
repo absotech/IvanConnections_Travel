@@ -10,6 +10,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
     public partial class VehiclePopupViewModel : ObservableObject
     {
         private readonly ApiService _apiService;
+        private readonly ChatHubService _chatHubService;
         private TimeZoneInfo _timeZoneInfo;
         readonly WeakEventManager followVehicleManager = new();
         public bool ShouldFollow = false;
@@ -54,16 +55,32 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
         [ObservableProperty]
         private bool hasChatError = false;
+        
+        [ObservableProperty]
+        private string userDisplayName = string.Empty;
+
+        [ObservableProperty]
+        private string userAvatarSeed = string.Empty;
 
         public ObservableCollection<ChatMessage> Messages { get; } = new();
 
-        public VehiclePopupViewModel(ApiService apiService)
+        public VehiclePopupViewModel(ApiService apiService, ChatHubService chatHubService)
         {
             _apiService = apiService;
+            _chatHubService = chatHubService;
             _timeZoneInfo = TimeZoneInfo.Local;
+
+            _chatHubService.MessageReceived += OnMessageReceived;
         }
 
-        internal void Load(Vehicle vehicle)
+        private void OnMessageReceived(ChatMessage msg)
+        {
+            if (Vehicle is null || msg.VehicleId != Vehicle.Id.ToString()) return;
+            if (Messages.Any(m => m.Id == msg.Id)) return;
+            Messages.Add(msg);
+        }
+
+        internal void Load(Vehicle vehicle, string userDisplayName, string userAvatarSeed)
         {
             Loading = true;
 
@@ -71,7 +88,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
             FollowText = ShouldFollow ? "Anulare urmărire " : "Urmărește ";
             Vehicle = vehicle;
             VehicleType = Utils.Translations.GetVehicleTypeNameInRomanian(vehicle.VehicleType);
-
+            UserDisplayName = userDisplayName;
+            UserAvatarSeed = userAvatarSeed;
             if (vehicle.IsElectricBus)
                 VehicleInfo = "Autobuz electric";
             else if (vehicle.IsNewTram)
@@ -134,9 +152,14 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private async Task ToggleChatAsync()
         {
             IsChatExpanded = !IsChatExpanded;
-            if (IsChatExpanded && Messages.Count == 0)
+            if (IsChatExpanded)
             {
                 await LoadMessagesAsync();
+                await ConnectToChatHubAsync();
+            }
+            else
+            {
+                await _chatHubService.DisconnectAsync();
             }
         }
 
@@ -144,6 +167,19 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private async Task RefreshMessagesAsync()
         {
             await LoadMessagesAsync();
+        }
+
+        private async Task ConnectToChatHubAsync()
+        {
+            if (Vehicle is null || string.IsNullOrEmpty(_deviceId)) return;
+            try
+            {
+                await _chatHubService.ConnectAsync(_deviceId, Vehicle.Id.ToString());
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[VehiclePopupViewModel] Error connecting to chat hub: {ex.Message}");
+            }
         }
 
         private async Task LoadMessagesAsync()
@@ -183,15 +219,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
             MessageText = string.Empty;
             try
             {
-                var success = await _apiService.SendMessageAsync(Vehicle.Id.ToString(), text, _deviceId);
-                if (success)
-                {
-                    await LoadMessagesAsync();
-                }
-                else
-                {
-                    MessageText = text;
-                }
+                await _chatHubService.SendMessageAsync(Vehicle.Id, text);
             }
             catch (Exception ex)
             {
@@ -202,6 +230,12 @@ namespace IvanConnections_Travel.ViewModels.Popups
             {
                 IsSending = false;
             }
+        }
+
+        public async Task CleanupAsync()
+        {
+            _chatHubService.MessageReceived -= OnMessageReceived;
+            await _chatHubService.DisconnectAsync();
         }
     }
 }
