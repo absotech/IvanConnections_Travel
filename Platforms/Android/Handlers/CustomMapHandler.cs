@@ -273,7 +273,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
         
                 // Get the DESCRIPTOR directly from the cache
                 var descriptor = BitmapCache.GetOrAddDescriptor(key, 
-                    _ => MapBitmapFactory.CreateStopPinBitmap(context, stop.StopName, mauiMap.StopPinSize));
+                    _ => MapBitmapFactory.CreateStopPinBitmap(context, mauiMap.StopPinSize));
 
                 var markerOptions = new MarkerOptions()
                     .SetPosition(new LatLng(stop.StopLat, stop.StopLon))

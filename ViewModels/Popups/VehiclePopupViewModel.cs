@@ -77,6 +77,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
         {
             if (Vehicle is null || msg.VehicleId != Vehicle.Id.ToString()) return;
             if (Messages.Any(m => m.Id == msg.Id)) return;
+            msg.IsSentByMe = !string.IsNullOrEmpty(UserAvatarSeed) && msg.AvatarSeed == UserAvatarSeed;
             Messages.Add(msg);
         }
 
@@ -194,7 +195,10 @@ namespace IvanConnections_Travel.ViewModels.Popups
                 {
                     Messages.Clear();
                     foreach (var msg in history.AsEnumerable().Reverse())
+                    {
+                        msg.IsSentByMe = !string.IsNullOrEmpty(UserAvatarSeed) && msg.AvatarSeed == UserAvatarSeed;
                         Messages.Add(msg);
+                    }
                 });
             }
             catch (Exception ex)

@@ -179,46 +179,86 @@
                             </CollectionView.ItemsLayout>
                             <CollectionView.ItemTemplate>
                                 <DataTemplate x:DataType="models:ChatMessage">
-                                    <Grid ColumnDefinitions="40, *"
-                                          Padding="8,4"
-                                          ColumnSpacing="8">
-                                        <!-- Avatar -->
-                                        <Border StrokeThickness="0"
-                                                StrokeShape="RoundRectangle 20"
-                                                HeightRequest="36"
-                                                WidthRequest="36"
-                                                VerticalOptions="Start"
-                                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
-                                            <Image Source="{Binding AvatarUrl}"
-                                                   HeightRequest="36"
-                                                   WidthRequest="36"
-                                                   Aspect="AspectFill" />
-                                        </Border>
-                                        <!-- Message bubble -->
-                                        <VerticalStackLayout Grid.Column="1"
-                                                             Spacing="2">
-                                            <Grid ColumnDefinitions="*, Auto">
-                                                <Label Text="{Binding DisplayName}"
-                                                       FontSize="11"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource Primary}"
-                                                       LineBreakMode="TailTruncation" />
-                                                <Label Text="{Binding FormattedTime}"
-                                                       Grid.Column="1"
-                                                       FontSize="10"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}"
-                                                       VerticalOptions="Center" />
-                                            </Grid>
+                                    <Grid Padding="8,4">
+                                        <!-- Received message (left-aligned) -->
+                                        <Grid ColumnDefinitions="40, *"
+                                              ColumnSpacing="8"
+                                              HorizontalOptions="Start"
+                                              IsVisible="{Binding IsSentByMe, Converter={toolkit:InvertedBoolConverter}}">
+                                            <!-- Avatar -->
                                             <Border StrokeThickness="0"
-                                                    StrokeShape="RoundRectangle 12"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark=#253047}"
-                                                    Padding="10,6">
-                                                <Label Text="{Binding Text}"
-                                                       FontSize="13"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                                                       LineBreakMode="WordWrap" />
+                                                    StrokeShape="RoundRectangle 20"
+                                                    HeightRequest="36"
+                                                    WidthRequest="36"
+                                                    VerticalOptions="Start"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
+                                                <Image Source="{Binding AvatarUrl}"
+                                                       HeightRequest="36"
+                                                       WidthRequest="36"
+                                                       Aspect="AspectFill" />
                                             </Border>
-                                        </VerticalStackLayout>
+                                            <!-- Received bubble -->
+                                            <VerticalStackLayout Grid.Column="1"
+                                                                 Spacing="2">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <Label Text="{Binding DisplayName}"
+                                                           FontSize="11"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{StaticResource Primary}"
+                                                           LineBreakMode="TailTruncation" />
+                                                    <Label Text="{Binding FormattedTime}"
+                                                           Grid.Column="1"
+                                                           FontSize="10"
+                                                           TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}"
+                                                           VerticalOptions="Center" />
+                                                </Grid>
+                                                <Border StrokeThickness="0"
+                                                        StrokeShape="RoundRectangle 12"
+                                                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark=#253047}"
+                                                        Padding="10,6">
+                                                    <Label Text="{Binding Text}"
+                                                           FontSize="13"
+                                                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                                                           LineBreakMode="WordWrap" />
+                                                </Border>
+                                            </VerticalStackLayout>
+                                        </Grid>
+
+                                        <!-- Sent message (right-aligned) -->
+                                        <Grid ColumnDefinitions="*, 40"
+                                              ColumnSpacing="8"
+                                              HorizontalOptions="End"
+                                              IsVisible="{Binding IsSentByMe}">
+                                            <!-- Sent bubble -->
+                                            <VerticalStackLayout Spacing="2">
+                                                <Label Text="{Binding FormattedTime}"
+                                                       FontSize="10"
+                                                       HorizontalOptions="End"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}" />
+                                                <Border StrokeThickness="0"
+                                                        StrokeShape="RoundRectangle 12"
+                                                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                        Padding="10,6">
+                                                    <Label Text="{Binding Text}"
+                                                           FontSize="13"
+                                                           TextColor="White"
+                                                           LineBreakMode="WordWrap" />
+                                                </Border>
+                                            </VerticalStackLayout>
+                                            <!-- Avatar -->
+                                            <Border Grid.Column="1"
+                                                    StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 20"
+                                                    HeightRequest="36"
+                                                    WidthRequest="36"
+                                                    VerticalOptions="Start"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
+                                                <Image Source="{Binding AvatarUrl}"
+                                                       HeightRequest="36"
+                                                       WidthRequest="36"
+                                                       Aspect="AspectFill" />
+                                            </Border>
+                                        </Grid>
                                     </Grid>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>

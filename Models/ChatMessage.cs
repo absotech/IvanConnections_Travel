@@ -14,4 +14,6 @@ public class ChatMessage
         : $"https://robohash.org/{AvatarSeed}?set=set4";
 
     public string FormattedTime => Timestamp.ToLocalTime().ToString("HH:mm");
+
+    public bool IsSentByMe { get; set; } = false;
 }

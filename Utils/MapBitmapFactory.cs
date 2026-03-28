@@ -34,7 +34,7 @@ namespace IvanConnections_Travel.Utils
             }
             BitmapCache.Clear();
         }
-        public static Bitmap CreateStopPinBitmap(Context context, string label, int stopPinSize)
+        public static Bitmap CreateStopPinBitmap(Context context, int stopPinSize)
         {
             var density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
             var size = (int)(stopPinSize * density);
@@ -48,12 +48,10 @@ namespace IvanConnections_Travel.Utils
 
             var resultBitmap = Bitmap.CreateBitmap(resultWidth, resultHeight, Bitmap.Config.Argb8888);
 
-            using (var canvas = new Canvas(resultBitmap))
-            {
-                var paint = new Paint();
-                paint.SetColorFilter(new PorterDuffColorFilter(Color.White, PorterDuff.Mode.SrcIn));
-                canvas.DrawBitmap(scaledBitmap, 0, 0, paint);
-            }
+            using var canvas = new Canvas(resultBitmap);
+            var paint = new Paint();
+            paint.SetColorFilter(new PorterDuffColorFilter(Color.White, PorterDuff.Mode.SrcIn));
+            canvas.DrawBitmap(scaledBitmap, 0, 0, paint);
 
             return resultBitmap;
         }

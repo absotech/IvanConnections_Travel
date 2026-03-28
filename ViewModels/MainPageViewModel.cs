@@ -117,6 +117,9 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _showStopsOnMap;
 
     [ObservableProperty] private bool _isTrafficEnabled;
+    
+    [ObservableProperty] private int _stopSize = 15;
+    [ObservableProperty] private int _vehicleSize = 25;
 
     [ObservableProperty] private Location? _mapCenterLocation;
 
@@ -204,6 +207,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     private async Task InitializeAsync()
     {
         if (_isInitialized) return;
+        StopSize = Microsoft.Maui.Storage.Preferences.Default.Get("StopSize", 15);
+        VehicleSize = Microsoft.Maui.Storage.Preferences.Default.Get("VehicleSize", 25);
         IsBusy = true;
         try
         {

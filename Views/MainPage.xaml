@@ -3,14 +3,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="IvanConnections_Travel.MainPage"
-             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
-             xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
              xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:local="clr-namespace:IvanConnections_Travel.Controls"
              xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
              Shell.NavBarIsVisible="False"
              Shell.TabBarIsVisible="False"
-             x:Name="this"
+             x:Name="This"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:MainPageViewModel">
     <ContentPage.Resources>
@@ -26,10 +24,10 @@
     </ContentPage.Resources>
     <ContentPage.Behaviors>
         <xct:EventToCommandBehavior EventName="Appearing"
-                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference this}}"
+                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference This}}"
                                     Command="{Binding AppearingCommand}" />
         <xct:EventToCommandBehavior EventName="Disappearing"
-                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference this}}"
+                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference This}}"
                                     Command="{Binding DisappearingCommand}" />
     </ContentPage.Behaviors>
 
@@ -43,6 +41,8 @@
                              Shapes="{Binding Shapes}"
                              Stops="{Binding AllStops}"
                              ShowStops="{Binding ShowStopsOnMap}"
+                             StopPinSize="{Binding StopSize}"
+                             VehiclePinSize="{Binding VehicleSize}"
                              MarkerClickCommand="{Binding MarkerClickedCommand}"
                              MapClickCommand="{Binding MapClickedCommand}">
         </local:CustomMauiMap>
@@ -182,6 +182,7 @@
                           Margin="10,0,10,10"
                           x:Name="FilterExpander"
                           IsExpanded="False"
+                          IsVisible="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
                           ExpandedChanged="OnFilterExpanderExpandedChanged">
                 <xct:Expander.Header>
                     <Border StrokeThickness="1"

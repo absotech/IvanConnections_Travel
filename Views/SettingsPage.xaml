@@ -1,12 +1,19 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:SettingsViewModel"
              x:Class="IvanConnections_Travel.Views.SettingsPage"
+             xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              Shell.NavBarIsVisible="False"
+             x:Name="This"
              Title="Setări">
-
+    <ContentPage.Behaviors>
+        <xct:EventToCommandBehavior EventName="Appearing"
+                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference This}}"
+                                    Command="{Binding AppearingCommand}" />
+    </ContentPage.Behaviors>
     <ScrollView>
         <VerticalStackLayout Padding="24,32" Spacing="24">
             <!-- Header -->
@@ -101,13 +108,122 @@
                             HorizontalOptions="End" />
                 </Grid>
             </Border>
-            
-            
-            
+
+            <!-- Bus icon section -->
+            <Grid ColumnDefinitions="4*, 1.5*" ColumnSpacing="12">
+
+                <Border Grid.Column="0"
+                        StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                        Padding="20,16">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
+                    </Border.Shadow>
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="10" VerticalOptions="Center">
+                        <Label FontSize="17"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Dimensiune vehicule: " />
+                                    <Span Text="{Binding VehicleSize}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Slider Minimum="25"
+                                Maximum="35"
+                                Value="{Binding VehicleSize}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="1"
+                        StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                        MinimumHeightRequest="100"
+                        Padding="20,16">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
+                    </Border.Shadow>
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16" />
+                    </Border.StrokeShape>
+
+                    <Image Source="{Binding VehiclePreview}"
+                           HeightRequest="{Binding VehicleDisplaySize}"
+                           WidthRequest="{Binding VehicleDisplaySize}"
+                           Aspect="Center"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center" />
+                </Border>
+            </Grid>
+
+            <!-- Stop icon section -->
+            <Grid ColumnDefinitions="4*, 1.5*" ColumnSpacing="12">
+
+                <Border Grid.Column="0"
+                        StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                        Padding="20,16">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
+                    </Border.Shadow>
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="10" VerticalOptions="Center">
+                        <Label FontSize="17"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Dimensiune stații:" />
+                                    <Span Text="  " />
+                                    <Span Text="{Binding StopSize}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Slider Minimum="15"
+                                Maximum="30"
+                                Value="{Binding StopSize}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="1"
+                        StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                        MinimumHeightRequest="100"
+                        Padding="20,16">
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
+                    </Border.Shadow>
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16" />
+                    </Border.StrokeShape>
+
+                    <Image Source="{Binding StopPreview}"
+                           HeightRequest="{Binding StopSize}"
+                           WidthRequest="{Binding StopSize}"
+                           Aspect="Center"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center" />
+                </Border>
+            </Grid>
+
+
             <Label
                 VerticalOptions="End"
-                HorizontalOptions="Center"
-                >
+                HorizontalOptions="Center">
                 <Label.FormattedText>
                     <FormattedString>
                         <Span Text="Versiune: " />
