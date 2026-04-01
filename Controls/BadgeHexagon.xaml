@@ -1,0 +1,69 @@
+﻿<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
+             xmlns:models="clr-namespace:IvanConnections_Travel.Models"
+             x:Class="IvanConnections_Travel.Controls.BadgeHexagon"
+             x:DataType="models:UserBadgeDto">
+    <ContentView.GestureRecognizers>
+        <TapGestureRecognizer Tapped="OnBadgeTapped" />
+    </ContentView.GestureRecognizers>
+    <ContentView.Resources>
+        <converters:BadgeIconConverter x:Key="BadgeIconConverter" />
+        <converters:RarityToBrushConverter x:Key="RarityToBrushConverter" />
+        <converters:GlowConverter x:Key="GlowConverter" />
+    </ContentView.Resources>
+
+    <Grid WidthRequest="52" HeightRequest="56">
+
+        <!-- BASE -->
+        <Path x:Name="HexPath"
+              Aspect="Uniform"
+              Data="M 50,0 L 93.3,25 L 93.3,75 L 50,100 L 6.7,75 L 6.7,25 Z"
+              StrokeThickness="1.5"
+              Stroke="{Binding Badge.Rarity.HexColor}"
+              Fill="{Binding Badge.Rarity.DisplayOrder, Converter={StaticResource RarityToBrushConverter}}">
+    
+            <Path.Shadow>
+                <Shadow x:Name="GlowShadow"
+                        Offset="0,0"
+                        Radius="6"
+                        Opacity="0.6"
+                        Brush="{Binding Badge.Rarity.DisplayOrder, Converter={StaticResource GlowConverter}}" />
+            </Path.Shadow>
+        </Path>
+
+        <!-- INNER DARK GRADIENT (depth) -->
+        <Path Aspect="Uniform"
+              Data="M 50,5 L 88,27 L 88,73 L 50,95 L 12,73 L 12,27 Z"
+              InputTransparent="True">
+            <Path.Fill>
+                <RadialGradientBrush Center="0.5,0.5" Radius="0.8">
+                    <GradientStop Color="#00000000" Offset="0.6" />
+                    <GradientStop Color="#40000000" Offset="1.0" />
+                </RadialGradientBrush>
+            </Path.Fill>
+        </Path>
+
+
+        <!-- ICON -->
+        <Label Text="{Binding Badge.IconCode, Converter={StaticResource BadgeIconConverter}}"
+               FontFamily="Fontello"
+               FontSize="22"
+               TextColor="White"
+               HorizontalOptions="Center"
+               VerticalOptions="Center">
+            <Label.Shadow>
+                <Shadow Offset="0,2" Radius="2" Opacity="0.4" />
+            </Label.Shadow>
+        </Label>
+       
+        <!-- LOCK OVERLAY -->
+        <Path x:Name="LockOverlay"
+              IsVisible="False"
+              Aspect="Uniform"
+              Data="M 50,0 L 93.3,25 L 93.3,75 L 50,100 L 6.7,75 L 6.7,25 Z"
+              InputTransparent="True"
+              Fill="#99000000" />
+
+    </Grid>
+</ContentView>

@@ -24,6 +24,8 @@ namespace IvanConnections_Travel
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                     fonts.AddFont("MaterialIconsRound-Regular.otf", "MaterialSymbolsRounded");
+                    fonts.AddFont("fontello.ttf", "Fontello");
+                    
                 })
                 .UseMauiMaps()
                 .ConfigureMauiHandlers(handlers =>
@@ -110,6 +112,7 @@ namespace IvanConnections_Travel
             mauiAppBuilder.Services.AddTransient<MainPageViewModel>();
             mauiAppBuilder.Services.AddSingleton<SettingsViewModel>();
             mauiAppBuilder.Services.AddSingleton<AppShellViewModel>();
+            mauiAppBuilder.Services.AddTransient<BadgesViewModel>();
             return mauiAppBuilder;
         }
 
@@ -118,6 +121,7 @@ namespace IvanConnections_Travel
             mauiAppBuilder.Services.AddSingleton<AppShell>();
             mauiAppBuilder.Services.AddTransient<MainPage>();
             mauiAppBuilder.Services.AddSingleton<SettingsPage>();
+            mauiAppBuilder.Services.AddTransient<BadgesPage>();
             return mauiAppBuilder;
         }
     }

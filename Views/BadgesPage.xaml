@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:IvanConnections_Travel.Controls"
+             xmlns:models="clr-namespace:IvanConnections_Travel.Models"
+             xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
+             x:Class="IvanConnections_Travel.Views.BadgesPage"
+             x:DataType="vm:BadgesViewModel"
+             Shell.NavBarIsVisible="False"
+             Title="Medalii">
+
+
+    <Grid RowDefinitions="Auto,*">
+
+        <ActivityIndicator
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            Color="#3B82F6"
+            HorizontalOptions="Center"
+            InputTransparent="True"
+            VerticalOptions="Center"
+            ZIndex="10" />
+
+        <ScrollView Grid.Row="0" Grid.RowSpan="2">
+            <VerticalStackLayout Spacing="16" Padding="16,20">
+                <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                    <Button Clicked="OnMenuClicked"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            BackgroundColor="Transparent"
+                            VerticalOptions="Center">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                             Glyph="&#xe5d2;"
+                                             Size="30"
+                                             Color="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+                        </Button.ImageSource>
+                    </Button>
+                    <Label Text="Medalii"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+                </HorizontalStackLayout>
+                <Label
+                    Text="Toate medaliile"
+                    FontSize="20"
+                    FontAttributes="Bold"
+                    TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
+
+                <Label
+                    Text="Deblochează medalii participând activ în comunitate."
+                    FontSize="13"
+                    TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}" />
+
+                <FlexLayout
+                    BindableLayout.ItemsSource="{Binding Badges}"
+                    Wrap="Wrap"
+                    CascadeInputTransparent="False"
+                    InputTransparent="False"
+                    Direction="Row"
+                    JustifyContent="Start"
+                    AlignContent="Start">
+
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="models:BadgeDisplayItem">
+                            <Grid x:Name="BadgeItemGrid" Padding="6" WidthRequest="60" HeightRequest="60" Background="Transparent">
+                                <controls:BadgeHexagon BindingContext="{Binding UserBadge}" IsLocked="{Binding BindingContext.IsLocked, Source={x:Reference BadgeItemGrid}}" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

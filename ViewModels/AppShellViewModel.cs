@@ -11,7 +11,7 @@ public partial class AppShellViewModel : ObservableObject
     private readonly ApiService _apiService;
     private const string DeviceIdKey = "device_id";
 
-    [ObservableProperty] private User? _currentUser;
+    [ObservableProperty] private AppUserDto? _currentUser;
 
     [ObservableProperty] private bool _isLoggedIn;
 

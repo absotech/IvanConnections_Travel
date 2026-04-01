@@ -1,94 +1,186 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
-<Shell
+﻿<Shell
     x:Class="IvanConnections_Travel.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:IvanConnections_Travel"
     xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
     xmlns:views="clr-namespace:IvanConnections_Travel.Views"
-    xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
+    xmlns:controls="clr-namespace:IvanConnections_Travel.Controls"
     FlyoutBehavior="Flyout"
-    FlyoutBackgroundColor="{AppThemeBinding Light=White, Dark=#111827}"
-    Title="IvanConnections_Travel">
+    FlyoutHeaderBehavior="Fixed"
+    FlyoutBackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#111827}"
+    Title="IvanConnections">
+
     <Shell.Resources>
         <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        
         <x:String x:Key="IconMap">&#xe55b;</x:String>
         <x:String x:Key="IconSettings">&#xe8b8;</x:String>
+        <x:String x:Key="IconMedal">&#xea3f;</x:String>
+
+        <Style x:Key="StatLabel" TargetType="Label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#666666, Dark=#9CA3AF}" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
     </Shell.Resources>
+
     <Shell.FlyoutHeader>
-        <Grid Padding="16,20,16,16" BackgroundColor="Transparent" RowSpacing="0" Margin="0,50,0,0">
+        <Grid Padding="20,40,20,24" RowSpacing="15" Margin="0,25,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Logged-in state: avatar + display name -->
-            <HorizontalStackLayout
+            <VerticalStackLayout
                 Grid.Row="0"
-                Spacing="12"
+                Spacing="16"
                 IsVisible="{Binding IsLoggedIn}">
-                <Border
-                    WidthRequest="48"
-                    HeightRequest="48"
-                    StrokeThickness="0">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="24" />
-                    </Border.StrokeShape>
-                    <Image
-                        Source="{Binding CurrentUser.AvatarUrl}"
-                        Aspect="AspectFill"
-                        WidthRequest="48"
-                        HeightRequest="48" />
-                </Border>
-                <Label
-                    Text="{Binding CurrentUser.DisplayName}"
-                    FontSize="16"
-                    FontAttributes="Bold"
-                    VerticalOptions="Center"
-                    TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-            </HorizontalStackLayout>
 
-            <!-- Logged-out state: login button -->
-            <Button
+                <HorizontalStackLayout Spacing="16">
+                    <Border
+                        WidthRequest="60"
+                        HeightRequest="60"
+                        Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#374151}"
+                        StrokeThickness="2">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="30" />
+                        </Border.StrokeShape>
+                        <Image
+                            Source="{Binding CurrentUser.AvatarUrl}"
+                            Aspect="AspectFill"
+                            WidthRequest="60"
+                            HeightRequest="60" />
+                    </Border>
+
+                    <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                        <Label
+                            Text="{Binding CurrentUser.DisplayName}"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
+                        <Label
+                            Text="Călător activ"
+                            FontSize="12"
+                            TextColor="#3B82F6"
+                            FontAttributes="Italic" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+
+                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start">
+                    <HorizontalStackLayout Margin="0,0,12,0" Spacing="6">
+                        <Label Text="⭐" FontSize="14" />
+                        <Label Style="{StaticResource StatLabel}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding CurrentUser.KarmaPoints}" FontAttributes="Bold"
+                                          TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                    <Span Text=" karma" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </HorizontalStackLayout>
+
+                    <HorizontalStackLayout Spacing="6">
+                        <Label Text="🏆" FontSize="14" />
+                        <Label Style="{StaticResource StatLabel}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding CurrentUser.BadgeCount}" FontAttributes="Bold"
+                                          TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                    <Span Text=" medalii" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </HorizontalStackLayout>
+                </FlexLayout>
+                <!-- <FlexLayout  -->
+                <!--     BindableLayout.ItemsSource="{Binding CurrentUser.UserBadges}" -->
+                <!--     Wrap="Wrap" -->
+                <!--     Direction="Row" -->
+                <!--     JustifyContent="Start" -->
+                <!--     AlignContent="Start" -->
+                <!--     Margin="0,10,0,0"> -->
+                <!-- -->
+                <!--     <BindableLayout.ItemTemplate> -->
+                <!--         <DataTemplate> -->
+                <!--             <Grid Padding="0,0,8,8">  -->
+                <!--                 <controls:BadgeHexagon /> -->
+                <!--             </Grid> -->
+                <!--         </DataTemplate> -->
+                <!--     </BindableLayout.ItemTemplate> -->
+                <!-- </FlexLayout> -->
+            </VerticalStackLayout>
+
+            <Border
                 Grid.Row="0"
-                Text="Activează chatul!"
-                Command="{Binding LoginCommand}"
                 IsVisible="{Binding IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
-                HorizontalOptions="Start"
-                BackgroundColor="#1976D2"
-                TextColor="White"
-                CornerRadius="8"
-                Padding="20,8"
-                FontSize="14" />
+                Padding="16"
+                StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#1F2937}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
 
-            <!-- Loading indicator -->
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="Salutare, Călătorule!"
+                        FontAttributes="Bold"
+                        FontSize="16" />
+                    <Label
+                        Text="Autentifică-te pentru a accesa chat-ul comunității."
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light=#4B5563, Dark=#9CA3AF}" />
+                    <Button
+                        Text="Activează chatul"
+                        Command="{Binding LoginCommand}"
+                        BackgroundColor="#3B82F6"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HeightRequest="40"
+                        Margin="0,5,0,0" />
+                </VerticalStackLayout>
+            </Border>
+
+            <BoxView
+                Grid.Row="0"
+                IsVisible="{Binding IsLoggingIn}"
+                Color="{AppThemeBinding Light=#80FFFFFF, Dark=#80000000}"
+                CornerRadius="12" />
             <ActivityIndicator
-                Grid.Row="1"
+                Grid.Row="0"
                 IsRunning="{Binding IsLoggingIn}"
                 IsVisible="{Binding IsLoggingIn}"
-                Color="#1976D2"
-                HeightRequest="20"
-                Margin="0,8,0,0"
-                HorizontalOptions="Start" />
+                Color="#3B82F6"
+                HorizontalOptions="Center"
+                VerticalOptions="Center" />
+
+            <BoxView Grid.Row="1" HeightRequest="1" Color="{AppThemeBinding Light=#E5E7EB, Dark=#374151}"
+                     Margin="0,10,0,0" />
         </Grid>
     </Shell.FlyoutHeader>
-    <FlyoutItem Title="Hartă">
+
+    <FlyoutItem Title="Hartă Interactivă">
         <FlyoutItem.Icon>
-            <FontImageSource
-                FontFamily="MaterialSymbolsRounded"
-                Glyph="{StaticResource IconMap}"
-                Size="24"
-                Color="Gray" />
+            <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconMap}" Size="24"
+                             Color="#3B82F6" />
         </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
     </FlyoutItem>
-    <FlyoutItem Title="Setări">
+
+    <FlyoutItem Title="Medalii">
         <FlyoutItem.Icon>
-            <FontImageSource
-                FontFamily="MaterialSymbolsRounded"
-                Glyph="{StaticResource IconSettings}"
-                Size="24"
-                Color="Gray" />
+            <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconMedal}" Size="24"
+                             Color="#3B82F6" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:BadgesPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Setări Aplicație">
+        <FlyoutItem.Icon>
+            <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconSettings}" Size="24"
+                             Color="#3B82F6" />
         </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
     </FlyoutItem>

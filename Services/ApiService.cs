@@ -173,11 +173,11 @@ public class ApiService
     /// </summary>
     /// <param name="deviceId">The unique device identifier.</param>
     /// <returns>The user object, or null if an error occurs.</returns>
-    public async Task<Models.User?> LoginAsync(string deviceId)
+    public async Task<Models.AppUserDto?> LoginAsync(string deviceId)
     {
         try
         {
-            var url = $"{BaseUrl}/Users";
+            const string url = $"{BaseUrl}/Users";
             var payload = new { deviceId };
             using var response = await _httpClient.PostAsJsonAsync(url, payload, _jsonSerializerOptions);
             if (!response.IsSuccessStatusCode)
@@ -185,7 +185,7 @@ public class ApiService
                 Debug.WriteLine($"[ApiService] Login error: {response.StatusCode}");
                 return null;
             }
-            var user = await response.Content.ReadFromJsonAsync<Models.User>(_jsonSerializerOptions);
+            var user = await response.Content.ReadFromJsonAsync<Models.AppUserDto>(_jsonSerializerOptions);
             return user;
         }
         catch (Exception ex)
@@ -209,6 +209,24 @@ public class ApiService
         catch (Exception ex)
         {
             Debug.WriteLine($"[ApiService] Error fetching message history: {ex.Message}");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Fetches all available badges.
+    /// </summary>
+    public async Task<List<BadgeDto>> GetAllBadgesAsync()
+    {
+        try
+        {
+            var url = $"{BaseUrl}/Badges";
+            var badges = await _httpClient.GetFromJsonAsync<List<BadgeDto>>(url, _jsonSerializerOptions);
+            return badges ?? [];
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error fetching badges: {ex.Message}");
             return [];
         }
     }
