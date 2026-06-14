@@ -12,6 +12,15 @@ public partial class AppShellViewModel : ObservableObject
     private const string DeviceIdKey = "device_id";
 
     [ObservableProperty] private AppUserDto? _currentUser;
+    private CancellationTokenSource? _loginRefreshCts;
+
+    partial void OnCurrentUserChanged(AppUserDto? value)
+    {
+        if (value != null)
+        {
+            IsLoggedIn = true;
+        }
+    }
 
     [ObservableProperty] private bool _isLoggedIn;
 
@@ -67,11 +76,53 @@ public partial class AppShellViewModel : ObservableObject
 
     private async Task PerformLoginAsync(string deviceId)
     {
-        var user = await _apiService.LoginAsync(deviceId);
-        if (user != null)
+        var (user, wasModified) = await _apiService.LoginAsync(deviceId);
+        if (wasModified && user != null)
         {
             CurrentUser = user;
+        }
+        else if (user == null && wasModified)
+        {
+            
+        }
+        else if (!wasModified)
+        {
             IsLoggedIn = true;
         }
+
+        StartLoginRefreshTimer(deviceId);
+    }
+
+    private void StartLoginRefreshTimer(string deviceId)
+    {
+        _loginRefreshCts?.Cancel();
+        _loginRefreshCts = new CancellationTokenSource();
+        var token = _loginRefreshCts.Token;
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), token);
+                    if (token.IsCancellationRequested) break;
+
+                    var (user, wasModified) = await _apiService.LoginAsync(deviceId);
+                    if (wasModified && user != null)
+                    {
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            CurrentUser = user;
+                        });
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[AppShellViewModel] Refresh login error: {ex.Message}");
+            }
+        }, token);
     }
 }

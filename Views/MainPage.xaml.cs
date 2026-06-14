@@ -1,4 +1,5 @@
-﻿using Android.Locations;
+﻿using System;
+using Android.Locations;
 using CommunityToolkit.Maui.Core;
 using IvanConnections_Travel.ViewModels;
 using Microsoft.Maui.Controls;
@@ -18,7 +19,7 @@ namespace IvanConnections_Travel
             BindingContext = mainPageViewModel;
         }
 
-        private void OnMenuClicked(object sender, EventArgs e)
+        private void OnMenuClicked(object? sender, EventArgs eventArgs)
         {
             Shell.Current.FlyoutIsPresented = true;
         }

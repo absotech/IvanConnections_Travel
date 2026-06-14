@@ -37,14 +37,14 @@ namespace IvanConnections_Travel.ViewModels.Popups
             }
         }
 
-        public async Task LoadAsync(Stop stop)
+        public async Task LoadAsync(Stop stop, string? deviceId = null)
         {
             Stop = stop;
             IsLoading = true;
             ErrorMessage = null;
             Arrivals.Clear();
 
-            var arrivalsData = await _apiService.GetArrivalsForStopAsync(stop.StopId);
+            var arrivalsData = await _apiService.GetArrivalsForStopAsync(stop.StopId, deviceId);
 
             if (arrivalsData.Count != 0)
             {

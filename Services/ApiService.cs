@@ -133,11 +133,11 @@ public class ApiService
     /// </summary>
     /// <param name="stopId">The ID of the stop.</param>
     /// <returns>A list of arrivals, or an empty list if an error occurs.</returns>
-    public async Task<List<StopArrival>> GetArrivalsForStopAsync(int stopId)
+    public async Task<List<StopArrival>> GetArrivalsForStopAsync(int stopId, string? deviceId = null)
     {
         try
         {
-            var url = $"{BaseUrl}/Stops/{stopId}/arrivals";
+            var url = $"{BaseUrl}/Stops/{stopId}/arrivals?deviceId={deviceId}";
             var arrivals = await _httpClient.GetFromJsonAsync<List<StopArrival>>(url, _jsonSerializerOptions);
             return arrivals ?? [];
         }
@@ -153,11 +153,11 @@ public class ApiService
     /// </summary>
     /// <param name="routeId">The ID of the route.</param>
     /// <returns>A list of shapes, or an empty list if an error occurs.</returns>
-    public async Task<List<Shape>> GetShapesAsync(int routeId)
+    public async Task<List<Shape>> GetShapesAsync(int routeId, string? deviceId = null)
     {
         try
         {
-            var url = $"{BaseUrl}/Shapes?routeId={routeId}";
+            var url = $"{BaseUrl}/Shapes?routeId={routeId}&deviceId={deviceId}";
             var shapes = await _httpClient.GetFromJsonAsync<List<Shape>>(url, _jsonSerializerOptions);
             return shapes ?? [];
         }
@@ -170,28 +170,92 @@ public class ApiService
 
     /// <summary>
     /// Logs in or registers a user by device ID. Creates the user if not found.
+    /// Supports ETags for performance.
     /// </summary>
     /// <param name="deviceId">The unique device identifier.</param>
-    /// <returns>The user object, or null if an error occurs.</returns>
-    public async Task<Models.AppUserDto?> LoginAsync(string deviceId)
+    /// <returns>The user object, and a boolean indicating if it was modified.</returns>
+    public async Task<(Models.AppUserDto? User, bool WasModified)> LoginAsync(string deviceId)
     {
         try
         {
             const string url = $"{BaseUrl}/Users";
             var payload = new { deviceId };
-            using var response = await _httpClient.PostAsJsonAsync(url, payload, _jsonSerializerOptions);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = JsonContent.Create(payload, options: _jsonSerializerOptions);
+
+            if (_etags.TryGetValue(url, out var etag))
+            {
+                request.Headers.TryAddWithoutValidation("If-None-Match", etag);
+            }
+
+            using var response = await _httpClient.SendAsync(request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
+            {
+                return (null, false);
+            }
+
             if (!response.IsSuccessStatusCode)
             {
                 Debug.WriteLine($"[ApiService] Login error: {response.StatusCode}");
-                return null;
+                return (null, false);
             }
+
+            if (response.Headers.TryGetValues("ETag", out var etagHeaderValues))
+            {
+                _etags[url] = etagHeaderValues.First();
+            }
+
             var user = await response.Content.ReadFromJsonAsync<Models.AppUserDto>(_jsonSerializerOptions);
-            return user;
+            return (user, true);
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[ApiService] Exception in LoginAsync: {ex.Message}");
-            return null;
+            return (null, false);
+        }
+    }
+
+    /// <summary>
+    /// Fetches the list of all routes from the API.
+    /// </summary>
+    public async Task<List<Models.Route>> GetRoutesAsync(int? agencyId = 1)
+    {
+        try
+        {
+            var url = agencyId.HasValue
+                ? $"{BaseUrl}/Routes/metropolitan/{agencyId}"
+                : $"{BaseUrl}/Routes";
+            var routes = await _httpClient.GetFromJsonAsync<List<Models.Route>>(url, _jsonSerializerOptions);
+            return routes ?? [];
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error fetching routes: {ex.Message}");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Fetches scheduled trips for a given routeId or tripId.
+    /// </summary>
+    public async Task<List<Models.ScheduledTrip>> GetSchedulesAsync(string? routeId = null, string? tripId = null, int? agencyId = null)
+    {
+        try
+        {
+            var query = new List<string>();
+            if (agencyId.HasValue) query.Add($"agencyId={agencyId}");
+            if (!string.IsNullOrEmpty(routeId)) query.Add($"routeId={Uri.EscapeDataString(routeId)}");
+            if (!string.IsNullOrEmpty(tripId)) query.Add($"tripId={Uri.EscapeDataString(tripId)}");
+            var url = $"{BaseUrl}/Schedules?{string.Join("&", query)}";
+            var schedules = await _httpClient.GetFromJsonAsync<List<Models.ScheduledTrip>>(url, _jsonSerializerOptions);
+            return schedules ?? [];
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error fetching schedules: {ex.Message}");
+            return [];
         }
     }
 
@@ -249,6 +313,32 @@ public class ApiService
             return false;
         }
     }
+
+    /// <summary>
+    /// Checks whether today is a Romanian public holiday using the Nager.Date API.
+    /// Returns false if the request fails so callers can fall back to the device date.
+    /// </summary>
+    public async Task<bool> HolidayCheckAsync()
+    {
+        try
+        {
+            var today = DateTime.Now;
+            var url = $"https://date.nager.at/api/v3/PublicHolidays/{today.Year}/RO";
+            var holidays = await _httpClient.GetFromJsonAsync<List<PublicHoliday>>(url, _jsonSerializerOptions);
+
+            var todayString = today.ToString("yyyy-MM-dd");
+            return holidays?.Any(h => h.Date == todayString) ?? false;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Error checking public holidays: {ex.Message}");
+            return false;
+        }
+    }
+
+    public record PublicHoliday(
+        [property: JsonPropertyName("date")] string Date
+    );
 
     public record DistanceApiResponse(
     [property: JsonPropertyName("rows")] List<Row> Rows,

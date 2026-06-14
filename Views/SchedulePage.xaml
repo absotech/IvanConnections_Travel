@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
+             xmlns:models="clr-namespace:IvanConnections_Travel.Models"
+             xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
+             x:Class="IvanConnections_Travel.Views.SchedulePage"
+             x:DataType="vm:ScheduleViewModel"
+             Shell.NavBarIsVisible="False"
+             Title="Orar Metropolitan">
+
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
+    </ContentPage.Resources>
+
+    <Grid>
+        <ActivityIndicator
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            Color="#3B82F6"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            ZIndex="10" />
+
+        <ScrollView>
+            <VerticalStackLayout Spacing="0" Padding="16,20,16,32">
+
+                <!-- Header -->
+                <HorizontalStackLayout Spacing="12" VerticalOptions="Center" Margin="0,0,0,20">
+                    <Button Clicked="OnMenuClicked"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            BackgroundColor="Transparent"
+                            VerticalOptions="Center">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                             Glyph="&#xe5d2;"
+                                             Size="30"
+                                             Color="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+                        </Button.ImageSource>
+                    </Button>
+                    <Label Text="Orar"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+                </HorizontalStackLayout>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,0,0,16">
+                    <Border Grid.Column="0"
+                            StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light=#E5E7EB, Dark=#374151}"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1F2937}"
+                            Padding="4,0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Picker Title="Selectează ruta..."
+                                ItemsSource="{Binding Routes}"
+                                SelectedItem="{Binding SelectedRoute}"
+                                ItemDisplayBinding="{Binding RouteShortName}"
+                                TitleColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}"
+                                TextColor="{AppThemeBinding Light=#1F2937, Dark=White}"
+                                BackgroundColor="Transparent"
+                                Margin="8,0" />
+                    </Border>
+                    <Border Grid.Column="1"
+                            WidthRequest="48"
+                            HeightRequest="48"
+                            StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light=#E5E7EB, Dark=#374151}"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1F2937}"
+                            IsVisible="{Binding SelectedRoute, Converter={StaticResource NullToBoolConverter}, ConverterParameter=invert}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleFavoriteCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="&#xe838;"
+                               FontFamily="MaterialSymbolsRounded"
+                               FontSize="26"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#D1D5DB, Dark=#4B5563}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsFavorite}" Value="True">
+                                    <Setter Property="TextColor" Value="#F59E0B" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+                </Grid>
+
+                <!-- Empty state: no route selected -->
+                <VerticalStackLayout Spacing="12"
+                                     HorizontalOptions="Center"
+                                     Margin="0,40,0,0"
+                                     IsVisible="{Binding SelectedRoute, Converter={StaticResource NullToBoolConverter}}">
+                    <Label Text="&#xe530;"
+                           FontFamily="MaterialSymbolsRounded"
+                           FontSize="56"
+                           TextColor="{AppThemeBinding Light=#D1D5DB, Dark=#374151}"
+                           HorizontalOptions="Center" />
+                    <Label Text="Selectează o rută pentru a vedea orarul."
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+
+                <!-- Content shown after route is selected -->
+                <VerticalStackLayout Spacing="0"
+                                     IsVisible="{Binding SelectedRoute, Converter={StaticResource NullToBoolConverter}, ConverterParameter=invert}">
+
+                    <Label Text="Plecare din:"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           Margin="2,0,0,6"
+                           TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}" />
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#1F2937}"
+                            Padding="4"
+                            Margin="0,0,0,12"
+                            IsVisible="{Binding StopTabs.Count, Converter={StaticResource NullToBoolConverter}, ConverterParameter=invert}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14" />
+                        </Border.StrokeShape>
+                        <FlexLayout BindableLayout.ItemsSource="{Binding StopTabs}"
+                                    Wrap="Wrap"
+                                    Direction="Row"
+                                    JustifyContent="Center"
+                                    AlignItems="Center">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:StopTabItem">
+                                    <Border Padding="14,8"
+                                            StrokeThickness="0"
+                                            Margin="3"
+                                            BackgroundColor="{AppThemeBinding Light=#E5E7EB, Dark=#374151}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="20" />
+                                        </Border.StrokeShape>
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border"
+                                                         Binding="{Binding IsSelected}"
+                                                         Value="True">
+                                                <Setter Property="BackgroundColor" Value="#3B82F6" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ScheduleViewModel}}, Path=SelectStartingStopCommand}"
+                                                CommandParameter="{Binding StartingStop}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding StartingStop}"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="Center"
+                                               TextColor="{AppThemeBinding Light=#374151, Dark=#D1D5DB}" />
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+                    </Border>
+
+                    <!-- Day type selector -->
+                    <Border StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#1F2937}"
+                            Padding="4"
+                            Margin="0,0,0,20">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14" />
+                        </Border.StrokeShape>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="4">
+
+                            <!-- Weekday -->
+                            <Border Grid.Column="0" Padding="14,8" StrokeThickness="0"
+                                    BackgroundColor="Transparent">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20" />
+                                </Border.StrokeShape>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDayType}" Value="weekday">
+                                        <Setter Property="BackgroundColor" Value="#3B82F6" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectDayTypeCommand}" CommandParameter="weekday" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Luni-Vineri" FontSize="12" FontAttributes="Bold"
+                                       HorizontalOptions="Center"
+                                       TextColor="{AppThemeBinding Light=#374151, Dark=#D1D5DB}" />
+                            </Border>
+
+                            <!-- Weekend & holidays -->
+                            <Border Grid.Column="1" Padding="14,8" StrokeThickness="0"
+                                    BackgroundColor="Transparent">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20" />
+                                </Border.StrokeShape>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDayType}" Value="weekend">
+                                        <Setter Property="BackgroundColor" Value="#3B82F6" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectDayTypeCommand}" CommandParameter="weekend" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Weekend și Sărbători" FontSize="12" FontAttributes="Bold"
+                                       HorizontalOptions="Center"
+                                       TextColor="{AppThemeBinding Light=#374151, Dark=#D1D5DB}" />
+                            </Border>
+
+                        </Grid>
+                    </Border>
+
+                    <!-- Loading schedules indicator -->
+                    <ActivityIndicator
+                        IsRunning="{Binding IsLoadingSchedules}"
+                        IsVisible="{Binding IsLoadingSchedules}"
+                        Color="#3B82F6"
+                        HorizontalOptions="Center"
+                        Margin="0,8,0,16" />
+
+                    <!-- No results message -->
+                    <VerticalStackLayout IsVisible="{Binding HasNoResults}"
+                                         Spacing="8"
+                                         HorizontalOptions="Center"
+                                         Margin="0,16,0,0">
+                        <Label Text="&#xe8f4;"
+                               FontFamily="MaterialSymbolsRounded"
+                               FontSize="48"
+                               TextColor="{AppThemeBinding Light=#D1D5DB, Dark=#4B5563}"
+                               HorizontalOptions="Center" />
+                        <Label Text="Nu există curse pentru această zi."
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+
+                    <!-- School-period extra buses note (Luni-Vineri only) -->
+                    <Border IsVisible="{Binding HasSchoolSchedules}"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#FEF3C7, Dark=#422006}"
+                            Padding="12,10"
+                            Margin="0,0,0,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Label Text="&#xe80c;"
+                                   FontFamily="MaterialSymbolsRounded"
+                                   FontSize="20"
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#B45309, Dark=#FCD34D}" />
+                            <Label Text="Autobuze suplimentate pe perioada școlii."
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center"
+                                   LineBreakMode="WordWrap"
+                                   TextColor="{AppThemeBinding Light=#92400E, Dark=#FCD34D}" />
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <!-- Schedule time chips grid -->
+                    <FlexLayout BindableLayout.ItemsSource="{Binding Schedules}"
+                                Wrap="Wrap"
+                                Direction="Row"
+                                JustifyContent="Start"
+                                AlignContent="Start"
+                                IsVisible="{Binding HasSchedules}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:ScheduledTrip">
+                                <Border Padding="10,8"
+                                        StrokeThickness="0"
+                                        WidthRequest="82"
+                                        HeightRequest="52"
+                                        Margin="4"
+                                        BackgroundColor="{AppThemeBinding Light=#EFF6FF, Dark=#1E3A5F}"
+                                        Opacity="{Binding IsPast, Converter={StaticResource BoolToOpacityConverter}}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10" />
+                                    </Border.StrokeShape>
+                                    <Label Text="{Binding DepartureDisplay}"
+                                           FontSize="15"
+                                           FontAttributes="Bold"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           TextColor="{AppThemeBinding Light=#1D4ED8, Dark=#93C5FD}" />
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

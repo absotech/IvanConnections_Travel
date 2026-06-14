@@ -17,6 +17,7 @@
         <x:String x:Key="IconMap">&#xe55b;</x:String>
         <x:String x:Key="IconSettings">&#xe8b8;</x:String>
         <x:String x:Key="IconMedal">&#xea3f;</x:String>
+        <x:String x:Key="IconSchedule">&#xe8b5;</x:String>
 
         <Style x:Key="StatLabel" TargetType="Label">
             <Setter Property="FontSize" Value="12" />
@@ -175,6 +176,14 @@
                              Color="#3B82F6" />
         </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:BadgesPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Orar Metropolitan">
+        <FlyoutItem.Icon>
+            <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconSchedule}" Size="24"
+                             Color="#3B82F6" />
+        </FlyoutItem.Icon>
+        <ShellContent ContentTemplate="{DataTemplate views:SchedulePage}" />
     </FlyoutItem>
 
     <FlyoutItem Title="Setări Aplicație">

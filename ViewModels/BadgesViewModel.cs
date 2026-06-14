@@ -19,11 +19,20 @@ public partial class BadgesViewModel : ObservableObject
     {
         _apiService = apiService;
         _appShellViewModel = appShellViewModel;
+        
+        _appShellViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(AppShellViewModel.CurrentUser))
+            {
+                MainThread.BeginInvokeOnMainThread(async () => await LoadBadgesAsync());
+            }
+        };
     }
 
     [RelayCommand]
     public async Task LoadBadgesAsync()
     {
+        if (IsLoading) return;
         IsLoading = true;
         try
         {

@@ -4,6 +4,16 @@ public static class Preferences
 {
     private const string PendingWidgetStopIdKey = "pending_widget_stop_id";
     private const string PendingWidgetStopNameKey = "pending_widget_stop_name";
+    private const string FavoriteRouteIdKey = "favorite_route_id";
+
+    /// <summary>
+    /// The RouteId saved as the user's favorite schedule route, or -1 when none is set.
+    /// </summary>
+    public static int FavoriteRouteId
+    {
+        get => Microsoft.Maui.Storage.Preferences.Default.Get(FavoriteRouteIdKey, -1);
+        set => Microsoft.Maui.Storage.Preferences.Default.Set(FavoriteRouteIdKey, value);
+    }
 
     public static int PendingWidgetStopId
     {

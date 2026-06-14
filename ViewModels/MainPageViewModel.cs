@@ -23,7 +23,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     private readonly ApiService _apiService;
     private readonly IPopupService _popupService;
     private readonly TimeZoneInfo _timeZoneInfo;
-    
+
     private bool _isInitialized = false;
 
     [ObservableProperty] private bool _isTracking;
@@ -91,7 +91,9 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         if (type == "Autobuz")
             VehicleTypeFilter = VehicleTypeFilter == Models.Enums.VehicleType.Bus ? null : Models.Enums.VehicleType.Bus;
         else if (type == "tramvai")
-            VehicleTypeFilter = VehicleTypeFilter == Models.Enums.VehicleType.Tram ? null : Models.Enums.VehicleType.Tram;
+            VehicleTypeFilter = VehicleTypeFilter == Models.Enums.VehicleType.Tram
+                ? null
+                : Models.Enums.VehicleType.Tram;
         else
             VehicleTypeFilter = null;
     }
@@ -107,6 +109,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         }
     }
 
+    internal string? deviceId = null;
     [ObservableProperty] private List<Stop> _allStops = [];
 
     [ObservableProperty] private bool _isLoggedIn;
@@ -117,13 +120,13 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _showStopsOnMap;
 
     [ObservableProperty] private bool _isTrafficEnabled;
-    
+
     [ObservableProperty] private int _stopSize = 15;
     [ObservableProperty] private int _vehicleSize = 25;
 
     [ObservableProperty] private Location? _mapCenterLocation;
 
-    [ObservableProperty] 
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CompassRotation))]
     [NotifyPropertyChangedFor(nameof(IsCompassVisible))]
     private double _mapBearing;
@@ -148,7 +151,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
 
         WeakReferenceMessenger.Default.Register<ClickMessage>(this, (r, m) => HandleVehicleClickMessage(m));
         WeakReferenceMessenger.Default.Register<StopClickMessage>(this, (r, m) => HandleStopClickMessage(m));
-        WeakReferenceMessenger.Default.Register<TrafficPreferenceChangedMessage>(this, (r, m) => IsTrafficEnabled = m.Value);
+        WeakReferenceMessenger.Default.Register<TrafficPreferenceChangedMessage>(this,
+            (r, m) => IsTrafficEnabled = m.Value);
         WeakReferenceMessenger.Default.Register<StopsPreferenceChangedMessage>(this, (r, m) =>
         {
             ShowStopsOnMap = m.Value;
@@ -189,7 +193,9 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var newTrackingState = await _popupService.ShowPopupAsync<VehiclePopupViewModel>(vm => vm.Load(m.Value, UserDisplayName, UserAvatarSeed));
+        var newTrackingState =
+            await _popupService.ShowPopupAsync<VehiclePopupViewModel>(vm =>
+                vm.Load(m.Value, UserDisplayName, UserAvatarSeed));
 
         if (newTrackingState is not bool shouldTrack) return;
         TrackedVehicle = shouldTrack ? m.Value : null;
@@ -200,15 +206,25 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     {
         if (m.Value != null)
         {
-            await _popupService.ShowPopupAsync<StopPopupViewModel>(async vm => await vm.LoadAsync(m.Value));
+            await _popupService.ShowPopupAsync<StopPopupViewModel>(async vm => await vm.LoadAsync(m.Value, deviceId));
         }
     }
 
     private async Task InitializeAsync()
     {
         if (_isInitialized) return;
-        StopSize = Microsoft.Maui.Storage.Preferences.Default.Get("StopSize", 15);
-        VehicleSize = Microsoft.Maui.Storage.Preferences.Default.Get("VehicleSize", 25);
+        try
+        {
+            StopSize = Microsoft.Maui.Storage.Preferences.Default.Get("StopSize", 15);
+            VehicleSize = Microsoft.Maui.Storage.Preferences.Default.Get("VehicleSize", 25);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            Debug.WriteLine($"[MainPageViewModel] Error loading preferences: {e.Message}");
+            throw;
+        }
+        
         IsBusy = true;
         try
         {
@@ -229,25 +245,33 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     {
         try
         {
-            var deviceId = await SecureStorage.Default.GetAsync("device_id");
+            deviceId = await SecureStorage.Default.GetAsync("device_id");
             if (string.IsNullOrEmpty(deviceId))
             {
                 deviceId = Guid.NewGuid().ToString();
                 await SecureStorage.Default.SetAsync("device_id", deviceId);
             }
 
-            var user = await _apiService.LoginAsync(deviceId);
-            if (user is not null)
+            var (user, wasModified) = await _apiService.LoginAsync(deviceId);
+            if (wasModified && user is not null)
             {
                 UserDisplayName = user.DisplayName;
                 UserAvatarUrl = user.AvatarUrl;
                 UserAvatarSeed = user.AvatarSeed;
                 IsLoggedIn = true;
                 Debug.WriteLine($"[Login] Logged in as {user.DisplayName}");
+                _vehicleService.DeviceId = deviceId;
+            }
+            else if (!wasModified)
+            {
+                // If not modified, it means we were already logged in or ETag matched.
+                // We should still ensure IsLoggedIn is true if we have a deviceId and it wasn't an error.
+                IsLoggedIn = true; 
+                _vehicleService.DeviceId = deviceId;
             }
             else
             {
-                Debug.WriteLine("[Login] Login returned null.");
+                Debug.WriteLine("[Login] Login failed.");
             }
         }
         catch (Exception ex)
@@ -256,7 +280,6 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         }
     }
 
-    
 
     [RelayCommand]
     private async Task StopTracking()
@@ -407,15 +430,18 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             MapCenterLocation = cachedLocation;
         }
 
-        switch (Pins.Count)
-        {
-            case 0:
-                await MessagePopup.ShowAsync("Eroare", "A apărut o eroare la încărcarea vehiculelor.", MessagePopupType.Error, MessagePopupButtons.Ok);
-                break;
-            case <= 5:
-                await MessagePopup.ShowAsync("Info", "E posibil ca agenția să nu trimită date.\nMajoritatea vehiculelor nu circulă între orele 23:30 si 04:30", MessagePopupType.Warning, MessagePopupButtons.Ok);
-                break;
-        }
+        // switch (Pins.Count)
+        // {
+        //     case 0:
+        //         await MessagePopup.ShowAsync("Eroare", "A apărut o eroare la încărcarea vehiculelor.",
+        //             MessagePopupType.Error, MessagePopupButtons.Ok);
+        //         break;
+        //     case <= 5:
+        //         await MessagePopup.ShowAsync("Info",
+        //             "E posibil ca agenția să nu trimită date.\nMajoritatea vehiculelor nu circulă între orele 23:30 si 04:30",
+        //             MessagePopupType.Warning, MessagePopupButtons.Ok);
+        //         break;
+        // }
     }
 
     [RelayCommand]

@@ -10,6 +10,11 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
     private readonly ApiService _apiService;
     private CancellationTokenSource? _cts;
 
+    public string? DeviceId
+    {
+        get;
+        set;
+    }
     [ObservableProperty]
     private ObservableCollection<Vehicle> _vehicles = [];
 
@@ -204,7 +209,7 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
             
             if (currentRouteId != null)
             {
-                var shapesList = await _apiService.GetShapesAsync(currentRouteId.Value);
+                var shapesList = await _apiService.GetShapesAsync(currentRouteId.Value, DeviceId);
 
                 if (!string.IsNullOrEmpty(ShapeFilter))
                 {

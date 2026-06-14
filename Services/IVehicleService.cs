@@ -15,6 +15,7 @@ public interface IVehicleService : INotifyPropertyChanged
     string? SearchText { get; set; }
     string? ShapeFilter { get; set; }
     VehicleType? VehicleTypeFilter { get; set; }
+    string? DeviceId { get; set; }
 
     void StartPeriodicRefresh();
     void StopPeriodicRefresh();

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net10.0-android36.0</TargetFramework>
+        <TargetFrameworks>net10.0-android</TargetFrameworks>
         <UseMaui>true</UseMaui>
         <RootNamespace>IvanConnections_Travel</RootNamespace>
         <SingleProject>true</SingleProject>
@@ -15,37 +15,35 @@
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
 
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.1.3</ApplicationDisplayVersion>
-        <ApplicationVersion>113</ApplicationVersion>
+        <ApplicationDisplayVersion>1.2.0</ApplicationDisplayVersion>
+        <ApplicationVersion>120</ApplicationVersion>
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">30.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+        <AndroidBuildApplicationPackage>true</AndroidBuildApplicationPackage>
         <Title>Ivan Connections Travel</Title>
         <Company>Ivan Connections</Company>
         <UserSecretsId>db59a5e8-d335-4435-b0dc-7220afb8d17e</UserSecretsId>
         <PackageIcon>ic_launcher.png</PackageIcon>
         <AndroidSigningKeyStore>Ivan Connections.keystore</AndroidSigningKeyStore>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net10.0-android36.0</TargetFramework>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android36.0|AnyCPU'">
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
         <ApplicationTitle>IC Travel</ApplicationTitle>
         <AndroidKeyStore>False</AndroidKeyStore>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android36.0|AnyCPU'">
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
         <ApplicationTitle>IC Travel</ApplicationTitle>
         <AndroidPackageFormat>aab</AndroidPackageFormat>
         <AndroidKeyStore>False</AndroidKeyStore>
     </PropertyGroup>
-
-    
 
     <ItemGroup>
         <!-- App Icon -->
@@ -73,6 +71,7 @@
         <PackageReference Include="CommunityToolkit.Maui" Version="11.2.0" />
         <PackageReference Include="CommunityToolkit.Maui.Maps" Version="3.0.2" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.3" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.50" />
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.50" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.3" />
@@ -100,6 +99,39 @@
           <SubType>Designer</SubType>
           <Generator>MSBuild:UpdateGeneratedFiles</Generator>
         </AndroidResource>
+        <MauiImage Include="Resources\Images\arrow_icon.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </MauiImage>
+        <MauiImage Include="Resources\Images\arrow_icon_notfilled.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </MauiImage>
+        <MauiImage Include="Resources\Images\arrow_icon_old.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </MauiImage>
+        <MauiImage Include="Resources\Images\bus_icon.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </MauiImage>
+        <MauiImage Include="Resources\Images\bus_stop.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </MauiImage>
+        <MauiImage Include="Resources\Images\ic.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+          <BaseSize>256,256</BaseSize>
+        </MauiImage>
+        <MauiImage Include="Resources\Images\stop_icon.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </MauiImage>
+        <MauiImage Include="Resources\Images\tram_icon.png">
+          <SubType>Designer</SubType>
+          <Generator>MSBuild:UpdateGeneratedFiles</Generator>
+        </MauiImage>
     </ItemGroup>
 
     <ItemGroup>

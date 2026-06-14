@@ -44,7 +44,7 @@ public partial class BadgeHexagon : ContentView
             : $"Deblocat la {userBadge.EarnedAt:dd.MM.yyyy}";
         var type = IsLocked ? MessagePopupType.Info : MessagePopupType.Success;
 
-        await MessagePopup.ShowAsync(title, message, type, MessagePopupButtons.Ok);
+        await MessagePopup.ShowAsync(title + '\n' + userBadge.Badge.Name, message, type, MessagePopupButtons.Ok);
     }
     private void StartPulse(int rarity)
     {

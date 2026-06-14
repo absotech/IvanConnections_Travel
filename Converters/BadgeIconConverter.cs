@@ -11,9 +11,14 @@ public class BadgeIconConverter : IValueConverter
             return iconCode.ToLower() switch
             {
                 "icon-message" => "\uf4ac",
-                "icon-explorer" => "\ue801",
-                "icon-star" => "\ue802",
-                _ => "\ue800"
+                "icon-bus" => "\ue80b",
+                "icon-hourglass" => "\ue800",
+                "icon-crown" => "\ue844",
+                "icon-briefcase" => "\ue801",
+                "icon-map-o" => "\uf278",
+                "icon-bell-alt" => "\uf0f3",
+                "icon-users" => "\ue80a",
+                _ => "\uf074"
             };
         }
 
