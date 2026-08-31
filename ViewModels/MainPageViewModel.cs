@@ -125,6 +125,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _stopSize = 15;
     [ObservableProperty] private int _vehicleSize = 25;
 
+    [ObservableProperty] private bool _showNumberOnly;
+
     [ObservableProperty] private Location? _mapCenterLocation;
 
     [ObservableProperty]
@@ -149,6 +151,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
         _timeZoneInfo = TimeZoneInfo.Local;
         IsTrafficEnabled = Microsoft.Maui.Storage.Preferences.Default.Get("IsTrafficEnabled", true);
         ShowStopsOnMap = Microsoft.Maui.Storage.Preferences.Default.Get("ShowStopsOnMap", true);
+        ShowNumberOnly = Microsoft.Maui.Storage.Preferences.Default.Get("ShowNumberOnly", false);
 
         WeakReferenceMessenger.Default.Register<ClickMessage>(this, (r, m) => HandleVehicleClickMessage(m));
         WeakReferenceMessenger.Default.Register<StopClickMessage>(this, (r, m) => HandleStopClickMessage(m));
@@ -159,6 +162,8 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             ShowStopsOnMap = m.Value;
             _ = LoadStopsFromBackendAsync();
         });
+        WeakReferenceMessenger.Default.Register<NumberOnlyPreferenceChangedMessage>(this,
+            (r, m) => ShowNumberOnly = m.Value);
 
         _vehicleService.PropertyChanged += (s, e) =>
         {

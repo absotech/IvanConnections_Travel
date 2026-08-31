@@ -43,6 +43,7 @@
                              ShowStops="{Binding ShowStopsOnMap}"
                              StopPinSize="{Binding StopSize}"
                              VehiclePinSize="{Binding VehicleSize}"
+                             ShowNumberOnly="{Binding ShowNumberOnly}"
                              MarkerClickCommand="{Binding MarkerClickedCommand}"
                              MapClickCommand="{Binding MapClickedCommand}">
         </local:CustomMauiMap>

@@ -19,12 +19,16 @@ public partial class SettingsViewModel : ObservableObject
     private const string PrefStopsKey = "ShowStopsOnMap";
     private const string PrefVehicleSize = "VehicleSize";
     private const string PrefStopSize = "StopSize";
+    private const string PrefNumberOnlyKey = "ShowNumberOnly";
     
     [ObservableProperty]
     private bool _isTrafficEnabled;
 
     [ObservableProperty]
     private bool _showStopsOnMap;
+
+    [ObservableProperty]
+    private bool _showNumberOnly;
 
 
     private int _vehicleSize;
@@ -91,6 +95,7 @@ public partial class SettingsViewModel : ObservableObject
         _stopDebouncer = new Debouncer();
         IsTrafficEnabled = Preferences.Default.Get(PrefTrafficKey, true);
         ShowStopsOnMap = Preferences.Default.Get(PrefStopsKey, true);
+        ShowNumberOnly = Preferences.Default.Get(PrefNumberOnlyKey, false);
         StopSize = Preferences.Default.Get(PrefStopSize, 15);
         VehicleSize = Preferences.Default.Get(PrefVehicleSize, 25);
     }
@@ -106,11 +111,18 @@ public partial class SettingsViewModel : ObservableObject
         Preferences.Default.Set(PrefStopsKey, value);
         WeakReferenceMessenger.Default.Send(new StopsPreferenceChangedMessage(value));
     }
+
+    partial void OnShowNumberOnlyChanged(bool value)
+    {
+        Preferences.Default.Set(PrefNumberOnlyKey, value);
+        WeakReferenceMessenger.Default.Send(new NumberOnlyPreferenceChangedMessage(value));
+        _ = UpdateVehiclePreview();
+    }
     private async Task UpdateVehiclePreview()
     {
         await _vehicleDebouncer.RunAsync(async () =>
         {
-            var bitmap = MapBitmapFactory.CreateCustomPinBitmap(Platform.CurrentActivity, VehicleType.Bus, "12", "#FF0000", 45, VehicleSize);
+            var bitmap = MapBitmapFactory.CreateCustomPinBitmap(Platform.CurrentActivity, VehicleType.Bus, "12", "#FF0000", 45, VehicleSize, ShowNumberOnly);
 
             using var ms = new MemoryStream();
             bitmap.Compress(Bitmap.CompressFormat.Png, 100, ms);

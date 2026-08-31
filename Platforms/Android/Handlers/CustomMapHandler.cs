@@ -31,6 +31,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 [nameof(CustomMauiMap.MapBearing)] = MapMapBearing,
                 [nameof(CustomMauiMap.StopPinSize)] = MapStopPinSize,
                 [nameof(CustomMauiMap.VehiclePinSize)] = MapVehiclePinSize,
+                [nameof(CustomMauiMap.ShowNumberOnly)] = MapShowNumberOnly,
                 [nameof(Microsoft.Maui.Maps.IMap.IsTrafficEnabled)] = MapIsTrafficEnabled
             };
 
@@ -72,6 +73,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
             => handler.UpdateStopMarkers();
 
         private static void MapVehiclePinSize(CustomMapHandler handler, CustomMauiMap map)
+            => handler.UpdateVehicleMarkers();
+
+        private static void MapShowNumberOnly(CustomMapHandler handler, CustomMauiMap map)
             => handler.UpdateVehicleMarkers();
 
         private static void MapMapBearing(CustomMapHandler handler, CustomMauiMap map)
@@ -166,7 +170,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
                         var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "",
                             ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false,
-                            mauiMap.VehiclePinSize);
+                            mauiMap.VehiclePinSize, mauiMap.ShowNumberOnly);
                         var descriptor = BitmapCache.GetOrAddDescriptor(key, _ => 
                             MapBitmapFactory.CreateCustomPinBitmap(
                                 context,
@@ -174,7 +178,8 @@ namespace IvanConnections_Travel.Platforms.Handlers
                                 v.RouteShortName, 
                                 v.RouteColor, 
                                 v.Direction, 
-                                mauiMap.VehiclePinSize));
+                                mauiMap.VehiclePinSize,
+                                mauiMap.ShowNumberOnly));
 
                         info.Add((v.Label, new LatLng(v.Latitude.Value, v.Longitude.Value), descriptor, key));
                     }

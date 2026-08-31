@@ -89,4 +89,13 @@ public class CustomMauiMap : Microsoft.Maui.Controls.Maps.Map
         get => (int)GetValue(VehiclePinSizeProperty);
         set => SetValue(VehiclePinSizeProperty, value);
     }
+
+    public static readonly BindableProperty ShowNumberOnlyProperty =
+        BindableProperty.Create(nameof(ShowNumberOnly), typeof(bool), typeof(CustomMauiMap), false);
+
+    public bool ShowNumberOnly
+    {
+        get => (bool)GetValue(ShowNumberOnlyProperty);
+        set => SetValue(ShowNumberOnlyProperty, value);
+    }
 }
