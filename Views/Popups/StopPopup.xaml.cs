@@ -13,6 +13,6 @@ public partial class StopPopup : Popup
 
     private void CloseButton_Clicked(object sender, EventArgs e)
     {
-        Close();
+        CloseAsync();
     }
 }

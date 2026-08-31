@@ -11,6 +11,7 @@ using IvanConnections_Travel.Utils;
 using IvanConnections_Travel.ViewModels.Popups;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using CommunityToolkit.Maui;
 using IvanConnections_Travel.Views.Popups;
 using Microsoft.Maui.Controls.Maps;
 using Location = Microsoft.Maui.Devices.Sensors.Location;
@@ -193,12 +194,22 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var newTrackingState =
-            await _popupService.ShowPopupAsync<VehiclePopupViewModel>(vm =>
-                vm.Load(m.Value, UserDisplayName, UserAvatarSeed));
+        var result = await _popupService.ShowPopupAsync<VehiclePopupViewModel, bool>(
+            Shell.Current,
+            new PopupOptions
+            {
+                Shape = null,
+                PageOverlayColor = Color.FromArgb("#80000000")
+            },
+            new Dictionary<string, object>
+            {
+                ["vehicle"] = m.Value,
+                ["userDisplayName"] = UserDisplayName,
+                ["userAvatarSeed"] = UserAvatarSeed,
+            });
 
-        if (newTrackingState is not bool shouldTrack) return;
-        TrackedVehicle = shouldTrack ? m.Value : null;
+        if (result.WasDismissedByTappingOutsideOfPopup) return;
+        TrackedVehicle = result.Result ? m.Value : null;
         await _vehicleService.RefreshAsync(forced: true);
     }
 
@@ -206,7 +217,16 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
     {
         if (m.Value != null)
         {
-            await _popupService.ShowPopupAsync<StopPopupViewModel>(async vm => await vm.LoadAsync(m.Value, deviceId));
+            var query = new Dictionary<string, object> { ["stop"] = m.Value, ["allStops"] = AllStops };
+            if (deviceId is not null) query["deviceId"] = deviceId;
+            await _popupService.ShowPopupAsync<StopPopupViewModel>(
+                Shell.Current,
+                new PopupOptions
+                {
+                    Shape = null,
+                    PageOverlayColor = Color.FromArgb("#80000000")
+                },
+                query);
         }
     }
 

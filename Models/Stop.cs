@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace IvanConnections_Travel.Models
+﻿namespace IvanConnections_Travel.Models
 {
     public class Stop
     {
@@ -21,5 +15,6 @@ namespace IvanConnections_Travel.Models
         public int LocationType { get; set; }
 
         public string? StopCode { get; set; }
+        public int? OppositeStopId { get; set; }
     }
 }

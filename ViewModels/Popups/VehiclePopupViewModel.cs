@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace IvanConnections_Travel.ViewModels.Popups
 {
-    public partial class VehiclePopupViewModel : ObservableObject
+    public partial class VehiclePopupViewModel : ObservableObject, IQueryAttributable
     {
         private readonly ApiService _apiService;
         private readonly ChatHubService _chatHubService;
@@ -79,6 +79,14 @@ namespace IvanConnections_Travel.ViewModels.Popups
             if (Messages.Any(m => m.Id == msg.Id)) return;
             msg.IsSentByMe = !string.IsNullOrEmpty(UserAvatarSeed) && msg.AvatarSeed == UserAvatarSeed;
             Messages.Add(msg);
+        }
+
+        public void ApplyQueryAttributes(IDictionary<string, object> query)
+        {
+            var vehicle = (Vehicle)query["vehicle"];
+            var displayName = query.TryGetValue("userDisplayName", out var n) ? n as string ?? string.Empty : string.Empty;
+            var avatarSeed = query.TryGetValue("userAvatarSeed", out var s) ? s as string ?? string.Empty : string.Empty;
+            Load(vehicle, displayName, avatarSeed);
         }
 
         internal void Load(Vehicle vehicle, string userDisplayName, string userAvatarSeed)

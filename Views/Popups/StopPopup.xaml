@@ -7,7 +7,7 @@
                xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
                CanBeDismissedByTappingOutsideOfPopup="True"
                x:DataType="vm:StopPopupViewModel"
-               Color="Transparent"
+               BackgroundColor="Transparent"
                x:Class="IvanConnections_Travel.Views.Popups.StopPopup">
     <toolkit:Popup.Resources>
         <converters:VehicleTypeToStringConverter x:Key="VehicleTypeConverter" />
@@ -23,10 +23,62 @@
         </Border.StrokeShape>
 
         <VerticalStackLayout Spacing="15">
-            <Label Text="{Binding Stop.StopName}"
-                   FontSize="22"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center" />
+            <!-- Header: direction switch + title + close -->
+            <Grid ColumnDefinitions="Auto, *, Auto"
+                  ColumnSpacing="8">
+                <!-- Switch to opposite-direction stop -->
+                <Button Grid.Column="0"
+                        Command="{Binding SwitchDirectionCommand}"
+                        IsEnabled="{Binding CanSwitchDirection}"
+                        ToolTipProperties.Text="Schimbă sensul"
+                        CornerRadius="18"
+                        HeightRequest="36"
+                        WidthRequest="36"
+                        Padding="0"
+                        VerticalOptions="Center"
+                        BackgroundColor="Transparent"
+                        BorderColor="{StaticResource OffBlackBorder}"
+                        BorderWidth="1">
+                    <Button.ImageSource>
+                        <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                         Glyph="&#xe8d5;"
+                                         Size="20"
+                                         Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    </Button.ImageSource>
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button"
+                                     Binding="{Binding CanSwitchDirection}"
+                                     Value="False">
+                            <Setter Property="Opacity" Value="0.35" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+
+                <Label Grid.Column="1"
+                       Text="{Binding Stop.StopName}"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center" />
+
+                <!-- Close (X) -->
+                <Button Grid.Column="2"
+                        Clicked="CloseButton_Clicked"
+                        ToolTipProperties.Text="Închide"
+                        CornerRadius="18"
+                        HeightRequest="36"
+                        WidthRequest="36"
+                        Padding="0"
+                        VerticalOptions="Center"
+                        BackgroundColor="Transparent">
+                    <Button.ImageSource>
+                        <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                         Glyph="&#xe5cd;"
+                                         Size="22"
+                                         Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    </Button.ImageSource>
+                </Button>
+            </Grid>
 
             <ActivityIndicator IsRunning="{Binding IsLoading}"
                                IsVisible="{Binding IsLoading}"
@@ -67,10 +119,6 @@
                     BackgroundColor="#2196F3"
                     TextColor="White"
                     Margin="0,10,0,0" />
-
-            <Button Text="Închide"
-                    Margin="0,10,0,0"
-                    Clicked="CloseButton_Clicked" />
 
         </VerticalStackLayout>
     </Border>

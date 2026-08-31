@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 
 namespace IvanConnections_Travel.ViewModels.Popups
 {
-    public partial class StopPopupViewModel : ObservableObject
+    public partial class StopPopupViewModel : ObservableObject, IQueryAttributable
     {
         private readonly ApiService _apiService;
         private readonly IWidgetService? _widgetService;
@@ -19,6 +19,12 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
         [ObservableProperty]
         private string? errorMessage;
+
+        [ObservableProperty]
+        private bool canSwitchDirection;
+
+        private List<Stop> _allStops = [];
+        private string? _deviceId;
 
         public ObservableCollection<StopArrival> Arrivals { get; } = [];
 
@@ -37,8 +43,43 @@ namespace IvanConnections_Travel.ViewModels.Popups
             }
         }
 
+        public void ApplyQueryAttributes(IDictionary<string, object> query)
+        {
+            var stop = (Stop)query["stop"];
+            var deviceId = query.TryGetValue("deviceId", out var d) ? d as string : null;
+            if (query.TryGetValue("allStops", out var s) && s is List<Stop> allStops)
+            {
+                _allStops = allStops;
+            }
+            _ = LoadAsync(stop, deviceId);
+        }
+
+        [RelayCommand]
+        private async Task SwitchDirectionAsync()
+        {
+            if (Stop?.OppositeStopId is not int oppositeId)
+            {
+                return;
+            }
+
+            var oppositeStop = _allStops.FirstOrDefault(s => s.StopId == oppositeId);
+            if (oppositeStop == null)
+            {
+                return;
+            }
+
+            await LoadAsync(oppositeStop, _deviceId);
+        }
+
+        partial void OnStopChanged(Stop? value)
+        {
+            CanSwitchDirection = value?.OppositeStopId is int oppositeId
+                                 && _allStops.Any(s => s.StopId == oppositeId);
+        }
+
         public async Task LoadAsync(Stop stop, string? deviceId = null)
         {
+            _deviceId = deviceId;
             Stop = stop;
             IsLoading = true;
             ErrorMessage = null;

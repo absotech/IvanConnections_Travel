@@ -1,4 +1,6 @@
-﻿using CommunityToolkit.Maui.Views;
+﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Views;
 
 namespace IvanConnections_Travel.Views.Popups;
 
@@ -27,7 +29,7 @@ public enum MessagePopupButtons
     YesNo
 }
 
-public partial class MessagePopup : Popup
+public partial class MessagePopup : Popup<bool>
 {
     // Glyph codes from MaterialSymbolsRounded font
     // warning: f083 | check/success: e5ca | question: e8fd | info: e88e | error: e000
@@ -98,8 +100,8 @@ public partial class MessagePopup : Popup
         }
     }
 
-    private void OnPrimaryButtonClicked(object sender, EventArgs e) => Close(true);
-    private void OnSecondaryButtonClicked(object sender, EventArgs e) => Close(false);
+    private async void OnPrimaryButtonClicked(object sender, EventArgs e) => await CloseAsync(true);
+    private async void OnSecondaryButtonClicked(object sender, EventArgs e) => await CloseAsync(false);
 
     // -------------------------------------------------------------------------
     // Static factory helpers for the most common scenarios
@@ -132,7 +134,12 @@ public partial class MessagePopup : Popup
     {
         var popup = new MessagePopup(title, message, type, buttons);
         var page = Shell.Current.CurrentPage;
-        var result = await page.ShowPopupAsync(popup);
-        return result is true;
+        var options = new PopupOptions
+        {
+            Shape = null,
+            PageOverlayColor = Color.FromArgb("#80000000")
+        };
+        var result = await page.ShowPopupAsync<bool>(popup, options, CancellationToken.None);
+        return !result.WasDismissedByTappingOutsideOfPopup && result.Result;
     }
 }

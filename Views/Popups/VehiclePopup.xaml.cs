@@ -2,20 +2,25 @@
 using IvanConnections_Travel.ViewModels.Popups;
 using System.Collections.Specialized;
 namespace IvanConnections_Travel.Views.Popups;
-public partial class VehiclePopup : Popup
+public partial class VehiclePopup : Popup<bool>
 {
     private readonly VehiclePopupViewModel VehiclePopupViewModel;
     public VehiclePopup(VehiclePopupViewModel vehiclePopupViewModel)
     {
         InitializeComponent();
         BindingContext = VehiclePopupViewModel = vehiclePopupViewModel;
-        VehiclePopupViewModel.FollowVehicle += (s, e) =>
+        VehiclePopupViewModel.FollowVehicle += async (s, e) =>
         {
-            Close(e);
+            await CloseAsync(e ?? false);
         };
         VehiclePopupViewModel.Messages.CollectionChanged += OnMessagesChanged;
         Closed += async (s, e) => await VehiclePopupViewModel.CleanupAsync();
     }
+    private async void CloseButton_Clicked(object sender, EventArgs e)
+    {
+        await CloseAsync(false);
+    }
+
     private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.Action == NotifyCollectionChangedAction.Add && VehiclePopupViewModel.Messages.Count > 0)
