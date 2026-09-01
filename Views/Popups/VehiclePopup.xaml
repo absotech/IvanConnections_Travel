@@ -82,6 +82,29 @@
                        FontAttributes="Bold"
                        Grid.Column="1" />
             </Grid>
+            <!-- Stale data warning -->
+            <Border IsVisible="{Binding IsDataStale}"
+                    StrokeThickness="1"
+                    Stroke="#F59E0B"
+                    StrokeShape="RoundRectangle 14"
+                    BackgroundColor="{AppThemeBinding Light=#FFF7E6, Dark=#3A2E12}"
+                    Padding="12,10">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="10">
+                    <Label VerticalOptions="Start"
+                           FontFamily="MaterialSymbolsRounded"
+                           Text="&#xe002;"
+                           FontSize="22"
+                           TextColor="#F59E0B" />
+                    <Label Grid.Column="1"
+                           Text="{Binding StaleMessage}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#8A5A00, Dark=#F5C46B}" />
+                </Grid>
+            </Border>
+
             <ActivityIndicator IsRunning="{Binding Loading}"
                                IsVisible="{Binding Loading}"
                                HorizontalOptions="Center"

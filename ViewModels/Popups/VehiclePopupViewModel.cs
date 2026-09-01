@@ -40,6 +40,12 @@ namespace IvanConnections_Travel.ViewModels.Popups
         [ObservableProperty]
         private string followText = "Urmărește ";
 
+        [ObservableProperty]
+        private bool isDataStale;
+
+        [ObservableProperty]
+        private string? staleMessage;
+
         // Chat
         [ObservableProperty]
         private bool isChatExpanded = false;
@@ -106,6 +112,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
             else
                 VehicleInfo = null;
 
+            UpdateStaleInfo(vehicle);
+
             if (vehicle.NextStop != null)
             {
                 _ = Task.Run(async () =>
@@ -136,6 +144,20 @@ namespace IvanConnections_Travel.ViewModels.Popups
             }
 
             _ = LoadDeviceIdAsync();
+        }
+
+        private void UpdateStaleInfo(Vehicle vehicle)
+        {
+            IsDataStale = vehicle.IsDataStale;
+            if (!IsDataStale || !vehicle.LastUpdateUtc.HasValue)
+            {
+                StaleMessage = null;
+                return;
+            }
+
+            var localTimestamp = TimeZoneInfo.ConvertTimeFromUtc(vehicle.LastUpdateUtc.Value, _timeZoneInfo);
+            var timeText = Utils.TimeFormatUtils.FormatTimeDifferenceInRomanian(localTimestamp);
+            StaleMessage = $"Poziția nu a mai fost actualizată de {timeText}. Este posibil ca acest {VehicleType} să fie pe capăt sau să nu se mai afle în acest loc.";
         }
 
         private async Task LoadDeviceIdAsync()

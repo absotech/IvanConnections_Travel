@@ -62,7 +62,7 @@ namespace IvanConnections_Travel.Utils
             return resultBitmap;
         }
 
-        public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing, int vehiclePinSize, bool numberOnly = false)
+        public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing, int vehiclePinSize, bool numberOnly = false, bool isStale = false)
         {
             var density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
             var baseIconSize = (int)(vehiclePinSize * density);
@@ -74,7 +74,7 @@ namespace IvanConnections_Travel.Utils
 
             if (numberOnly)
             {
-                return CreateNumberOnlyPinBitmap(context, label, colorHex, bearing, baseIconSize, overlaySize, padding);
+                return CreateNumberOnlyPinBitmap(context, label, colorHex, bearing, baseIconSize, overlaySize, padding, isStale);
             }
 
             var resultWidth = baseIconSize + overlaySize + padding;
@@ -133,10 +133,15 @@ namespace IvanConnections_Travel.Utils
                 }
             }
 
+            if (isStale)
+            {
+                DrawStaleBadge(canvas, resultWidth, overlaySize);
+            }
+
             return resultBitmap;
         }
 
-        private static Bitmap CreateNumberOnlyPinBitmap(Context context, string label, string colorHex, double? bearing, int baseIconSize, int overlaySize, int padding)
+        private static Bitmap CreateNumberOnlyPinBitmap(Context context, string label, string colorHex, double? bearing, int baseIconSize, int overlaySize, int padding, bool isStale = false)
         {
             label ??= string.Empty;
 
@@ -213,7 +218,40 @@ namespace IvanConnections_Travel.Utils
                 }
             }
 
+            if (isStale)
+            {
+                DrawStaleBadge(canvas, resultWidth, overlaySize);
+            }
+
             return resultBitmap;
+        }
+
+        /// <summary>
+        /// Desenează un mic semn de avertizare (cerc portocaliu cu „!”) în colțul din dreapta-sus
+        /// al iconiței, pentru a marca faptul că poziția vehiculului este învechită.
+        /// </summary>
+        private static void DrawStaleBadge(Canvas canvas, int resultWidth, int overlaySize)
+        {
+            var radius = overlaySize / 2f;
+            var centerX = resultWidth - radius;
+            var centerY = radius;
+
+            using var ringPaint = new Paint { Color = Color.White, AntiAlias = true };
+            canvas.DrawCircle(centerX, centerY, radius, ringPaint);
+
+            using var circlePaint = new Paint { Color = Color.Argb(255, 245, 158, 11), AntiAlias = true };
+            canvas.DrawCircle(centerX, centerY, radius * 0.86f, circlePaint);
+
+            using var markPaint = new Paint
+            {
+                Color = Color.White,
+                AntiAlias = true,
+                TextAlign = Paint.Align.Center,
+                FakeBoldText = true,
+                TextSize = radius * 1.3f
+            };
+            var textY = centerY - (markPaint.Descent() + markPaint.Ascent()) / 2f;
+            canvas.DrawText("!", centerX, textY, markPaint);
         }
     }
 
@@ -227,8 +265,9 @@ namespace IvanConnections_Travel.Utils
         private bool IsStopIcon { get; }
         private int Size { get; }
         private bool NumberOnly { get; }
+        private bool IsStale { get; }
 
-        public BitmapCacheKey(VehicleType vehicleType, string routeShortName, string colorValue, double? bearing, bool isStopIcon, int size, bool numberOnly = false)
+        public BitmapCacheKey(VehicleType vehicleType, string routeShortName, string colorValue, double? bearing, bool isStopIcon, int size, bool numberOnly = false, bool isStale = false)
         {
             VehicleType = vehicleType;
             RouteShortName = routeShortName ?? string.Empty;
@@ -238,9 +277,10 @@ namespace IvanConnections_Travel.Utils
             RoundedBearing = IsStopped ? -1 : (int)Math.Round(bearing!.Value);
             Size = size;
             NumberOnly = numberOnly;
+            IsStale = isStale;
         }
 
-        public override int GetHashCode() => HashCode.Combine(VehicleType, RouteShortName, ColorValue, RoundedBearing, IsStopped, IsStopIcon, Size, NumberOnly);
+        public override int GetHashCode() => HashCode.Combine(HashCode.Combine(VehicleType, RouteShortName, ColorValue, RoundedBearing, IsStopped, IsStopIcon, Size, NumberOnly), IsStale);
 
         public bool Equals(BitmapCacheKey other)
         {
@@ -251,7 +291,8 @@ namespace IvanConnections_Travel.Utils
                    IsStopIcon == other.IsStopIcon &&
                    IsStopped == other.IsStopped &&
                    Size == other.Size &&
-                   NumberOnly == other.NumberOnly;
+                   NumberOnly == other.NumberOnly &&
+                   IsStale == other.IsStale;
         }
 
         public override bool Equals(object? obj) => obj is BitmapCacheKey key && Equals(key);

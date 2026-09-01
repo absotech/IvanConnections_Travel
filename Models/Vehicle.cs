@@ -31,5 +31,29 @@ namespace IvanConnections_Travel.Models
 
         public bool IsNewTram { get; set; }
         public bool IsTracked { get; set; } = false;
+
+        /// <summary>
+        /// Numărul de minute după care datele de poziție ale unui vehicul sunt considerate învechite.
+        /// </summary>
+        public const int StaleThresholdMinutes = 2;
+
+        /// <summary>
+        /// Momentul (UTC) al ultimei actualizări a poziției vehiculului.
+        /// </summary>
+        public DateTime? LastUpdateUtc => LocalTimestamp ?? Timestamp;
+
+        /// <summary>
+        /// True dacă poziția vehiculului nu a mai fost actualizată de mai mult de
+        /// <see cref="StaleThresholdMinutes"/> minute, deci este posibil ca vehiculul
+        /// să nu se mai afle în acel loc.
+        /// </summary>
+        public bool IsDataStale
+        {
+            get
+            {
+                if (!LastUpdateUtc.HasValue) return false;
+                return DateTime.UtcNow - LastUpdateUtc.Value > TimeSpan.FromMinutes(StaleThresholdMinutes);
+            }
+        }
     }
 }

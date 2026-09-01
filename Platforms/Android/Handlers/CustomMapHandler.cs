@@ -55,6 +55,11 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         private readonly Dictionary<string, BitmapCacheKey> _markerIconKeys = new();
 
+        // Marker draw/hit-test ordering: higher ZIndex wins the tap when pins overlap.
+        // Vehicles (bus/tram) must sit above stops so tapping an overlapping pin selects the vehicle.
+        private const float StopMarkerZIndex = 0f;
+        private const float VehicleMarkerZIndex = 1f;
+
         private static void MapIsTrafficEnabled(CustomMapHandler handler, CustomMauiMap map)
         {
             handler._googleMap?.TrafficEnabled = map.IsTrafficEnabled;
@@ -168,9 +173,10 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     {
                         if (!v.Latitude.HasValue || !v.Longitude.HasValue || v.Label is null) continue;
 
+                        var isStale = v.IsDataStale;
                         var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "",
                             ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false,
-                            mauiMap.VehiclePinSize, mauiMap.ShowNumberOnly);
+                            mauiMap.VehiclePinSize, mauiMap.ShowNumberOnly, isStale);
                         var descriptor = BitmapCache.GetOrAddDescriptor(key, _ => 
                             MapBitmapFactory.CreateCustomPinBitmap(
                                 context,
@@ -179,7 +185,8 @@ namespace IvanConnections_Travel.Platforms.Handlers
                                 v.RouteColor, 
                                 v.Direction, 
                                 mauiMap.VehiclePinSize,
-                                mauiMap.ShowNumberOnly));
+                                mauiMap.ShowNumberOnly,
+                                isStale));
 
                         info.Add((v.Label, new LatLng(v.Latitude.Value, v.Longitude.Value), descriptor, key));
                     }
@@ -200,6 +207,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
                         if (existingMarker.Tag == null) 
                             existingMarker.Tag = expectedTag;
 
+                        // Keep vehicles above stops so taps on overlapping pins hit the vehicle.
+                        existingMarker.ZIndex = VehicleMarkerZIndex;
+
                         if (!_markerIconKeys.TryGetValue(vehicleId, out var oldKey) || !oldKey.Equals(key))
                         {
                             existingMarker.SetIcon(icon);
@@ -211,7 +221,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     {
                         var markerOptions = new MarkerOptions()
                             .SetPosition(pos)
-                            .SetIcon(icon);
+                            .SetIcon(icon)
+                            // Keep vehicles above stops so taps on overlapping pins hit the vehicle.
+                            .InvokeZIndex(VehicleMarkerZIndex);
 
                         var newMarker = _googleMap.AddMarker(markerOptions);
                         if (newMarker == null) continue;
@@ -283,7 +295,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 var markerOptions = new MarkerOptions()
                     .SetPosition(new LatLng(stop.StopLat, stop.StopLon))
                     .SetTitle($"Stație: {stop.StopName}")
-                    .SetIcon(descriptor); // Use the descriptor directly!
+                    .SetIcon(descriptor) // Use the descriptor directly!
+                    // Keep stops below vehicles so taps on overlapping pins hit the vehicle.
+                    .InvokeZIndex(StopMarkerZIndex);
 
                 var newMarker = _googleMap.AddMarker(markerOptions);
                 if (newMarker == null) continue;

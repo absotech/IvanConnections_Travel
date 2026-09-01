@@ -253,6 +253,13 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     annotationView.Image = customAnnotation.Icon;
                 }
 
+                // Keep vehicles (bus/tram) above stops so taps on overlapping pins hit the vehicle.
+                var isVehicle = customAnnotation.Tag?.StartsWith("vehicle_", StringComparison.Ordinal) == true;
+                annotationView.Layer.ZPosition = isVehicle ? 1f : 0f;
+                annotationView.DisplayPriority = isVehicle
+                    ? MKFeatureDisplayPriority.Required
+                    : MKFeatureDisplayPriority.DefaultLow;
+
                 return annotationView;
             }
 
