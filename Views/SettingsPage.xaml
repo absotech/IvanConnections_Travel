@@ -15,7 +15,7 @@
                                     Command="{Binding AppearingCommand}" />
     </ContentPage.Behaviors>
     <ScrollView>
-        <VerticalStackLayout Padding="24,32" Spacing="24">
+        <VerticalStackLayout Padding="24,32" Spacing="12">
             <!-- Header -->
             <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
                 <Button Clicked="OnMenuClicked"

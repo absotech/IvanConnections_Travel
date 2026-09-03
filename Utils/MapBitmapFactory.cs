@@ -18,9 +18,19 @@ namespace IvanConnections_Travel.Utils
         
         private static float VehiclePinOverlayScale = 0.48f;
         private static float VehiclePinPaddingScale = 0.20f;
+        private static float VehiclePinArrowGapScale = 0.02f;
         private static float VehiclePinTextScale = 0.40f;
         private static float VehiclePinTextPaddingScale = 0.08f;
         private static float VehiclePinCornerRadiusScale = 0.12f;
+
+        // Color used to fill the direction arrow overlay. Change this to recolor the arrow.
+        private static Color VehiclePinArrowColor = Color.White;
+
+        // Margin/outline drawn behind the direction arrow so it stays visible on any map
+        // background. Change VehiclePinArrowMarginColor to recolor it and
+        // VehiclePinArrowMarginScale (fraction of the arrow size) to change its thickness.
+        private static Color VehiclePinArrowMarginColor = Color.Black;
+        private static float VehiclePinArrowMarginScale = 0.12f;
 
         // Number-only marker proportions
         private static float NumberOnlyTextScale = 0.70f;
@@ -62,23 +72,26 @@ namespace IvanConnections_Travel.Utils
             return resultBitmap;
         }
 
-        public static Bitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing, int vehiclePinSize, bool numberOnly = false, bool isStale = false)
+        public static VehiclePinBitmap CreateCustomPinBitmap(Context context, VehicleType iconType, string label, string colorHex, double? bearing, int vehiclePinSize, bool numberOnly = false, bool isStale = false)
         {
             var density = context.Resources?.DisplayMetrics?.Density ?? 1.0f;
             var baseIconSize = (int)(vehiclePinSize * density);
             var overlaySize = (int)(baseIconSize * VehiclePinOverlayScale);
             var padding = (int)(baseIconSize * VehiclePinPaddingScale);
+            var gap = Math.Max(1, (int)(baseIconSize * VehiclePinArrowGapScale));
             var fontSize = (int)(baseIconSize * VehiclePinTextScale);
             var textPadding = (int)(baseIconSize * VehiclePinTextPaddingScale);
             var cornerRadius = (int)(baseIconSize * VehiclePinCornerRadiusScale);
 
             if (numberOnly)
             {
-                return CreateNumberOnlyPinBitmap(context, label, colorHex, bearing, baseIconSize, overlaySize, padding, isStale);
+                return CreateNumberOnlyPinBitmap(context, label, colorHex, bearing, baseIconSize, overlaySize, padding, gap, isStale);
             }
 
             var resultWidth = baseIconSize + overlaySize + padding;
-            var resultHeight = baseIconSize + overlaySize + padding;
+            // The vehicle icon sits on top and the direction arrow (or stop marker) is placed
+            // directly beneath it, so the arrow can be anchored exactly on the vehicle's location.
+            var resultHeight = baseIconSize + gap + overlaySize;
 
             var resultBitmap = Bitmap.CreateBitmap(resultWidth, resultHeight, Bitmap.Config.Argb8888);
             using var canvas = new Canvas(resultBitmap);
@@ -93,15 +106,15 @@ namespace IvanConnections_Travel.Utils
             var textPaint = new Paint { Color = ColorManagement.IsColorDark(iconPaint.Color) ? Color.Yellow : Color.White, TextSize = fontSize, AntiAlias = true, TextAlign = Paint.Align.Center };
             var bgPaint = new Paint { Color = Color.Argb(170, 0, 0, 0), AntiAlias = true };
             var iconResId = iconType == VehicleType.Bus ? Resource.Drawable.bus_icon : Resource.Drawable.tram_icon;
+            var iconX = (resultWidth - baseIconSize) / 2f;
+            const float iconY = 0f;
             using (var baseBitmap = BitmapFactory.DecodeResource(context.Resources, iconResId))
             using (var scaledBitmap = Bitmap.CreateScaledBitmap(baseBitmap, baseIconSize, baseIconSize, true))
             {
-                var iconX = (resultWidth - baseIconSize) / 2f;
-                var iconY = (resultHeight - baseIconSize) / 2f;
                 canvas.DrawBitmap(scaledBitmap, iconX, iconY, iconPaint);
             }
             var textX = resultWidth / 2f;
-            var textY = resultHeight / 2f - ((textPaint.Descent() + textPaint.Ascent()) / 2);
+            var textY = baseIconSize / 2f - ((textPaint.Descent() + textPaint.Ascent()) / 2);
             Rect textBounds = new();
             textPaint.GetTextBounds(label, 0, label.Length, textBounds);
 
@@ -110,38 +123,25 @@ namespace IvanConnections_Travel.Utils
             canvas.DrawText(label, textX, textY, textPaint);
 
             var isStopped = bearing is null or < 0;
-            var overlayResId = isStopped ? Resource.Drawable.stop_icon : Resource.Drawable.arrow_icon_notfilled;
-            var overlayPaint = new Paint { AntiAlias = true };
-            overlayPaint.SetColorFilter(new PorterDuffColorFilter(isStopped ? Color.Red : Color.White, PorterDuff.Mode.SrcIn));
+            var overlayResId = isStopped ? Resource.Drawable.stop_icon : Resource.Drawable.arrow_icon;
 
-            using (var overlayBase = BitmapFactory.DecodeResource(context.Resources, overlayResId))
-            using (var scaledOverlay = Bitmap.CreateScaledBitmap(overlayBase, overlaySize, overlaySize, true))
-            {
-                const float overlayX = 0;
-                const float overlayY = 0;
-
-                if (!isStopped)
-                {
-                    canvas.Save();
-                    canvas.Rotate((float)bearing!.Value, overlayX + overlaySize / 2f, overlayY + overlaySize / 2f);
-                    canvas.DrawBitmap(scaledOverlay, overlayX, overlayY, overlayPaint);
-                    canvas.Restore();
-                }
-                else
-                {
-                    canvas.DrawBitmap(scaledOverlay, overlayX, overlayY, overlayPaint);
-                }
-            }
+            var overlayX = (resultWidth - overlaySize) / 2f;
+            var overlayY = (float)(baseIconSize + gap);
+            DrawDirectionOverlay(context, canvas, overlayResId, isStopped, bearing, overlayX, overlayY, overlaySize);
 
             if (isStale)
             {
                 DrawStaleBadge(canvas, resultWidth, overlaySize);
             }
 
-            return resultBitmap;
+            // Anchor the marker on the centre of the overlay so the arrow/stop icon sits
+            // exactly on the vehicle's real-world location (underneath the vehicle icon).
+            var anchorU = (overlayX + overlaySize / 2f) / resultWidth;
+            var anchorV = (overlayY + overlaySize / 2f) / resultHeight;
+            return new VehiclePinBitmap(resultBitmap, anchorU, anchorV);
         }
 
-        private static Bitmap CreateNumberOnlyPinBitmap(Context context, string label, string colorHex, double? bearing, int baseIconSize, int overlaySize, int padding, bool isStale = false)
+        private static VehiclePinBitmap CreateNumberOnlyPinBitmap(Context context, string label, string colorHex, double? bearing, int baseIconSize, int overlaySize, int padding, int gap, bool isStale = false)
         {
             label ??= string.Empty;
 
@@ -171,13 +171,15 @@ namespace IvanConnections_Travel.Utils
             var badgeHeight = Math.Max((int)(baseIconSize * 0.72f), textBounds.Height() + textPadding * 2);
 
             var resultWidth = badgeWidth + overlaySize + padding;
-            var resultHeight = badgeHeight + overlaySize + padding;
+            // The number badge sits on top and the direction arrow (or stop marker) is placed
+            // directly beneath it, so the arrow can be anchored exactly on the vehicle's location.
+            var resultHeight = badgeHeight + gap + overlaySize;
 
             var resultBitmap = Bitmap.CreateBitmap(resultWidth, resultHeight, Bitmap.Config.Argb8888);
             using var canvas = new Canvas(resultBitmap);
 
             var badgeLeft = (resultWidth - badgeWidth) / 2f;
-            var badgeTop = (resultHeight - badgeHeight) / 2f;
+            const float badgeTop = 0f;
             var badgeRect = new RectF(badgeLeft, badgeTop, badgeLeft + badgeWidth, badgeTop + badgeHeight);
 
             var bgPaint = new Paint { Color = tintColor, AntiAlias = true };
@@ -195,35 +197,61 @@ namespace IvanConnections_Travel.Utils
             canvas.DrawText(label, textX, textY, textPaint);
 
             var isStopped = bearing is null or < 0;
-            var overlayResId = isStopped ? Resource.Drawable.stop_icon : Resource.Drawable.arrow_icon_notfilled;
-            var overlayPaint = new Paint { AntiAlias = true };
-            overlayPaint.SetColorFilter(new PorterDuffColorFilter(isStopped ? Color.Red : Color.White, PorterDuff.Mode.SrcIn));
+            var overlayResId = isStopped ? Resource.Drawable.stop_icon : Resource.Drawable.arrow_icon;
 
-            using (var overlayBase = BitmapFactory.DecodeResource(context.Resources, overlayResId))
-            using (var scaledOverlay = Bitmap.CreateScaledBitmap(overlayBase, overlaySize, overlaySize, true))
-            {
-                const float overlayX = 0;
-                const float overlayY = 0;
-
-                if (!isStopped)
-                {
-                    canvas.Save();
-                    canvas.Rotate((float)bearing!.Value, overlayX + overlaySize / 2f, overlayY + overlaySize / 2f);
-                    canvas.DrawBitmap(scaledOverlay, overlayX, overlayY, overlayPaint);
-                    canvas.Restore();
-                }
-                else
-                {
-                    canvas.DrawBitmap(scaledOverlay, overlayX, overlayY, overlayPaint);
-                }
-            }
+            var overlayX = (resultWidth - overlaySize) / 2f;
+            var overlayY = (float)(badgeHeight + gap);
+            DrawDirectionOverlay(context, canvas, overlayResId, isStopped, bearing, overlayX, overlayY, overlaySize);
 
             if (isStale)
             {
                 DrawStaleBadge(canvas, resultWidth, overlaySize);
             }
 
-            return resultBitmap;
+            // Anchor the marker on the centre of the overlay so the arrow/stop icon sits
+            // exactly on the vehicle's real-world location (underneath the number badge).
+            var anchorU = (overlayX + overlaySize / 2f) / resultWidth;
+            var anchorV = (overlayY + overlaySize / 2f) / resultHeight;
+            return new VehiclePinBitmap(resultBitmap, anchorU, anchorV);
+        }
+
+        /// <summary>
+        /// Desenează iconița direcției (săgeata) cu un contur/margine în spate, astfel încât
+        /// săgeata să rămână vizibilă pe orice fundal al hărții. Pentru vehiculele oprite
+        /// desenează iconița de stop, fără margine.
+        /// </summary>
+        private static void DrawDirectionOverlay(Context context, Canvas canvas, int overlayResId, bool isStopped, double? bearing, float overlayX, float overlayY, int overlaySize)
+        {
+            using var overlayBase = BitmapFactory.DecodeResource(context.Resources, overlayResId);
+
+            canvas.Save();
+            if (!isStopped)
+            {
+                canvas.Rotate((float)bearing!.Value, overlayX + overlaySize / 2f, overlayY + overlaySize / 2f);
+
+                // Draw a slightly larger version of the arrow behind it, acting as a margin/outline.
+                var margin = Math.Max(1, (int)(overlaySize * VehiclePinArrowMarginScale));
+                var marginSize = overlaySize + margin * 2;
+                using var marginPaint = new Paint { AntiAlias = true };
+                marginPaint.SetColorFilter(new PorterDuffColorFilter(VehiclePinArrowMarginColor, PorterDuff.Mode.SrcIn));
+                using (var scaledMargin = Bitmap.CreateScaledBitmap(overlayBase, marginSize, marginSize, true))
+                {
+                    canvas.DrawBitmap(scaledMargin, overlayX - margin, overlayY - margin, marginPaint);
+                }
+
+                using var arrowPaint = new Paint { AntiAlias = true };
+                arrowPaint.SetColorFilter(new PorterDuffColorFilter(VehiclePinArrowColor, PorterDuff.Mode.SrcIn));
+                using var scaledArrow = Bitmap.CreateScaledBitmap(overlayBase, overlaySize, overlaySize, true);
+                canvas.DrawBitmap(scaledArrow, overlayX, overlayY, arrowPaint);
+            }
+            else
+            {
+                using var stopPaint = new Paint { AntiAlias = true };
+                stopPaint.SetColorFilter(new PorterDuffColorFilter(Color.Red, PorterDuff.Mode.SrcIn));
+                using var scaledStop = Bitmap.CreateScaledBitmap(overlayBase, overlaySize, overlaySize, true);
+                canvas.DrawBitmap(scaledStop, overlayX, overlayY, stopPaint);
+            }
+            canvas.Restore();
         }
 
         /// <summary>
@@ -254,6 +282,12 @@ namespace IvanConnections_Travel.Utils
             canvas.DrawText("!", centerX, textY, markPaint);
         }
     }
+
+    /// <summary>
+    /// A generated vehicle pin bitmap together with the anchor fractions that place the
+    /// direction arrow (or stop marker) exactly on the vehicle's real-world location.
+    /// </summary>
+    public readonly record struct VehiclePinBitmap(Bitmap Bitmap, float AnchorU, float AnchorV);
 
     public readonly struct BitmapCacheKey : IEquatable<BitmapCacheKey>
     {

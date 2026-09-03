@@ -122,10 +122,10 @@ public partial class SettingsViewModel : ObservableObject
     {
         await _vehicleDebouncer.RunAsync(async () =>
         {
-            var bitmap = MapBitmapFactory.CreateCustomPinBitmap(Platform.CurrentActivity, VehicleType.Bus, "12", "#FF0000", 45, VehicleSize, ShowNumberOnly);
+            var pin = MapBitmapFactory.CreateCustomPinBitmap(Platform.CurrentActivity, VehicleType.Bus, "12", "#FF0000", 45, VehicleSize, ShowNumberOnly);
 
             using var ms = new MemoryStream();
-            bitmap.Compress(Bitmap.CompressFormat.Png, 100, ms);
+            pin.Bitmap.Compress(Bitmap.CompressFormat.Png, 100, ms);
             ms.Seek(0, SeekOrigin.Begin);
 
             VehiclePreview = ImageSource.FromStream(() => new MemoryStream(ms.ToArray()));

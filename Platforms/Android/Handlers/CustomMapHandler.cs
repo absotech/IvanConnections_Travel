@@ -37,21 +37,27 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
         private static class BitmapCache
         {
-            private static readonly ConcurrentDictionary<BitmapCacheKey, BitmapDescriptor> _descriptorCache = new();
-            public static BitmapDescriptor GetOrAddDescriptor(BitmapCacheKey key, Func<BitmapCacheKey, Bitmap> factory)
+            private static readonly ConcurrentDictionary<BitmapCacheKey, MarkerIcon> _iconCache = new();
+            public static MarkerIcon GetOrAddIcon(BitmapCacheKey key, Func<BitmapCacheKey, (Bitmap Bitmap, float AnchorU, float AnchorV)> factory)
             {
-                return _descriptorCache.GetOrAdd(key, k => 
+                return _iconCache.GetOrAdd(key, k =>
                 {
-                    using var bitmap = factory(k);
+                    var (bitmap, anchorU, anchorV) = factory(k);
                     var descriptor = BitmapDescriptorFactory.FromBitmap(bitmap);
                     if (bitmap != null && !bitmap.IsRecycled)
                     {
                         bitmap.Recycle();
                     }
-                    return descriptor;
+                    return new MarkerIcon(descriptor, anchorU, anchorV);
                 });
             }
         }
+
+        /// <summary>
+        /// A cached marker icon together with the anchor fractions that place the direction
+        /// arrow (or stop marker) exactly on the target's real-world location.
+        /// </summary>
+        private readonly record struct MarkerIcon(BitmapDescriptor Descriptor, float AnchorU, float AnchorV);
 
         private readonly Dictionary<string, BitmapCacheKey> _markerIconKeys = new();
 
@@ -168,7 +174,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
                 var vehicleData = await Task.Run(() =>
                 {
-                    var info = new List<(string Label, LatLng Pos, BitmapDescriptor Icon, BitmapCacheKey Key)>();
+                    var info = new List<(string Label, LatLng Pos, MarkerIcon Icon, BitmapCacheKey Key)>();
                     foreach (var v in mauiMap.Vehicles)
                     {
                         if (!v.Latitude.HasValue || !v.Longitude.HasValue || v.Label is null) continue;
@@ -177,8 +183,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
                         var key = new BitmapCacheKey(v.VehicleType.Value, v.RouteShortName ?? "",
                             ColorManagement.NormalizeColorHex(v.RouteColor ?? "#000000"), v.Direction, false,
                             mauiMap.VehiclePinSize, mauiMap.ShowNumberOnly, isStale);
-                        var descriptor = BitmapCache.GetOrAddDescriptor(key, _ => 
-                            MapBitmapFactory.CreateCustomPinBitmap(
+                        var icon = BitmapCache.GetOrAddIcon(key, _ =>
+                        {
+                            var pin = MapBitmapFactory.CreateCustomPinBitmap(
                                 context,
                                 v.VehicleType.Value, 
                                 v.RouteShortName, 
@@ -186,9 +193,11 @@ namespace IvanConnections_Travel.Platforms.Handlers
                                 v.Direction, 
                                 mauiMap.VehiclePinSize,
                                 mauiMap.ShowNumberOnly,
-                                isStale));
+                                isStale);
+                            return (pin.Bitmap, pin.AnchorU, pin.AnchorV);
+                        });
 
-                        info.Add((v.Label, new LatLng(v.Latitude.Value, v.Longitude.Value), descriptor, key));
+                        info.Add((v.Label, new LatLng(v.Latitude.Value, v.Longitude.Value), icon, key));
                     }
 
                     return info;
@@ -212,7 +221,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
                         if (!_markerIconKeys.TryGetValue(vehicleId, out var oldKey) || !oldKey.Equals(key))
                         {
-                            existingMarker.SetIcon(icon);
+                            existingMarker.SetIcon(icon.Descriptor);
+                            // Re-anchor so the arrow keeps sitting on the vehicle's location.
+                            existingMarker.SetAnchor(icon.AnchorU, icon.AnchorV);
                             _markerIconKeys[vehicleId] = key;
                         }
                         visibleVehicleKeys.Remove(vehicleId);
@@ -221,7 +232,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
                     {
                         var markerOptions = new MarkerOptions()
                             .SetPosition(pos)
-                            .SetIcon(icon)
+                            .SetIcon(icon.Descriptor)
+                            // Anchor the arrow exactly on the vehicle's real-world location.
+                            .Anchor(icon.AnchorU, icon.AnchorV)
                             // Keep vehicles above stops so taps on overlapping pins hit the vehicle.
                             .InvokeZIndex(VehicleMarkerZIndex);
 
@@ -288,9 +301,9 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
                 var key = new BitmapCacheKey(VehicleType.Bus, stop.StopName, "#000088", null, isStopIcon: true, mauiMap.StopPinSize);
         
-                // Get the DESCRIPTOR directly from the cache
-                var descriptor = BitmapCache.GetOrAddDescriptor(key, 
-                    _ => MapBitmapFactory.CreateStopPinBitmap(context, mauiMap.StopPinSize));
+                // Get the DESCRIPTOR directly from the cache (stops keep the default bottom-centre anchor).
+                var descriptor = BitmapCache.GetOrAddIcon(key, 
+                    _ => (MapBitmapFactory.CreateStopPinBitmap(context, mauiMap.StopPinSize), 0.5f, 1.0f)).Descriptor;
 
                 var markerOptions = new MarkerOptions()
                     .SetPosition(new LatLng(stop.StopLat, stop.StopLon))
