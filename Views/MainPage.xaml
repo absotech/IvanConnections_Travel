@@ -70,7 +70,7 @@
                             <FontImageSource FontFamily="MaterialSymbolsRounded"
                                              Glyph="&#xe5d2;"
                                              Size="30"
-                                             Color="{StaticResource PrimaryDarkText}" />
+                                             Color="{AppThemeBinding Light={StaticResource OffBlack}, Dark={StaticResource PrimaryDarkText}}" />
                         </Button.ImageSource>
                         </Button>
                     <local:FancySearchBar Grid.Column="1"

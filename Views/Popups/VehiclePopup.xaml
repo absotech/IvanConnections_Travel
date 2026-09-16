@@ -10,286 +10,488 @@
                x:TypeArguments="sys:Boolean"
                BackgroundColor="Transparent"
                x:Class="IvanConnections_Travel.Views.Popups.VehiclePopup">
-    <Border Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+    <Border x:Name="RootCard"
+            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
             StrokeThickness="1"
             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
             MinimumWidthRequest="300"
             MaximumWidthRequest="400"
-            Padding="20">
+            VerticalOptions="Start"
+            Padding="0">
         <Border.Shadow>
             <Shadow Brush="Black"
-                    Offset="10,10"
-                    Radius="20"
-                    Opacity="0.3" />
+                    Offset="0,8"
+                    Radius="24"
+                    Opacity="0.25" />
         </Border.Shadow>
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="24" />
         </Border.StrokeShape>
-        <VerticalStackLayout Spacing="12">
-            <!-- Close (X) -->
-            <Button Clicked="CloseButton_Clicked"
-                    ToolTipProperties.Text="Închide"
-                    CornerRadius="18"
-                    HeightRequest="36"
-                    WidthRequest="36"
-                    Padding="0"
-                    Margin="0,-8,-8,-4"
-                    HorizontalOptions="End"
-                    BackgroundColor="Transparent">
-                <Button.ImageSource>
-                    <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                     Glyph="&#xe5cd;"
-                                     Size="22"
-                                     Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                </Button.ImageSource>
-            </Button>
+        <!-- Antet fix, detalii care se pot derula, chat mereu vizibil integral.
+         Toate rândurile sunt Auto, astfel încât cardul să se strângă exact pe conținut
+         (fără spațiu gol când chatul este închis); înălțimea maximă a zonei de detalii
+         este calculată în code-behind. -->
+        <Grid RowDefinitions="Auto, Auto, Auto"
+              VerticalOptions="Start">
+            <!-- Header: identitatea traseului -->
+            <Border x:Name="HeaderBorder"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 23,23,0,0"
+                    BackgroundColor="{Binding HeaderColor}"
+                    Padding="16,14">
+                <Grid ColumnDefinitions="Auto, *, Auto"
+                      ColumnSpacing="12">
+                    <!-- Pastilă cu tipul vehiculului + numărul traseului -->
+                    <Border Grid.Column="0"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{Binding HeaderOverlayColor}"
+                            MinimumWidthRequest="56"
+                            MinimumHeightRequest="48"
+                            Padding="10,6"
+                            VerticalOptions="Center">
+                        <Grid ColumnDefinitions="Auto, Auto"
+                              ColumnSpacing="6"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center">
+                            <Label FontFamily="MaterialSymbolsRounded"
+                                   Text="{Binding VehicleGlyph}"
+                                   FontSize="22"
+                                   VerticalOptions="Center"
+                                   TextColor="{Binding HeaderTextColor}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding RouteLabel}"
+                                   FontSize="22"
+                                   FontAttributes="Bold"
+                                   LineBreakMode="NoWrap"
+                                   VerticalOptions="Center"
+                                   TextColor="{Binding HeaderTextColor}" />
+                        </Grid>
+                    </Border>
 
-            <!-- Vehicle info -->
-            <Label FontSize="22"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="Traseu " />
-                        <Span Text="{Binding VehicleType}"
-                              FontAttributes="Bold" />
-                        <Span Text=": " />
-                        <Span Text="{Binding Vehicle.RouteShortName}"
-                              FontAttributes="Bold" />
-                    </FormattedString>
-                </Label.FormattedText>
-            </Label>
-            <Label FontSize="16"
-                   HorizontalOptions="Center"
-                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="{Binding Vehicle.PreviousStopName}" />
-                        <Span Text=" → "
-                              FontAttributes="Bold" />
-                        <Span Text="{Binding Vehicle.NextStop.StopName}" />
-                    </FormattedString>
-                </Label.FormattedText>
-            </Label>
-            <Grid ColumnDefinitions="Auto, *"
-                  HorizontalOptions="Center"
-                  IsVisible="{Binding TimeOfArrival, Converter={toolkit:IsNotNullConverter}}">
-                <Label Text="⏱ Ajunge la "
-                       FontSize="14"
-                       VerticalOptions="Center"
-                       TextColor="{AppThemeBinding Light=Black, Dark=LightGray}" />
-                <Label Text="{Binding TimeOfArrival, StringFormat='{0:HH:mm}'}"
-                       FontSize="16"
-                       FontAttributes="Bold"
-                       Grid.Column="1" />
-            </Grid>
-            <!-- Stale data warning -->
-            <Border IsVisible="{Binding IsDataStale}"
-                    StrokeThickness="1"
-                    Stroke="#F59E0B"
-                    StrokeShape="RoundRectangle 14"
-                    BackgroundColor="{AppThemeBinding Light=#FFF7E6, Dark=#3A2E12}"
-                    Padding="12,10">
-                <Grid ColumnDefinitions="Auto,*"
-                      ColumnSpacing="10">
-                    <Label VerticalOptions="Start"
-                           FontFamily="MaterialSymbolsRounded"
-                           Text="&#xe002;"
-                           FontSize="22"
-                           TextColor="#F59E0B" />
-                    <Label Grid.Column="1"
-                           Text="{Binding StaleMessage}"
-                           FontSize="13"
-                           LineBreakMode="WordWrap"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light=#8A5A00, Dark=#F5C46B}" />
+                    <!-- Tip vehicul + destinație -->
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="2"
+                                         VerticalOptions="Center">
+                        <Label Text="Traseu"
+                               FontSize="11"
+                               CharacterSpacing="1.5"
+                               TextColor="{Binding HeaderMutedTextColor}" />
+                        <Label Text="{Binding VehicleSubtitle}"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               MaxLines="2"
+                               LineBreakMode="TailTruncation"
+                               TextColor="{Binding HeaderTextColor}" />
+                    </VerticalStackLayout>
+
+                    <!-- Close (X) -->
+                    <Button Grid.Column="2"
+                            Clicked="CloseButton_Clicked"
+                            ToolTipProperties.Text="Închide"
+                            SemanticProperties.Description="Închide detaliile vehiculului"
+                            CornerRadius="18"
+                            HeightRequest="36"
+                            WidthRequest="36"
+                            Padding="0"
+                            VerticalOptions="Start"
+                            BackgroundColor="{Binding HeaderOverlayColor}">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                             Glyph="&#xe5cd;"
+                                             Size="20"
+                                             Color="{Binding HeaderTextColor}" />
+                        </Button.ImageSource>
+                    </Button>
                 </Grid>
             </Border>
 
-            <ActivityIndicator IsRunning="{Binding Loading}"
-                               IsVisible="{Binding Loading}"
-                               HorizontalOptions="Center"
-                               HeightRequest="24" />
-            <Label HorizontalOptions="Center"
-                   FontSize="14"
-                   TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                   Text="{Binding VehicleInfo}"
-                   IsVisible="{Binding VehicleInfo, Converter={toolkit:IsNotNullConverter}}" />
-            <Button Text="{Binding FollowText}"
-                    Command="{Binding FollowCommand}"
-                    CornerRadius="20"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                    TextColor="White"
-                    WidthRequest="160"
-                    HorizontalOptions="Center" />
+            <!-- Corpul popup-ului (se micșorează când chatul este deschis) -->
+            <ScrollView Grid.Row="1"
+                        x:Name="DetailsScroll"
+                        MinimumHeightRequest="0"
+                        VerticalOptions="Start"
+                        VerticalScrollBarVisibility="Default">
+                <VerticalStackLayout Spacing="12"
+                                     Padding="16,14,16,16">
+                    <!-- Traseul parcurs: stația anterioară → stația următoare -->
+                    <Border StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#1a2233}"
+                            Padding="14,12">
+                        <Grid ColumnDefinitions="Auto, *, Auto"
+                              ColumnSpacing="12">
+                            <!-- Linia vizuală a traseului -->
+                            <Grid Grid.Column="0"
+                                  RowDefinitions="Auto, *, Auto"
+                                  VerticalOptions="Fill"
+                                  WidthRequest="12">
+                                <Border StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 5"
+                                        WidthRequest="10"
+                                        HeightRequest="10"
+                                        VerticalOptions="Center"
+                                        HorizontalOptions="Center"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray500}}" />
+                                <Border Grid.Row="1"
+                                        StrokeThickness="0"
+                                        WidthRequest="2"
+                                        MinimumHeightRequest="14"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Fill"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray500}}" />
+                                <Border Grid.Row="2"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 6"
+                                        WidthRequest="12"
+                                        HeightRequest="12"
+                                        VerticalOptions="Center"
+                                        HorizontalOptions="Center"
+                                        BackgroundColor="{Binding HeaderColor}" />
+                            </Grid>
 
-            <!-- Chat toggle button -->
-            <Button Command="{Binding ToggleChatCommand}"
-                    CornerRadius="20"
-                    BackgroundColor="Transparent"
-                    BorderColor="{StaticResource OffBlackBorder}"
-                    BorderWidth="1"
-                    HeightRequest="36"
-                    HorizontalOptions="Center"
-                    Padding="16,0">
-                <Button.ImageSource>
-                    <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                     Glyph="&#xe0bf;"
-                                     Size="18"
-                                     Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                </Button.ImageSource>
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button"
-                                 Binding="{Binding IsChatExpanded}"
-                                 Value="False">
-                        <Setter Property="Text" Value="Chat vehicul" />
-                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                    </DataTrigger>
-                    <DataTrigger TargetType="Button"
-                                 Binding="{Binding IsChatExpanded}"
-                                 Value="True">
-                        <Setter Property="Text" Value="Închide chat" />
-                        <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                        <Setter Property="BorderColor" Value="{StaticResource Primary}" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Spacing="8">
+                                <VerticalStackLayout Spacing="1">
+                                    <Label Text="Stația anterioară"
+                                           FontSize="11"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                    <Label Text="{Binding Vehicle.PreviousStopName, TargetNullValue='—'}"
+                                           FontSize="14"
+                                           LineBreakMode="TailTruncation"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Spacing="1">
+                                    <Label Text="Următoarea stație"
+                                           FontSize="11"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                    <Label Text="{Binding Vehicle.NextStop.StopName, TargetNullValue='—'}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           LineBreakMode="TailTruncation"
+                                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
 
-            <!-- Extra vehicle info (setarea "Arată mai multe informații") -->
-            <Border IsVisible="{Binding ShowMoreInfo}"
-                    StrokeThickness="1"
-                    Stroke="{StaticResource OffBlackBorder}"
-                    StrokeShape="RoundRectangle 16"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark=#1a2233}"
-                    Padding="14,12">
-                <Grid RowDefinitions="Auto, Auto, Auto, Auto"
-                      ColumnDefinitions="Auto, *, Auto"
-                      RowSpacing="10"
-                      ColumnSpacing="10">
-
-                    <!-- Cod vehicul -->
-                    <Label Grid.Row="0" Grid.Column="0"
-                           FontFamily="MaterialSymbolsRounded"
-                           Text="&#xe638;"
-                           FontSize="18"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                    <Label Grid.Row="0" Grid.Column="1"
-                           Text="Cod vehicul"
-                           FontSize="13"
-                           LineBreakMode="NoWrap"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                    <Label Grid.Row="0" Grid.Column="2"
-                           Text="{Binding VehicleCode}"
-                           FontSize="16"
-                           FontAttributes="Bold"
-                           LineBreakMode="NoWrap"
-                           VerticalOptions="Center"
-                           HorizontalOptions="End"
-                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-
-                    <!-- Ultima actualizare -->
-                    <Label Grid.Row="1" Grid.Column="0"
-                           FontFamily="MaterialSymbolsRounded"
-                           Text="&#xe8b5;"
-                           FontSize="18"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                    <Label Grid.Row="1" Grid.Column="1"
-                           Text="Actualizat"
-                           FontSize="13"
-                           LineBreakMode="NoWrap"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                    <Label Grid.Row="1" Grid.Column="2"
-                           Text="{Binding LastUpdateText}"
-                           FontSize="13"
-                           FontAttributes="Bold"
-                           LineBreakMode="NoWrap"
-                           VerticalOptions="Center"
-                           HorizontalOptions="End"
-                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-
-                    <!-- Biciclete -->
-                    <Label Grid.Row="2" Grid.Column="0"
-                           FontFamily="MaterialSymbolsRounded"
-                           Text="&#xe52f;"
-                           FontSize="18"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                    <Label Grid.Row="2" Grid.Column="1"
-                           Text="Biciclete"
-                           FontSize="13"
-                           LineBreakMode="NoWrap"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                    <Border Grid.Row="2" Grid.Column="2"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="10,2"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End"
-                            BackgroundColor="#9CA3AF">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                         Binding="{Binding IsBikeAccessible}"
-                                         Value="True">
-                                <Setter Property="BackgroundColor" Value="#16A34A" />
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Label Text="{Binding BikeAccessibleText}"
-                               FontSize="12"
-                               FontAttributes="Bold"
-                               LineBreakMode="NoWrap"
-                               TextColor="White" />
+                            <!-- Ora estimată de sosire -->
+                            <VerticalStackLayout Grid.Column="2"
+                                                 Spacing="2"
+                                                 VerticalOptions="End"
+                                                 HorizontalOptions="End">
+                                <ActivityIndicator IsRunning="{Binding Loading}"
+                                                   IsVisible="{Binding Loading}"
+                                                   HorizontalOptions="End"
+                                                   HeightRequest="20"
+                                                   WidthRequest="20"
+                                                   Color="{Binding HeaderColor}" />
+                                <VerticalStackLayout Spacing="0"
+                                                     IsVisible="{Binding TimeOfArrival, Converter={toolkit:IsNotNullConverter}}">
+                                    <Label Text="Sosire"
+                                           FontSize="11"
+                                           HorizontalOptions="End"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                    <Label Text="{Binding TimeOfArrival, StringFormat='{0:HH:mm}'}"
+                                           FontSize="22"
+                                           FontAttributes="Bold"
+                                           HorizontalOptions="End"
+                                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Grid>
                     </Border>
 
-                    <!-- Scaun rulant -->
-                    <Label Grid.Row="3" Grid.Column="0"
-                           FontFamily="MaterialSymbolsRounded"
-                           Text="&#xe914;"
-                           FontSize="18"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                    <Label Grid.Row="3" Grid.Column="1"
-                           Text="Scaun rulant"
-                           FontSize="13"
-                           LineBreakMode="NoWrap"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
-                    <Border Grid.Row="3" Grid.Column="2"
+                    <!-- Etichetă informativă (autobuz electric / tramvai nou) -->
+                    <Border IsVisible="{Binding VehicleInfo, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
                             StrokeThickness="0"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="10,2"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End"
-                            BackgroundColor="#9CA3AF">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                         Binding="{Binding IsWheelchairAccessible}"
-                                         Value="True">
-                                <Setter Property="BackgroundColor" Value="#16A34A" />
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Label Text="{Binding WheelchairAccessibleText}"
-                               FontSize="12"
-                               FontAttributes="Bold"
-                               LineBreakMode="NoWrap"
-                               TextColor="White" />
+                            StrokeShape="RoundRectangle 12"
+                            BackgroundColor="{AppThemeBinding Light=#E7F8EF, Dark=#12301F}"
+                            Padding="10,5"
+                            HorizontalOptions="Start">
+                        <Grid ColumnDefinitions="Auto, Auto"
+                              ColumnSpacing="6">
+                            <Label FontFamily="MaterialSymbolsRounded"
+                                   Text="&#xe1a3;"
+                                   FontSize="16"
+                                   VerticalOptions="Center"
+                                   TextColor="#16A34A" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding VehicleInfo}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#15803D, Dark=#6EE7A4}" />
+                        </Grid>
                     </Border>
-                </Grid>
-            </Border>
+
+                    <!-- Avertisment date învechite -->
+                    <Border IsVisible="{Binding IsDataStale}"
+                            StrokeThickness="1"
+                            Stroke="#F59E0B"
+                            StrokeShape="RoundRectangle 14"
+                            BackgroundColor="{AppThemeBinding Light=#FFF7E6, Dark=#3A2E12}"
+                            Padding="12,10">
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="10">
+                            <Label VerticalOptions="Start"
+                                   FontFamily="MaterialSymbolsRounded"
+                                   Text="&#xe002;"
+                                   FontSize="22"
+                                   TextColor="#F59E0B" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding StaleMessage}"
+                                   FontSize="13"
+                                   LineBreakMode="WordWrap"
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#8A5A00, Dark=#F5C46B}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Acțiuni -->
+                    <Grid ColumnDefinitions="*, *"
+                          ColumnSpacing="10">
+                        <Button Text="{Binding FollowText}"
+                                Command="{Binding FollowCommand}"
+                                CornerRadius="22"
+                                MinimumHeightRequest="44"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                LineBreakMode="WordWrap"
+                                Padding="8,6"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                TextColor="White">
+                            <Button.ImageSource>
+                                <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                                 Glyph="&#xe55c;"
+                                                 Size="18"
+                                                 Color="White" />
+                            </Button.ImageSource>
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button"
+                                             Binding="{Binding IsFollowing}"
+                                             Value="True">
+                                    <Setter Property="BackgroundColor" Value="Transparent" />
+                                    <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="BorderWidth" Value="1" />
+                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+
+                        <!-- Chat toggle button -->
+                        <Button Grid.Column="1"
+                                Command="{Binding ToggleChatCommand}"
+                                CornerRadius="22"
+                                MinimumHeightRequest="44"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                LineBreakMode="WordWrap"
+                                Padding="8,6"
+                                BackgroundColor="Transparent"
+                                BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                                BorderWidth="1">
+                            <Button.ImageSource>
+                                <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                                 Glyph="&#xe0bf;"
+                                                 Size="18"
+                                                 Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                            </Button.ImageSource>
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button"
+                                             Binding="{Binding IsChatExpanded}"
+                                             Value="False">
+                                    <Setter Property="Text" Value="Chat" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Button"
+                                             Binding="{Binding IsChatExpanded}"
+                                             Value="True">
+                                    <Setter Property="Text" Value="Închide chat" />
+                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                                    <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </Grid>
+
+                    <!-- Extra vehicle info (setarea "Arată mai multe informații") -->
+                    <Border IsVisible="{Binding ShowMoreInfo}"
+                            StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#1a2233}"
+                            Padding="14,12">
+                        <VerticalStackLayout Spacing="10">
+                            <!-- Cod vehicul -->
+                            <Grid ColumnDefinitions="Auto, *, Auto"
+                                  ColumnSpacing="10">
+                                <Label FontFamily="MaterialSymbolsRounded"
+                                       Text="&#xe638;"
+                                       FontSize="18"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                                <Label Grid.Column="1"
+                                       Text="Cod vehicul"
+                                       FontSize="13"
+                                       LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                <Label Grid.Column="2"
+                                       Text="{Binding VehicleCode}"
+                                       FontSize="15"
+                                       FontAttributes="Bold"
+                                       LineBreakMode="NoWrap"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="End"
+                                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                            </Grid>
+
+                            <!-- Viteză -->
+                            <Grid ColumnDefinitions="Auto, *, Auto"
+                                  ColumnSpacing="10"
+                                  IsVisible="{Binding SpeedText, Converter={toolkit:IsStringNotNullOrEmptyConverter}}">
+                                <Label FontFamily="MaterialSymbolsRounded"
+                                       Text="&#xe9e4;"
+                                       FontSize="18"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                                <Label Grid.Column="1"
+                                       Text="Viteză"
+                                       FontSize="13"
+                                       LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                <Label Grid.Column="2"
+                                       Text="{Binding SpeedText}"
+                                       FontSize="15"
+                                       FontAttributes="Bold"
+                                       LineBreakMode="NoWrap"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="End"
+                                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                            </Grid>
+
+                            <!-- Ultima actualizare -->
+                            <Grid ColumnDefinitions="Auto, *, Auto"
+                                  ColumnSpacing="10">
+                                <Label FontFamily="MaterialSymbolsRounded"
+                                       Text="&#xe8b5;"
+                                       FontSize="18"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                                <Label Grid.Column="1"
+                                       Text="Actualizat"
+                                       FontSize="13"
+                                       LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                <Label Grid.Column="2"
+                                       Text="{Binding LastUpdateText}"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       LineBreakMode="NoWrap"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="End"
+                                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                            </Grid>
+
+                            <!-- Accesibilitate -->
+                            <Grid ColumnDefinitions="Auto, *, Auto"
+                                  ColumnSpacing="10">
+                                <Label FontFamily="MaterialSymbolsRounded"
+                                       Text="&#xe914;"
+                                       FontSize="18"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                                <Label Grid.Column="1"
+                                       Text="Accesibilitate"
+                                       FontSize="13"
+                                       LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                <HorizontalStackLayout Grid.Column="2"
+                                                       Spacing="6"
+                                                       HorizontalOptions="End">
+                                    <!-- Biciclete -->
+                                    <Border StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 12"
+                                            Padding="8,4"
+                                            VerticalOptions="Center"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border"
+                                                         Binding="{Binding IsBikeAccessible}"
+                                                         Value="True">
+                                                <Setter Property="BackgroundColor" Value="#16A34A" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Grid ColumnDefinitions="Auto, Auto"
+                                              ColumnSpacing="4">
+                                            <Label FontFamily="MaterialSymbolsRounded"
+                                                   Text="&#xe52f;"
+                                                   FontSize="14"
+                                                   VerticalOptions="Center"
+                                                   TextColor="White" />
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding BikeAccessibleText}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   LineBreakMode="NoWrap"
+                                                   VerticalOptions="Center"
+                                                   TextColor="White" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Scaun rulant -->
+                                    <Border StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 12"
+                                            Padding="8,4"
+                                            VerticalOptions="Center"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border"
+                                                         Binding="{Binding IsWheelchairAccessible}"
+                                                         Value="True">
+                                                <Setter Property="BackgroundColor" Value="#16A34A" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Grid ColumnDefinitions="Auto, Auto"
+                                              ColumnSpacing="4">
+                                            <Label FontFamily="MaterialSymbolsRounded"
+                                                   Text="&#xe914;"
+                                                   FontSize="14"
+                                                   VerticalOptions="Center"
+                                                   TextColor="White" />
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding WheelchairAccessibleText}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   LineBreakMode="NoWrap"
+                                                   VerticalOptions="Center"
+                                                   TextColor="White" />
+                                        </Grid>
+                                    </Border>
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
 
             <!-- Chat panel -->
-            <Border IsVisible="{Binding IsChatExpanded}"
+            <Border Grid.Row="2"
+                    x:Name="ChatContainer"
+                    IsVisible="{Binding IsChatExpanded}"
+                    Margin="16,0,16,16"
                     StrokeThickness="1"
-                    Stroke="{StaticResource OffBlackBorder}"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
                     StrokeShape="RoundRectangle 16"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark=#1a2233}"
+                    BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#1a2233}"
                     Padding="0">
 
-                <Grid RowDefinitions="*, Auto"
+                <Grid x:Name="ChatPanel"
+                      RowDefinitions="*, Auto"
+                      MinimumHeightRequest="0"
                       HeightRequest="280">
 
                     <!-- Messages list -->
@@ -438,8 +640,8 @@
                     <!-- Send bar -->
                     <Border Grid.Row="1"
                             StrokeThickness="1"
-                            Stroke="{StaticResource OffBlackBorder}"
-                            StrokeShape="RoundRectangle 0,0,16,16"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                            StrokeShape="RoundRectangle 0,0,15,15"
                             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
                             Padding="8,6">
                         <Grid ColumnDefinitions="*, Auto"
@@ -480,6 +682,6 @@
                 </Grid>
             </Border>
 
-        </VerticalStackLayout>
+        </Grid>
     </Border>
 </toolkit:Popup>

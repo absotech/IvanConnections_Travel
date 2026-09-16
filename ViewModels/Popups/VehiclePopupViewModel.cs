@@ -9,6 +9,9 @@ namespace IvanConnections_Travel.ViewModels.Popups
 {
     public partial class VehiclePopupViewModel : ObservableObject, IQueryAttributable
     {
+        private const string DefaultRouteColor = "#5763FF";
+        private const string GenericVehicleGlyph = "\ue535";
+
         private readonly ApiService _apiService;
         private readonly ChatHubService _chatHubService;
         private TimeZoneInfo _timeZoneInfo;
@@ -31,6 +34,28 @@ namespace IvanConnections_Travel.ViewModels.Popups
         [ObservableProperty]
         private string? vehicleInfo;
 
+        // Header (identitate traseu)
+        [ObservableProperty]
+        private string routeLabel = "—";
+
+        [ObservableProperty]
+        private string vehicleGlyph = GenericVehicleGlyph;
+
+        [ObservableProperty]
+        private string vehicleSubtitle = string.Empty;
+
+        [ObservableProperty]
+        private Color headerColor = Color.FromArgb(DefaultRouteColor);
+
+        [ObservableProperty]
+        private Color headerTextColor = Colors.White;
+
+        [ObservableProperty]
+        private Color headerMutedTextColor = Color.FromRgba(255, 255, 255, 200);
+
+        [ObservableProperty]
+        private Color headerOverlayColor = Color.FromRgba(255, 255, 255, 56);
+
         [ObservableProperty]
         private DateTime? timeOfArrival;
 
@@ -38,7 +63,10 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private bool loading = true;
 
         [ObservableProperty]
-        private string followText = "Urmărește ";
+        private string followText = "Urmărește";
+
+        [ObservableProperty]
+        private bool isFollowing;
 
         [ObservableProperty]
         private bool isDataStale;
@@ -55,6 +83,9 @@ namespace IvanConnections_Travel.ViewModels.Popups
 
         [ObservableProperty]
         private string lastUpdateText = "-";
+
+        [ObservableProperty]
+        private string? speedText;
 
         [ObservableProperty]
         private string bikeAccessibleText = "Nu";
@@ -122,9 +153,11 @@ namespace IvanConnections_Travel.ViewModels.Popups
             Loading = true;
 
             ShouldFollow = vehicle.IsTracked;
-            FollowText = ShouldFollow ? "Anulare urmărire " : "Urmărește ";
+            IsFollowing = ShouldFollow;
+            FollowText = ShouldFollow ? "Nu mai urmări" : "Urmărește";
             Vehicle = vehicle;
             VehicleType = Utils.Translations.GetVehicleTypeNameInRomanian(vehicle.VehicleType);
+            UpdateHeaderInfo(vehicle);
             UserDisplayName = userDisplayName;
             UserAvatarSeed = userAvatarSeed;
             if (vehicle.IsElectricBus)
@@ -169,6 +202,74 @@ namespace IvanConnections_Travel.ViewModels.Popups
             _ = LoadDeviceIdAsync();
         }
 
+        private void UpdateHeaderInfo(Vehicle vehicle)
+        {
+            RouteLabel = string.IsNullOrWhiteSpace(vehicle.RouteShortName) ? "—" : vehicle.RouteShortName!.Trim();
+            VehicleGlyph = GetVehicleGlyph(vehicle.VehicleType);
+
+            var typeTitle = string.IsNullOrEmpty(VehicleType)
+                ? "Vehicul"
+                : char.ToUpperInvariant(VehicleType[0]) + VehicleType[1..];
+            VehicleSubtitle = string.IsNullOrWhiteSpace(vehicle.TripHeadsign)
+                ? typeTitle
+                : $"{typeTitle} · către {vehicle.TripHeadsign!.Trim()}";
+
+            ApplyRouteColors(vehicle.RouteColor);
+        }
+
+        private void ApplyRouteColors(string? routeColor)
+        {
+            var color = ParseHexColor(routeColor) ?? Color.FromArgb(DefaultRouteColor);
+            HeaderColor = color;
+
+            if (IsDark(color))
+            {
+                HeaderTextColor = Colors.White;
+                HeaderMutedTextColor = Color.FromRgba(255, 255, 255, 200);
+                HeaderOverlayColor = Color.FromRgba(255, 255, 255, 56);
+            }
+            else
+            {
+                HeaderTextColor = Color.FromArgb("#111827");
+                HeaderMutedTextColor = Color.FromRgba(17, 24, 39, 170);
+                HeaderOverlayColor = Color.FromRgba(17, 24, 39, 36);
+            }
+        }
+
+        private static Color? ParseHexColor(string? hex)
+        {
+            if (string.IsNullOrWhiteSpace(hex)) return null;
+
+            var value = hex.Trim();
+            if (!value.StartsWith('#')) value = '#' + value;
+            if (value.Length is not (4 or 7 or 9)) return null;
+
+            try
+            {
+                return Color.FromArgb(value);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[VehiclePopupViewModel] Invalid route color '{hex}': {ex.Message}");
+                return null;
+            }
+        }
+
+        private static bool IsDark(Color color)
+            => (0.299 * color.Red + 0.587 * color.Green + 0.114 * color.Blue) < 0.6;
+
+        private static string GetVehicleGlyph(Models.Enums.VehicleType? vehicleType) => vehicleType switch
+        {
+            Models.Enums.VehicleType.Tram => "\ue571",
+            Models.Enums.VehicleType.Bus => "\ue530",
+            Models.Enums.VehicleType.Trolleybus => "\ue530",
+            Models.Enums.VehicleType.Subway => "\ue56f",
+            Models.Enums.VehicleType.Rail => "\ue570",
+            Models.Enums.VehicleType.Monorail => "\ue570",
+            Models.Enums.VehicleType.Ferry => "\ue532",
+            _ => GenericVehicleGlyph
+        };
+
         private void UpdateStaleInfo(Vehicle vehicle)
         {
             IsDataStale = vehicle.IsDataStale;
@@ -193,6 +294,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
                 ? $"acum {Utils.TimeFormatUtils.FormatTimeDifferenceInRomanian(TimeZoneInfo.ConvertTimeFromUtc(vehicle.LastUpdateUtc.Value, _timeZoneInfo))}"
                 : "-";
 
+            SpeedText = vehicle.Speed.HasValue ? $"{vehicle.Speed.Value} km/h" : null;
+
             IsBikeAccessible = Utils.Translations.IsAccessible(vehicle.BikeAccessible);
             IsWheelchairAccessible = Utils.Translations.IsAccessible(vehicle.WheelchairAccessible);
             BikeAccessibleText = Utils.Translations.GetAccessibilityInRomanian(vehicle.BikeAccessible);
@@ -215,6 +318,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private void Follow()
         {
             ShouldFollow = !ShouldFollow;
+            IsFollowing = ShouldFollow;
+            FollowText = ShouldFollow ? "Nu mai urmări" : "Urmărește";
             followVehicleManager.HandleEvent(this, ShouldFollow, nameof(FollowVehicle));
         }
 
