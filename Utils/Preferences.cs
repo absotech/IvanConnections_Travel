@@ -5,6 +5,17 @@ public static class Preferences
     private const string PendingWidgetStopIdKey = "pending_widget_stop_id";
     private const string PendingWidgetStopNameKey = "pending_widget_stop_name";
     private const string FavoriteRouteIdKey = "favorite_route_id";
+    private const string ShowMoreVehicleInfoKey = "ShowMoreVehicleInfo";
+
+    /// <summary>
+    /// True dacă în fereastra unui vehicul trebuie afișate informații suplimentare
+    /// (codul vehiculului și accesibilitatea).
+    /// </summary>
+    public static bool ShowMoreVehicleInfo
+    {
+        get => Microsoft.Maui.Storage.Preferences.Default.Get(ShowMoreVehicleInfoKey, false);
+        set => Microsoft.Maui.Storage.Preferences.Default.Set(ShowMoreVehicleInfoKey, value);
+    }
 
     /// <summary>
     /// The RouteId saved as the user's favorite schedule route, or -1 when none is set.

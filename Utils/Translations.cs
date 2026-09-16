@@ -26,5 +26,30 @@ namespace IvanConnections_Travel.Utils
                 _ => "vehicul"
             };
         }
+
+        /// <summary>
+        /// Gets the Romanian answer ("Da"/"Nu") for an accessibility value returned by the API.
+        /// </summary>
+        /// <param name="accessibilityValue">The raw accessibility value (e.g. BIKE_ACCESSIBLE).</param>
+        /// <returns>"Da" if accessible, otherwise "Nu".</returns>
+        public static string GetAccessibilityInRomanian(string? accessibilityValue)
+        {
+            return IsAccessible(accessibilityValue) ? "Da" : "Nu";
+        }
+
+        /// <summary>
+        /// True if the accessibility value returned by the API means that the feature is available.
+        /// </summary>
+        /// <param name="accessibilityValue">The raw accessibility value (e.g. WHEELCHAIR_ACCESSIBLE).</param>
+        public static bool IsAccessible(string? accessibilityValue)
+        {
+            if (string.IsNullOrWhiteSpace(accessibilityValue)) return false;
+
+            var value = accessibilityValue.Trim();
+            if (value.Contains("INACCESSIBLE", StringComparison.OrdinalIgnoreCase)) return false;
+            if (value.Contains("ACCESSIBLE", StringComparison.OrdinalIgnoreCase)) return true;
+
+            return value is "1" or "true" or "True" or "DA" or "Da" or "da";
+        }
     }
 }

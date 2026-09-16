@@ -46,6 +46,28 @@ namespace IvanConnections_Travel.ViewModels.Popups
         [ObservableProperty]
         private string? staleMessage;
 
+        // Extra info (setare "Arată mai multe informații")
+        [ObservableProperty]
+        private bool showMoreInfo;
+
+        [ObservableProperty]
+        private string vehicleCode = "-";
+
+        [ObservableProperty]
+        private string lastUpdateText = "-";
+
+        [ObservableProperty]
+        private string bikeAccessibleText = "Nu";
+
+        [ObservableProperty]
+        private string wheelchairAccessibleText = "Nu";
+
+        [ObservableProperty]
+        private bool isBikeAccessible;
+
+        [ObservableProperty]
+        private bool isWheelchairAccessible;
+
         // Chat
         [ObservableProperty]
         private bool isChatExpanded = false;
@@ -113,6 +135,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
                 VehicleInfo = null;
 
             UpdateStaleInfo(vehicle);
+            UpdateExtraInfo(vehicle);
 
             if (vehicle.NextStop != null)
             {
@@ -158,6 +181,22 @@ namespace IvanConnections_Travel.ViewModels.Popups
             var localTimestamp = TimeZoneInfo.ConvertTimeFromUtc(vehicle.LastUpdateUtc.Value, _timeZoneInfo);
             var timeText = Utils.TimeFormatUtils.FormatTimeDifferenceInRomanian(localTimestamp);
             StaleMessage = $"Poziția nu a mai fost actualizată de {timeText}. Este posibil ca acest {VehicleType} să fie pe capăt sau să nu se mai afle în acest loc.";
+        }
+
+        private void UpdateExtraInfo(Vehicle vehicle)
+        {
+            ShowMoreInfo = Utils.Preferences.ShowMoreVehicleInfo;
+
+            VehicleCode = string.IsNullOrWhiteSpace(vehicle.Label) ? "-" : vehicle.Label!;
+
+            LastUpdateText = vehicle.LastUpdateUtc.HasValue
+                ? $"acum {Utils.TimeFormatUtils.FormatTimeDifferenceInRomanian(TimeZoneInfo.ConvertTimeFromUtc(vehicle.LastUpdateUtc.Value, _timeZoneInfo))}"
+                : "-";
+
+            IsBikeAccessible = Utils.Translations.IsAccessible(vehicle.BikeAccessible);
+            IsWheelchairAccessible = Utils.Translations.IsAccessible(vehicle.WheelchairAccessible);
+            BikeAccessibleText = Utils.Translations.GetAccessibilityInRomanian(vehicle.BikeAccessible);
+            WheelchairAccessibleText = Utils.Translations.GetAccessibilityInRomanian(vehicle.WheelchairAccessible);
         }
 
         private async Task LoadDeviceIdAsync()

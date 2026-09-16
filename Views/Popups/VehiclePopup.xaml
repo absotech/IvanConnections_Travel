@@ -72,7 +72,8 @@
                 </Label.FormattedText>
             </Label>
             <Grid ColumnDefinitions="Auto, *"
-                  HorizontalOptions="Center">
+                  HorizontalOptions="Center"
+                  IsVisible="{Binding TimeOfArrival, Converter={toolkit:IsNotNullConverter}}">
                 <Label Text="⏱ Ajunge la "
                        FontSize="14"
                        VerticalOptions="Center"
@@ -153,6 +154,132 @@
                     </DataTrigger>
                 </Button.Triggers>
             </Button>
+
+            <!-- Extra vehicle info (setarea "Arată mai multe informații") -->
+            <Border IsVisible="{Binding ShowMoreInfo}"
+                    StrokeThickness="1"
+                    Stroke="{StaticResource OffBlackBorder}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark=#1a2233}"
+                    Padding="14,12">
+                <Grid RowDefinitions="Auto, Auto, Auto, Auto"
+                      ColumnDefinitions="Auto, *, Auto"
+                      RowSpacing="10"
+                      ColumnSpacing="10">
+
+                    <!-- Cod vehicul -->
+                    <Label Grid.Row="0" Grid.Column="0"
+                           FontFamily="MaterialSymbolsRounded"
+                           Text="&#xe638;"
+                           FontSize="18"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    <Label Grid.Row="0" Grid.Column="1"
+                           Text="Cod vehicul"
+                           FontSize="13"
+                           LineBreakMode="NoWrap"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                    <Label Grid.Row="0" Grid.Column="2"
+                           Text="{Binding VehicleCode}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           LineBreakMode="NoWrap"
+                           VerticalOptions="Center"
+                           HorizontalOptions="End"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+                    <!-- Ultima actualizare -->
+                    <Label Grid.Row="1" Grid.Column="0"
+                           FontFamily="MaterialSymbolsRounded"
+                           Text="&#xe8b5;"
+                           FontSize="18"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    <Label Grid.Row="1" Grid.Column="1"
+                           Text="Actualizat"
+                           FontSize="13"
+                           LineBreakMode="NoWrap"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                    <Label Grid.Row="1" Grid.Column="2"
+                           Text="{Binding LastUpdateText}"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           LineBreakMode="NoWrap"
+                           VerticalOptions="Center"
+                           HorizontalOptions="End"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+                    <!-- Biciclete -->
+                    <Label Grid.Row="2" Grid.Column="0"
+                           FontFamily="MaterialSymbolsRounded"
+                           Text="&#xe52f;"
+                           FontSize="18"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    <Label Grid.Row="2" Grid.Column="1"
+                           Text="Biciclete"
+                           FontSize="13"
+                           LineBreakMode="NoWrap"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                    <Border Grid.Row="2" Grid.Column="2"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 10"
+                            Padding="10,2"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End"
+                            BackgroundColor="#9CA3AF">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border"
+                                         Binding="{Binding IsBikeAccessible}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor" Value="#16A34A" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="{Binding BikeAccessibleText}"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               LineBreakMode="NoWrap"
+                               TextColor="White" />
+                    </Border>
+
+                    <!-- Scaun rulant -->
+                    <Label Grid.Row="3" Grid.Column="0"
+                           FontFamily="MaterialSymbolsRounded"
+                           Text="&#xe914;"
+                           FontSize="18"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                    <Label Grid.Row="3" Grid.Column="1"
+                           Text="Scaun rulant"
+                           FontSize="13"
+                           LineBreakMode="NoWrap"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}" />
+                    <Border Grid.Row="3" Grid.Column="2"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 10"
+                            Padding="10,2"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End"
+                            BackgroundColor="#9CA3AF">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border"
+                                         Binding="{Binding IsWheelchairAccessible}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor" Value="#16A34A" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="{Binding WheelchairAccessibleText}"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               LineBreakMode="NoWrap"
+                               TextColor="White" />
+                    </Border>
+                </Grid>
+            </Border>
 
             <!-- Chat panel -->
             <Border IsVisible="{Binding IsChatExpanded}"

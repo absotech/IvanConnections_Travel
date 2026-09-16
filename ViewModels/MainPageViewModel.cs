@@ -330,12 +330,16 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
             var vehicleData = Pins.FirstOrDefault(p => p.Label == vehicleLabel);
             if (vehicleData != null)
             {
-                var vehicleTypeName = Translations.GetVehicleTypeNameInRomanian(vehicleData.VehicleType.Value);
-                var localTimestamp = TimeZoneInfo.ConvertTimeFromUtc(vehicleData.LocalTimestamp.Value, _timeZoneInfo);
-                var timeText = TimeFormatUtils.FormatTimeDifferenceInRomanian(localTimestamp);
-                var message = $"Cod {vehicleTypeName}: {vehicleLabel}, actualizat acum {timeText}";
+                if (!IvanConnections_Travel.Utils.Preferences.ShowMoreVehicleInfo)
+                {
+                    var vehicleTypeName = Translations.GetVehicleTypeNameInRomanian(vehicleData.VehicleType.Value);
+                    var localTimestamp = TimeZoneInfo.ConvertTimeFromUtc(vehicleData.LocalTimestamp.Value, _timeZoneInfo);
+                    var timeText = TimeFormatUtils.FormatTimeDifferenceInRomanian(localTimestamp);
+                    var message = $"Cod {vehicleTypeName}: {vehicleLabel}, actualizat acum {timeText}";
 
-                Toast.Make(message, ToastDuration.Long, 14).Show();
+                    Toast.Make(message, ToastDuration.Long, 14).Show();
+                }
+
                 HandleVehicleClickMessage(new ClickMessage(vehicleData));
             }
         }

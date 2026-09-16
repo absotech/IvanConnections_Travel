@@ -145,6 +145,42 @@
                 </Grid>
             </Border>
 
+            <!-- More vehicle info section -->
+            <Border StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                    Padding="20,16">
+                <Border.Shadow>
+                    <Shadow Brush="{AppThemeBinding Light=Black, Dark=Black}"
+                            Offset="0,2"
+                            Radius="8"
+                            Opacity="0.08" />
+                </Border.Shadow>
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="*, Auto"
+                      RowDefinitions="Auto, Auto"
+                      ColumnSpacing="16">
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Text="Arată mai multe informații"
+                           FontSize="17"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="Afișează codul vehiculului și accesibilitatea în fereastra vehiculului"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
+                           VerticalOptions="Center" />
+                    <Switch Grid.Row="0" Grid.Column="1"
+                            Grid.RowSpan="2"
+                            IsToggled="{Binding ShowMoreVehicleInfo}"
+                            VerticalOptions="Center"
+                            HorizontalOptions="End" />
+                </Grid>
+            </Border>
+
             <!-- Bus icon section -->
             <Grid ColumnDefinitions="4*, 1.5*" ColumnSpacing="12">
 

@@ -30,6 +30,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _showNumberOnly;
 
+    [ObservableProperty]
+    private bool _showMoreVehicleInfo;
+
 
     private int _vehicleSize;
     public int VehicleSize
@@ -96,6 +99,7 @@ public partial class SettingsViewModel : ObservableObject
         IsTrafficEnabled = Preferences.Default.Get(PrefTrafficKey, true);
         ShowStopsOnMap = Preferences.Default.Get(PrefStopsKey, true);
         ShowNumberOnly = Preferences.Default.Get(PrefNumberOnlyKey, false);
+        ShowMoreVehicleInfo = Utils.Preferences.ShowMoreVehicleInfo;
         StopSize = Preferences.Default.Get(PrefStopSize, 15);
         VehicleSize = Preferences.Default.Get(PrefVehicleSize, 25);
     }
@@ -118,6 +122,12 @@ public partial class SettingsViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new NumberOnlyPreferenceChangedMessage(value));
         _ = UpdateVehiclePreview();
     }
+
+    partial void OnShowMoreVehicleInfoChanged(bool value)
+    {
+        Utils.Preferences.ShowMoreVehicleInfo = value;
+    }
+
     private async Task UpdateVehiclePreview()
     {
         await _vehicleDebouncer.RunAsync(async () =>
