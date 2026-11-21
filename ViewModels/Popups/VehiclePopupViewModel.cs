@@ -10,7 +10,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
     public partial class VehiclePopupViewModel : ObservableObject, IQueryAttributable
     {
         private const string DefaultRouteColor = "#5763FF";
-        private const string GenericVehicleGlyph = "\ue535";
+        private const string GenericVehicleGlyph = Utils.VehicleVisuals.GenericGlyph;
 
         private readonly ApiService _apiService;
         private readonly ChatHubService _chatHubService;
@@ -258,17 +258,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private static bool IsDark(Color color)
             => (0.299 * color.Red + 0.587 * color.Green + 0.114 * color.Blue) < 0.6;
 
-        private static string GetVehicleGlyph(Models.Enums.VehicleType? vehicleType) => vehicleType switch
-        {
-            Models.Enums.VehicleType.Tram => "\ue571",
-            Models.Enums.VehicleType.Bus => "\ue530",
-            Models.Enums.VehicleType.Trolleybus => "\ue530",
-            Models.Enums.VehicleType.Subway => "\ue56f",
-            Models.Enums.VehicleType.Rail => "\ue570",
-            Models.Enums.VehicleType.Monorail => "\ue570",
-            Models.Enums.VehicleType.Ferry => "\ue532",
-            _ => GenericVehicleGlyph
-        };
+        private static string GetVehicleGlyph(Models.Enums.VehicleType? vehicleType)
+            => Utils.VehicleVisuals.GetGlyph(vehicleType);
 
         private void UpdateStaleInfo(Vehicle vehicle)
         {

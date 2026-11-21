@@ -23,6 +23,22 @@ namespace IvanConnections_Travel.ViewModels.Popups
         [ObservableProperty]
         private bool canSwitchDirection;
 
+        // Informații pentru antetul și rezumatul popup-ului.
+        [ObservableProperty]
+        private string? stopSubtitle;
+
+        [ObservableProperty]
+        private string arrivalsSummary = string.Empty;
+
+        [ObservableProperty]
+        private bool hasArrivals;
+
+        [ObservableProperty]
+        private string? lastUpdateText;
+
+        [ObservableProperty]
+        private bool canPinWidget;
+
         private List<Stop> _allStops = [];
         private string? _deviceId;
 
@@ -32,6 +48,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
         {
             _apiService = apiService;
             _widgetService = widgetService;
+            CanPinWidget = widgetService?.IsPinningSupported() == true;
         }
 
         [RelayCommand]
@@ -71,10 +88,45 @@ namespace IvanConnections_Travel.ViewModels.Popups
             await LoadAsync(oppositeStop, _deviceId);
         }
 
+        [RelayCommand]
+        private async Task RefreshAsync()
+        {
+            if (Stop is null || IsLoading)
+            {
+                return;
+            }
+
+            await LoadAsync(Stop, _deviceId);
+        }
+
         partial void OnStopChanged(Stop? value)
         {
             CanSwitchDirection = value?.OppositeStopId is int oppositeId
                                  && _allStops.Any(s => s.StopId == oppositeId);
+            StopSubtitle = BuildStopSubtitle(value);
+        }
+
+        /// <summary>
+        /// Detaliile secundare ale stației (codul și descrierea din GTFS), afișate sub nume.
+        /// </summary>
+        private static string? BuildStopSubtitle(Stop? stop)
+        {
+            if (stop is null)
+            {
+                return null;
+            }
+
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(stop.StopCode))
+            {
+                parts.Add($"Cod {stop.StopCode!.Trim()}");
+            }
+            if (!string.IsNullOrWhiteSpace(stop.StopDesc))
+            {
+                parts.Add(stop.StopDesc!.Trim());
+            }
+
+            return parts.Count == 0 ? null : string.Join(" · ", parts);
         }
 
         public async Task LoadAsync(Stop stop, string? deviceId = null)
@@ -84,6 +136,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
             IsLoading = true;
             ErrorMessage = null;
             Arrivals.Clear();
+            HasArrivals = false;
+            ArrivalsSummary = string.Empty;
 
             var arrivalsData = await _apiService.GetArrivalsForStopAsync(stop.StopId, deviceId);
 
@@ -99,10 +153,20 @@ namespace IvanConnections_Travel.ViewModels.Popups
                     Arrivals.Add(arrival);
                 }
             }
-            else
+
+            if (Arrivals.Count == 0)
             {
                 ErrorMessage = "Nu sunt sosiri în următoarea perioadă.";
             }
+
+            HasArrivals = Arrivals.Count > 0;
+            ArrivalsSummary = Arrivals.Count switch
+            {
+                0 => string.Empty,
+                1 => "1 sosire în următoarele 25 de minute",
+                _ => $"{Arrivals.Count} sosiri în următoarele 25 de minute"
+            };
+            LastUpdateText = $"Actualizat la {DateTime.Now:HH:mm}";
 
             IsLoading = false;
         }
