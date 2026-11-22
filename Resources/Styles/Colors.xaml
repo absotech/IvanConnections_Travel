@@ -28,6 +28,27 @@
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
+    <!-- App design tokens (use these instead of hard-coded hex values) -->
+    <Color x:Key="Accent">#3B82F6</Color>
+    <Color x:Key="AccentDark">#2563EB</Color>
+    <Color x:Key="OnAccent">#FFFFFF</Color>
+    <Color x:Key="Success">#22C55E</Color>
+    <Color x:Key="Warning">#F59E0B</Color>
+    <Color x:Key="Danger">#EF4444</Color>
+
+    <Color x:Key="SurfaceLight">#FFFFFF</Color>
+    <Color x:Key="SurfaceDark">#1A2233</Color>
+    <Color x:Key="PageBackgroundLight">#F7F8FA</Color>
+    <Color x:Key="PageBackgroundDark">#111827</Color>
+    <Color x:Key="SurfaceMutedLight">#F3F4F6</Color>
+    <Color x:Key="SurfaceMutedDark">#273244</Color>
+    <Color x:Key="DividerLight">#E5E7EB</Color>
+    <Color x:Key="DividerDark">#374151</Color>
+    <Color x:Key="TextPrimaryLight">#111827</Color>
+    <Color x:Key="TextPrimaryDark">#F9FAFB</Color>
+    <Color x:Key="TextSecondaryLight">#6B7280</Color>
+    <Color x:Key="TextSecondaryDark">#9CA3AF</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush"
                      Color="{StaticResource Primary}" />
     <SolidColorBrush x:Key="SecondaryBrush"

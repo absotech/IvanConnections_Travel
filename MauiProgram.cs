@@ -115,6 +115,7 @@ namespace IvanConnections_Travel
             mauiAppBuilder.Services.AddSingleton<AppShellViewModel>();
             mauiAppBuilder.Services.AddTransient<BadgesViewModel>();
             mauiAppBuilder.Services.AddTransient<ScheduleViewModel>();
+            mauiAppBuilder.Services.AddTransient<OnboardingViewModel>();
             return mauiAppBuilder;
         }
 
@@ -125,6 +126,7 @@ namespace IvanConnections_Travel
             mauiAppBuilder.Services.AddSingleton<SettingsPage>();
             mauiAppBuilder.Services.AddTransient<BadgesPage>();
             mauiAppBuilder.Services.AddTransient<SchedulePage>();
+            mauiAppBuilder.Services.AddTransient<OnboardingPage>();
             return mauiAppBuilder;
         }
     }

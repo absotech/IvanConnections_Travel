@@ -9,14 +9,17 @@
                x:DataType="vm:VehiclePopupViewModel"
                x:TypeArguments="sys:Boolean"
                BackgroundColor="Transparent"
+               VerticalOptions="End"
+               HorizontalOptions="Fill"
+               Padding="0"
+               Margin="0"
                x:Class="IvanConnections_Travel.Views.Popups.VehiclePopup">
     <Border x:Name="RootCard"
             Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
             StrokeThickness="1"
-            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-            MinimumWidthRequest="300"
-            MaximumWidthRequest="400"
-            VerticalOptions="Start"
+            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource PageBackgroundDark}}"
+            HorizontalOptions="Fill"
+            VerticalOptions="End"
             Padding="0">
         <Border.Shadow>
             <Shadow Brush="Black"
@@ -25,7 +28,7 @@
                     Opacity="0.25" />
         </Border.Shadow>
         <Border.StrokeShape>
-            <RoundRectangle CornerRadius="24" />
+            <RoundRectangle CornerRadius="24,24,0,0" />
         </Border.StrokeShape>
         <!-- Antet fix, detalii care se pot derula, chat mereu vizibil integral.
          Toate rândurile sunt Auto, astfel încât cardul să se strângă exact pe conținut
@@ -90,9 +93,9 @@
                             Clicked="CloseButton_Clicked"
                             ToolTipProperties.Text="Închide"
                             SemanticProperties.Description="Închide detaliile vehiculului"
-                            CornerRadius="18"
-                            HeightRequest="36"
-                            WidthRequest="36"
+                            CornerRadius="22"
+                            HeightRequest="44"
+                            WidthRequest="44"
                             Padding="0"
                             VerticalOptions="Start"
                             BackgroundColor="{Binding HeaderOverlayColor}">
@@ -191,11 +194,15 @@
                                            FontSize="11"
                                            HorizontalOptions="End"
                                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                                    <Label Text="{Binding TimeOfArrival, StringFormat='{0:HH:mm}'}"
+                                    <Label Text="{Binding ArrivalRelativeText}"
                                            FontSize="22"
                                            FontAttributes="Bold"
                                            HorizontalOptions="End"
-                                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{Binding TimeOfArrival, StringFormat='la {0:HH:mm}'}"
+                                           FontSize="12"
+                                           HorizontalOptions="End"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                                 </VerticalStackLayout>
                             </VerticalStackLayout>
                         </Grid>
@@ -417,7 +424,8 @@
                                             StrokeShape="RoundRectangle 12"
                                             Padding="8,4"
                                             VerticalOptions="Center"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
+                                            SemanticProperties.Description="{Binding BikeAccessibleText, StringFormat='Acces biciclete: {0}'}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource DividerDark}}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border"
                                                          Binding="{Binding IsBikeAccessible}"
@@ -447,7 +455,8 @@
                                             StrokeShape="RoundRectangle 12"
                                             Padding="8,4"
                                             VerticalOptions="Center"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}">
+                                            SemanticProperties.Description="{Binding WheelchairAccessibleText, StringFormat='Acces scaun rulant: {0}'}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource DividerDark}}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border"
                                                          Binding="{Binding IsWheelchairAccessible}"
@@ -637,8 +646,30 @@
                         </CollectionView>
                     </Grid>
 
+                    <!-- Login prompt (chat needs an account) -->
+                    <Border Grid.Row="1"
+                            IsVisible="{Binding IsLoggedIn, Converter={toolkit:InvertedBoolConverter}}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 0,0,15,15"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
+                            Padding="10,8">
+                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                            <Label Text="Activează chatul pentru a trimite mesaje."
+                                   FontSize="13"
+                                   VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                            <Button Grid.Column="1"
+                                    Text="Activează"
+                                    Style="{StaticResource AccentButton}"
+                                    Padding="14,0"
+                                    IsEnabled="{Binding IsLoggingIn, Converter={toolkit:InvertedBoolConverter}}"
+                                    Command="{Binding LoginForChatCommand}" />
+                        </Grid>
+                    </Border>
+
                     <!-- Send bar -->
                     <Border Grid.Row="1"
+                            IsVisible="{Binding IsLoggedIn}"
                             StrokeThickness="1"
                             Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
                             StrokeShape="RoundRectangle 0,0,15,15"
@@ -658,11 +689,12 @@
                             <Button Grid.Column="1"
                                     Command="{Binding SendMessageCommand}"
                                     IsEnabled="{Binding IsSending, Converter={toolkit:InvertedBoolConverter}}"
-                                    CornerRadius="18"
-                                    HeightRequest="36"
-                                    WidthRequest="36"
+                                    CornerRadius="22"
+                                    HeightRequest="44"
+                                    WidthRequest="44"
                                     Padding="0"
-                                    BackgroundColor="{StaticResource Primary}">
+                                    SemanticProperties.Description="Trimite mesajul"
+                                    BackgroundColor="{StaticResource Accent}">
                                 <Button.ImageSource>
                                     <FontImageSource FontFamily="MaterialSymbolsRounded"
                                                      Glyph="&#xe163;"

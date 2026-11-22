@@ -211,7 +211,7 @@ namespace IvanConnections_Travel.Platforms.Handlers
 
                     if (_vehicleMarkers.TryGetValue(vehicleId, out var existingMarker))
                     {
-                        existingMarker.Position = pos;
+                        AnimateMarkerTo(vehicleId, existingMarker, pos);
         
                         if (existingMarker.Tag == null) 
                             existingMarker.Tag = expectedTag;
@@ -252,6 +252,8 @@ namespace IvanConnections_Travel.Platforms.Handlers
                 // Cleanup removed vehicles
                 foreach (var keyToRemove in visibleVehicleKeys)
                 {
+                    if (_markerAnimators.Remove(keyToRemove, out var animator))
+                        animator.Cancel();
                     _vehicleMarkers[keyToRemove].Remove();
                     _vehicleMarkers.Remove(keyToRemove);
                     _markerIconKeys.Remove(keyToRemove);
@@ -261,6 +263,46 @@ namespace IvanConnections_Travel.Platforms.Handlers
             {
                 System.Diagnostics.Debug.WriteLine($"Error updating vehicle markers: {e.Message}");
             }
+        }
+
+        // Glide vehicles to their new position instead of jumping. Large jumps (e.g. data gaps)
+        // are applied instantly so a marker never "flies" across the city.
+        private const double MaxAnimatedDistanceMeters = 600;
+        private const long MarkerAnimationDurationMs = 900;
+        private readonly Dictionary<string, global::Android.Animation.ValueAnimator> _markerAnimators = [];
+
+        private void AnimateMarkerTo(string key, Marker marker, LatLng target)
+        {
+            var start = marker.Position;
+            if (start is null || (Math.Abs(start.Latitude - target.Latitude) < 1e-7 && Math.Abs(start.Longitude - target.Longitude) < 1e-7))
+                return;
+
+            if (_markerAnimators.Remove(key, out var running))
+                running.Cancel();
+
+            var distance = Microsoft.Maui.Devices.Sensors.Location.CalculateDistance(
+                start.Latitude, start.Longitude, target.Latitude, target.Longitude,
+                Microsoft.Maui.Devices.Sensors.DistanceUnits.Kilometers) * 1000;
+
+            if (distance > MaxAnimatedDistanceMeters)
+            {
+                marker.Position = target;
+                return;
+            }
+
+            var animator = global::Android.Animation.ValueAnimator.OfFloat(0f, 1f)!;
+            animator.SetDuration(MarkerAnimationDurationMs);
+            animator.SetInterpolator(new global::Android.Views.Animations.AccelerateDecelerateInterpolator());
+            animator.Update += (_, e) =>
+            {
+                var t = (float)(e.Animation.AnimatedValue ?? 1f);
+                marker.Position = new LatLng(
+                    start.Latitude + (target.Latitude - start.Latitude) * t,
+                    start.Longitude + (target.Longitude - start.Longitude) * t);
+            };
+            animator.AnimationEnd += (_, _) => _markerAnimators.Remove(key);
+            _markerAnimators[key] = animator;
+            animator.Start();
         }
 
         private void UpdateStopMarkers()

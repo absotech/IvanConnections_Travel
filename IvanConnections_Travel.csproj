@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net10.0-android</TargetFrameworks>
+        <TargetFramework>net11.0-android</TargetFramework>
         <UseMaui>true</UseMaui>
         <RootNamespace>IvanConnections_Travel</RootNamespace>
         <SingleProject>true</SingleProject>
@@ -15,8 +15,8 @@
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
 
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.2.9</ApplicationDisplayVersion>
-        <ApplicationVersion>129</ApplicationVersion>
+        <ApplicationDisplayVersion>2.0.2</ApplicationDisplayVersion>
+        <ApplicationVersion>202</ApplicationVersion>
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">30.0</SupportedOSPlatformVersion>
@@ -32,13 +32,13 @@
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net11.0-android|AnyCPU'">
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
         <ApplicationTitle>IC Travel</ApplicationTitle>
         <AndroidKeyStore>False</AndroidKeyStore>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net11.0-android|AnyCPU'">
         <ApplicationId>com.ivanconnections.ivanconnectionstravel</ApplicationId>
         <ApplicationTitle>IC Travel</ApplicationTitle>
         <AndroidPackageFormat>aab</AndroidPackageFormat>
@@ -68,15 +68,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CommunityToolkit.Maui" Version="15.0.1" />
-        <PackageReference Include="CommunityToolkit.Maui.Maps" Version="4.0.0" />
+        <PackageReference Include="CommunityToolkit.Maui" Version="17.0.0" />
+        <PackageReference Include="CommunityToolkit.Maui.Maps" Version="5.0.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.101" />
-        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.101" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.12" />
-        <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="10.0.101" />
-        <PackageReference Include="Microsoft.Maui.Maps" Version="10.0.101" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.10" />
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.130" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="11.0.0" />
+        <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="11.0.10" />
+        <PackageReference Include="Microsoft.Maui.Maps" Version="11.0.10" />
     </ItemGroup>
 
     <ItemGroup>
@@ -170,6 +170,11 @@
         <None Update="Views\Popups\MessagePopup.xaml">
             <Generator>MSBuild:Compile</Generator>
         </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Platforms\Android\proguard.cfg" />
+      <ProguardConfiguration Include="Platforms\Android\proguard.cfg" />
     </ItemGroup>
 
 </Project>

@@ -16,21 +16,61 @@ public partial class StopPopup : Popup
 
     private double PopupHeight;
 
+    private readonly StopPopupViewModel ViewModel;
+    private bool IsClosed;
+
     public StopPopup(StopPopupViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel;
+        BindingContext = ViewModel = viewModel;
 
         ApplyResponsiveSizing();
         HeaderBorder.SizeChanged += OnSectionSizeChanged;
         ActionsPanel.SizeChanged += OnSectionSizeChanged;
         DeviceDisplay.MainDisplayInfoChanged += OnMainDisplayInfoChanged;
+        ViewModel.CloseRequested += OnCloseRequested;
+
+        // Reîmprospătarea automată rulează doar cât timp popup-ul este afișat.
+        Loaded += OnPopupLoaded;
+        Unloaded += OnPopupUnloaded;
         Closed += (s, e) =>
         {
+            IsClosed = true;
+            ViewModel.StopAutoRefresh();
+            ViewModel.CloseRequested -= OnCloseRequested;
+            Loaded -= OnPopupLoaded;
+            Unloaded -= OnPopupUnloaded;
             DeviceDisplay.MainDisplayInfoChanged -= OnMainDisplayInfoChanged;
             HeaderBorder.SizeChanged -= OnSectionSizeChanged;
             ActionsPanel.SizeChanged -= OnSectionSizeChanged;
         };
+    }
+
+    private void OnPopupLoaded(object? sender, EventArgs e)
+    {
+        if (!IsClosed)
+        {
+            ViewModel.StartAutoRefresh();
+        }
+    }
+
+    private void OnPopupUnloaded(object? sender, EventArgs e) => ViewModel.StopAutoRefresh();
+
+    private async void OnCloseRequested(object? sender, EventArgs e)
+    {
+        if (IsClosed)
+        {
+            return;
+        }
+
+        try
+        {
+            await CloseAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Nu s-a putut închide popup-ul stației: {ex.Message}");
+        }
     }
 
     private void OnMainDisplayInfoChanged(object? sender, DisplayInfoChangedEventArgs e)
@@ -80,8 +120,9 @@ public partial class StopPopup : Popup
         DetailsScroll.MaximumHeightRequest = Math.Max(MinListHeight, available);
     }
 
-    private void CloseButton_Clicked(object sender, EventArgs e)
+    private async void CloseButton_Clicked(object sender, EventArgs e)
     {
-        CloseAsync();
+        ViewModel.StopAutoRefresh();
+        await CloseAsync();
     }
 }

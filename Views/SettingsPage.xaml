@@ -3,10 +3,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
+             xmlns:controls="clr-namespace:IvanConnections_Travel.Controls"
              x:DataType="vm:SettingsViewModel"
              x:Class="IvanConnections_Travel.Views.SettingsPage"
              xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              Shell.NavBarIsVisible="False"
+             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}"
              x:Name="This"
              Title="Setări">
     <ContentPage.Behaviors>
@@ -14,292 +16,220 @@
                                     BindingContext="{Binding Path=BindingContext, Source={x:Reference This}}"
                                     Command="{Binding AppearingCommand}" />
     </ContentPage.Behaviors>
+
+    <ContentPage.Resources>
+        <Style x:Key="TrailingPicker" TargetType="Picker">
+            <Setter Property="WidthRequest" Value="130" />
+            <Setter Property="MinimumHeightRequest" Value="44" />
+            <Setter Property="HorizontalTextAlignment" Value="End" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextColor" Value="{StaticResource Accent}" />
+        </Style>
+
+        <!-- Map-like preview background (roads on a muted surface) -->
+        <ControlTemplate x:Key="MapPreviewTemplate">
+            <Border StrokeThickness="0"
+                    StrokeShape="RoundRectangle 12"
+                    HeightRequest="96"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedLight}, Dark={StaticResource SurfaceMutedDark}}">
+                <Grid>
+                    <BoxView HeightRequest="10"
+                             VerticalOptions="Center"
+                             Color="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource DividerDark}}" />
+                    <BoxView WidthRequest="8"
+                             HorizontalOptions="Start"
+                             Margin="36,0,0,0"
+                             Color="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource DividerDark}}" />
+                    <BoxView WidthRequest="6"
+                             HorizontalOptions="End"
+                             Margin="0,0,48,0"
+                             Rotation="20"
+                             Color="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}" />
+                    <ContentPresenter HorizontalOptions="Center" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </ControlTemplate>
+    </ContentPage.Resources>
+
     <ScrollView>
-        <VerticalStackLayout Padding="24,32" Spacing="12">
+        <VerticalStackLayout Padding="20,24,20,32" Spacing="10">
             <!-- Header -->
-            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
                 <Button Clicked="OnMenuClicked"
-                        HeightRequest="36"
-                        WidthRequest="36"
+                        HeightRequest="44"
+                        WidthRequest="44"
+                        Padding="0"
                         BackgroundColor="Transparent"
+                        SemanticProperties.Description="Deschide meniul"
                         VerticalOptions="Center">
                     <Button.ImageSource>
                         <FontImageSource FontFamily="MaterialSymbolsRounded"
                                          Glyph="&#xe5d2;"
                                          Size="30"
-                                         Color="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+                                         Color="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
                     </Button.ImageSource>
                 </Button>
                 <Label Text="Setări"
                        FontSize="26"
                        FontAttributes="Bold"
                        VerticalOptions="Center"
-                       TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+                       SemanticProperties.HeadingLevel="Level1"
+                       TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
             </HorizontalStackLayout>
 
-            <!-- Traffic section -->
-            <Border StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                    Padding="20,16">
-                <Border.Shadow>
-                    <Shadow Brush="{AppThemeBinding Light=Black, Dark=Black}"
-                            Offset="0,2"
-                            Radius="8"
-                            Opacity="0.08" />
-                </Border.Shadow>
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Grid ColumnDefinitions="*, Auto"
-                      RowDefinitions="Auto, Auto"
-                      ColumnSpacing="16">
-                    <Label Grid.Row="0" Grid.Column="0"
-                           Text="Trafic"
-                           FontSize="17"
-                           FontAttributes="Bold"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-                    <Label Grid.Row="1" Grid.Column="0"
-                           Text="Afișează traficul în timp real pe hartă"
-                           FontSize="13"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                           VerticalOptions="Center" />
-                    <Switch Grid.Row="0" Grid.Column="1"
-                            Grid.RowSpan="2"
-                            IsToggled="{Binding IsTrafficEnabled}"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End" />
-                </Grid>
-            </Border>
+            <!-- ===== Hartă ===== -->
+            <Label Text="Hartă" Style="{StaticResource SectionHeaderLabel}" SemanticProperties.HeadingLevel="Level2" />
 
-            <!-- Bus stops section -->
-            <Border StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                    Padding="20,16">
-                <Border.Shadow>
-                    <Shadow Brush="{AppThemeBinding Light=Black, Dark=Black}"
-                            Offset="0,2"
-                            Radius="8"
-                            Opacity="0.08" />
-                </Border.Shadow>
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Grid ColumnDefinitions="*, Auto"
-                      RowDefinitions="Auto, Auto"
-                      ColumnSpacing="16">
-                    <Label Grid.Row="0" Grid.Column="0"
-                           Text="Stații de autobuz"
-                           FontSize="17"
-                           FontAttributes="Bold"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-                    <Label Grid.Row="1" Grid.Column="0"
-                           Text="Afișează stațiile de autobuz pe hartă"
-                           FontSize="13"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                           VerticalOptions="Center" />
-                    <Switch Grid.Row="0" Grid.Column="1"
-                            Grid.RowSpan="2"
-                            IsToggled="{Binding ShowStopsOnMap}"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End" />
-                </Grid>
-            </Border>
+            <controls:SettingsRow Icon="🚦"
+                                  Title="Trafic"
+                                  Subtitle="Afișează traficul în timp real pe hartă">
+                <Switch IsToggled="{Binding IsTrafficEnabled}"
+                        OnColor="{StaticResource Accent}"
+                        SemanticProperties.Description="Trafic" />
+            </controls:SettingsRow>
 
-            <!-- Number only section -->
-            <Border StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                    Padding="20,16">
-                <Border.Shadow>
-                    <Shadow Brush="{AppThemeBinding Light=Black, Dark=Black}"
-                            Offset="0,2"
-                            Radius="8"
-                            Opacity="0.08" />
-                </Border.Shadow>
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Grid ColumnDefinitions="*, Auto"
-                      RowDefinitions="Auto, Auto"
-                      ColumnSpacing="16">
-                    <Label Grid.Row="0" Grid.Column="0"
-                           Text="Doar numărul rutei"
-                           FontSize="17"
-                           FontAttributes="Bold"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-                    <Label Grid.Row="1" Grid.Column="0"
-                           Text="Afișează doar numărul rutei pe fundal colorat, fără pictograma vehiculului"
-                           FontSize="13"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                           VerticalOptions="Center" />
-                    <Switch Grid.Row="0" Grid.Column="1"
-                            Grid.RowSpan="2"
-                            IsToggled="{Binding ShowNumberOnly}"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End" />
-                </Grid>
-            </Border>
+            <controls:SettingsRow Icon="🚏"
+                                  Title="Stații"
+                                  Subtitle="Afișează stațiile pe hartă">
+                <Switch IsToggled="{Binding ShowStopsOnMap}"
+                        OnColor="{StaticResource Accent}"
+                        SemanticProperties.Description="Stații" />
+            </controls:SettingsRow>
 
-            <!-- More vehicle info section -->
-            <Border StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                    Padding="20,16">
-                <Border.Shadow>
-                    <Shadow Brush="{AppThemeBinding Light=Black, Dark=Black}"
-                            Offset="0,2"
-                            Radius="8"
-                            Opacity="0.08" />
-                </Border.Shadow>
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Grid ColumnDefinitions="*, Auto"
-                      RowDefinitions="Auto, Auto"
-                      ColumnSpacing="16">
-                    <Label Grid.Row="0" Grid.Column="0"
-                           Text="Arată mai multe informații"
-                           FontSize="17"
-                           FontAttributes="Bold"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-                    <Label Grid.Row="1" Grid.Column="0"
-                           Text="Afișează codul vehiculului și accesibilitatea în fereastra vehiculului"
-                           FontSize="13"
-                           TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"
-                           VerticalOptions="Center" />
-                    <Switch Grid.Row="0" Grid.Column="1"
-                            Grid.RowSpan="2"
-                            IsToggled="{Binding ShowMoreVehicleInfo}"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End" />
-                </Grid>
-            </Border>
-
-            <!-- Bus icon section -->
-            <Grid ColumnDefinitions="4*, 1.5*" ColumnSpacing="12">
-
-                <Border Grid.Column="0"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                        Padding="20,16">
-                    <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
-                    </Border.Shadow>
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="16" />
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="10" VerticalOptions="Center">
-                        <Label FontSize="17"
+            <Border Style="{StaticResource CardBorder}" Padding="16,12">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Dimensiune stații" Style="{StaticResource TitleLabel}" VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding StopSize}"
                                FontAttributes="Bold"
-                               TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="Dimensiune vehicule: " />
-                                    <Span Text="{Binding VehicleSize}" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
+                               TextColor="{StaticResource Accent}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                    <Slider Minimum="15"
+                            Maximum="30"
+                            MinimumTrackColor="{StaticResource Accent}"
+                            ThumbColor="{StaticResource Accent}"
+                            SemanticProperties.Description="Dimensiune stații"
+                            Value="{Binding StopSizeSlider}" />
+                    <ContentView ControlTemplate="{StaticResource MapPreviewTemplate}">
+                        <Image Source="{Binding StopPreview}"
+                               HeightRequest="{Binding StopSize}"
+                               WidthRequest="{Binding StopSize}"
+                               Aspect="Center"
+                               SemanticProperties.Description="Previzualizare stație" />
+                    </ContentView>
+                </VerticalStackLayout>
+            </Border>
 
-                        <Slider Minimum="25"
-                                Maximum="35"
-                                Value="{Binding VehicleSize}" />
-                    </VerticalStackLayout>
-                </Border>
+            <controls:SettingsRow Icon="⏱️"
+                                  Title="Interval de actualizare"
+                                  Subtitle="Cât de des se actualizează pozițiile vehiculelor">
+                <Picker Style="{StaticResource TrailingPicker}"
+                        Title="Interval"
+                        ItemsSource="{Binding RefreshIntervalOptions}"
+                        SelectedIndex="{Binding RefreshIntervalIndex}"
+                        SemanticProperties.Description="Interval de actualizare" />
+            </controls:SettingsRow>
 
-                <Border Grid.Column="1"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                        MinimumHeightRequest="100"
-                        Padding="20,16">
-                    <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
-                    </Border.Shadow>
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="16" />
-                    </Border.StrokeShape>
+            <!-- ===== Vehicule ===== -->
+            <Label Text="Vehicule" Style="{StaticResource SectionHeaderLabel}" SemanticProperties.HeadingLevel="Level2" />
 
-                    <Image Source="{Binding VehiclePreview}"
-                           HeightRequest="{Binding VehicleDisplaySize}"
-                           WidthRequest="{Binding VehicleDisplaySize}"
-                           Aspect="Center"
-                           VerticalOptions="Center"
-                           HorizontalOptions="Center" />
-                </Border>
-            </Grid>
+            <controls:SettingsRow Icon="🔢"
+                                  Title="Doar numărul rutei"
+                                  Subtitle="Afișează doar numărul rutei pe fundal colorat, fără pictograma vehiculului">
+                <Switch IsToggled="{Binding ShowNumberOnly}"
+                        OnColor="{StaticResource Accent}"
+                        SemanticProperties.Description="Doar numărul rutei" />
+            </controls:SettingsRow>
 
-            <!-- Stop icon section -->
-            <Grid ColumnDefinitions="4*, 1.5*" ColumnSpacing="12">
+            <controls:SettingsRow Icon="ℹ️"
+                                  Title="Arată mai multe informații"
+                                  Subtitle="Afișează codul vehiculului și accesibilitatea în fereastra vehiculului">
+                <Switch IsToggled="{Binding ShowMoreVehicleInfo}"
+                        OnColor="{StaticResource Accent}"
+                        SemanticProperties.Description="Arată mai multe informații" />
+            </controls:SettingsRow>
 
-                <Border Grid.Column="0"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                        Padding="20,16">
-                    <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
-                    </Border.Shadow>
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="16" />
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="10" VerticalOptions="Center">
-                        <Label FontSize="17"
+            <Border Style="{StaticResource CardBorder}" Padding="16,12">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Dimensiune vehicule" Style="{StaticResource TitleLabel}" VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding VehicleSize}"
                                FontAttributes="Bold"
-                               TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="Dimensiune stații:" />
-                                    <Span Text="  " />
-                                    <Span Text="{Binding StopSize}" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
+                               TextColor="{StaticResource Accent}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                    <Slider Minimum="25"
+                            Maximum="35"
+                            MinimumTrackColor="{StaticResource Accent}"
+                            ThumbColor="{StaticResource Accent}"
+                            SemanticProperties.Description="Dimensiune vehicule"
+                            Value="{Binding VehicleSizeSlider}" />
+                    <ContentView ControlTemplate="{StaticResource MapPreviewTemplate}">
+                        <Image Source="{Binding VehiclePreview}"
+                               HeightRequest="{Binding VehicleDisplaySize}"
+                               WidthRequest="{Binding VehicleDisplaySize}"
+                               Aspect="Center"
+                               SemanticProperties.Description="Previzualizare vehicul" />
+                    </ContentView>
+                </VerticalStackLayout>
+            </Border>
 
-                        <Slider Minimum="15"
-                                Maximum="30"
-                                Value="{Binding StopSize}" />
-                    </VerticalStackLayout>
-                </Border>
+            <!-- ===== Aplicație ===== -->
+            <Label Text="Aplicație" Style="{StaticResource SectionHeaderLabel}" SemanticProperties.HeadingLevel="Level2" />
 
-                <Border Grid.Column="1"
-                        StrokeThickness="1"
-                        Stroke="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource OffBlackBorder}}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                        MinimumHeightRequest="100"
-                        Padding="20,16">
-                    <Border.Shadow>
-                        <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.08" />
-                    </Border.Shadow>
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="16" />
-                    </Border.StrokeShape>
+            <controls:SettingsRow Icon="🎨"
+                                  Title="Temă"
+                                  Subtitle="Aspectul aplicației">
+                <Picker Style="{StaticResource TrailingPicker}"
+                        Title="Temă"
+                        ItemsSource="{Binding ThemeOptions}"
+                        SelectedIndex="{Binding ThemeIndex}"
+                        SemanticProperties.Description="Temă" />
+            </controls:SettingsRow>
 
-                    <Image Source="{Binding StopPreview}"
-                           HeightRequest="{Binding StopSize}"
-                           WidthRequest="{Binding StopSize}"
-                           Aspect="Center"
-                           VerticalOptions="Center"
-                           HorizontalOptions="Center" />
-                </Border>
-            </Grid>
+            <controls:SettingsRow Icon="🏠"
+                                  Title="Ecran de pornire"
+                                  Subtitle="Ce ecran se deschide la lansarea aplicației">
+                <Picker Style="{StaticResource TrailingPicker}"
+                        Title="Ecran de pornire"
+                        ItemsSource="{Binding StartPageOptions}"
+                        SelectedIndex="{Binding StartPageIndex}"
+                        SemanticProperties.Description="Ecran de pornire" />
+            </controls:SettingsRow>
 
+            <!-- ===== Despre ===== -->
+            <Label Text="Despre" Style="{StaticResource SectionHeaderLabel}" SemanticProperties.HeadingLevel="Level2" />
 
-            <Label
-                VerticalOptions="End"
-                HorizontalOptions="Center">
+            <controls:SettingsRow Icon="✉️"
+                                  Title="Trimite feedback"
+                                  Subtitle="Spune-ne ce îți place sau ce putem îmbunătăți"
+                                  Command="{Binding SendFeedbackCommand}"
+                                  SemanticProperties.Description="Trimite feedback">
+                <Label Text="›"
+                       FontSize="24"
+                       TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+            </controls:SettingsRow>
+
+            <controls:SettingsRow Icon="🧭"
+                                  Title="Revezi turul de introducere"
+                                  Subtitle="Arată din nou ecranele de bun venit"
+                                  Command="{Binding ShowOnboardingCommand}"
+                                  SemanticProperties.Description="Revezi turul de introducere">
+                <Label Text="›"
+                       FontSize="24"
+                       TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+            </controls:SettingsRow>
+
+            <Label Margin="0,16,0,0"
+                   HorizontalOptions="Center"
+                   Style="{StaticResource SubtitleLabel}">
                 <Label.FormattedText>
                     <FormattedString>
                         <Span Text="Versiune: " />
-                        <Span Text="{Binding AppVersion}"></Span>
+                        <Span Text="{Binding AppVersion}" />
                     </FormattedString>
                 </Label.FormattedText>
             </Label>

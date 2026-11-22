@@ -57,7 +57,26 @@ namespace IvanConnections_Travel.ViewModels.Popups
         private Color headerOverlayColor = Color.FromRgba(255, 255, 255, 56);
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ArrivalRelativeText))]
         private DateTime? timeOfArrival;
+
+        /// <summary>"în 4 min" / "acum" – easier to read at a glance than a clock time.</summary>
+        public string ArrivalRelativeText
+        {
+            get
+            {
+                if (TimeOfArrival is not { } eta) return string.Empty;
+                var minutes = (int)Math.Round((eta - DateTime.Now).TotalMinutes);
+                return minutes <= 0 ? "acum" : $"în {minutes} min";
+            }
+        }
+
+        /// <summary>True when the user has an account (needed to send chat messages).</summary>
+        [ObservableProperty]
+        private bool isLoggedIn;
+
+        [ObservableProperty]
+        private bool isLoggingIn;
 
         [ObservableProperty]
         private bool loading = true;
@@ -145,6 +164,8 @@ namespace IvanConnections_Travel.ViewModels.Popups
             var vehicle = (Vehicle)query["vehicle"];
             var displayName = query.TryGetValue("userDisplayName", out var n) ? n as string ?? string.Empty : string.Empty;
             var avatarSeed = query.TryGetValue("userAvatarSeed", out var s) ? s as string ?? string.Empty : string.Empty;
+            IsLoggedIn = query.TryGetValue("isLoggedIn", out var l) && l is true
+                         || Shell.Current?.BindingContext is AppShellViewModel { IsLoggedIn: true };
             Load(vehicle, displayName, avatarSeed);
         }
 
@@ -310,6 +331,7 @@ namespace IvanConnections_Travel.ViewModels.Popups
         {
             ShouldFollow = !ShouldFollow;
             IsFollowing = ShouldFollow;
+            Utils.Haptics.Click();
             FollowText = ShouldFollow ? "Nu mai urmări" : "Urmărește";
             followVehicleManager.HandleEvent(this, ShouldFollow, nameof(FollowVehicle));
         }
@@ -326,6 +348,37 @@ namespace IvanConnections_Travel.ViewModels.Popups
             else
             {
                 await _chatHubService.DisconnectAsync();
+            }
+        }
+
+        /// <summary>Lets the user enable chat right from the vehicle popup instead of hunting in the menu.</summary>
+        [RelayCommand]
+        private async Task LoginForChatAsync()
+        {
+            if (IsLoggingIn) return;
+            IsLoggingIn = true;
+            try
+            {
+                if (Shell.Current?.BindingContext is AppShellViewModel shell)
+                {
+                    await shell.LoginCommand.ExecuteAsync(null);
+                    IsLoggedIn = shell.IsLoggedIn;
+                }
+
+                if (IsLoggedIn)
+                {
+                    await LoadDeviceIdAsync();
+                    await ConnectToChatHubAsync();
+                    Utils.Haptics.Confirm();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[VehiclePopupViewModel] Login from chat failed: {ex.Message}");
+            }
+            finally
+            {
+                IsLoggingIn = false;
             }
         }
 

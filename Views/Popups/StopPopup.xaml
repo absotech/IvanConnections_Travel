@@ -3,15 +3,21 @@
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels.Popups"
-               xmlns:model="clr-namespace:IvanConnections_Travel.Models"
                CanBeDismissedByTappingOutsideOfPopup="True"
                x:DataType="vm:StopPopupViewModel"
                BackgroundColor="Transparent"
                x:Class="IvanConnections_Travel.Views.Popups.StopPopup">
+    <toolkit:Popup.Resources>
+        <ResourceDictionary>
+            <!-- Suprafață translucidă pentru butoanele/pictogramele din antetul colorat. -->
+            <Color x:Key="HeaderOverlay">#38FFFFFF</Color>
+        </ResourceDictionary>
+    </toolkit:Popup.Resources>
+
     <Border x:Name="RootCard"
-            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+            Stroke="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
             StrokeThickness="1"
-            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
             MinimumWidthRequest="300"
             MaximumWidthRequest="400"
             VerticalOptions="Start"
@@ -34,25 +40,27 @@
             <Border x:Name="HeaderBorder"
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 23,23,0,0"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                    Padding="16,14">
-                <Grid ColumnDefinitions="Auto, *, Auto"
-                      ColumnSpacing="12">
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}"
+                    Padding="16,14,10,14">
+                <Grid ColumnDefinitions="Auto, *, Auto, Auto"
+                      ColumnSpacing="8">
                     <!-- Pictogramă stație -->
                     <Border Grid.Column="0"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 16"
-                            BackgroundColor="#38FFFFFF"
+                            BackgroundColor="{StaticResource HeaderOverlay}"
                             MinimumWidthRequest="48"
                             MinimumHeightRequest="48"
                             Padding="8,6"
-                            VerticalOptions="Center">
+                            Margin="0,0,4,0"
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="Stație">
                         <Label FontFamily="MaterialSymbolsRounded"
                                Text="&#xe576;"
                                FontSize="26"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
-                               TextColor="White" />
+                               TextColor="{StaticResource OnAccent}" />
                     </Border>
 
                     <!-- Nume stație -->
@@ -62,31 +70,61 @@
                         <Label Text="Stație"
                                FontSize="11"
                                CharacterSpacing="1.5"
-                               TextColor="#C8FFFFFF" />
+                               Opacity="0.8"
+                               TextColor="{StaticResource OnAccent}" />
                         <Label Text="{Binding Stop.StopName}"
                                FontSize="17"
                                FontAttributes="Bold"
                                MaxLines="2"
                                LineBreakMode="TailTruncation"
-                               TextColor="White" />
+                               SemanticProperties.HeadingLevel="Level1"
+                               TextColor="{StaticResource OnAccent}" />
                     </VerticalStackLayout>
 
-                    <!-- Close (X) -->
+                    <!-- Favorit (stea) -->
                     <Button Grid.Column="2"
+                            Command="{Binding ToggleFavoriteCommand}"
+                            Text="&#xe838;"
+                            FontFamily="MaterialSymbolsRounded"
+                            FontSize="22"
+                            ToolTipProperties.Text="{Binding FavoriteDescription}"
+                            SemanticProperties.Description="{Binding FavoriteDescription}"
+                            CornerRadius="22"
+                            HeightRequest="44"
+                            WidthRequest="44"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
+                            Padding="0"
+                            VerticalOptions="Start"
+                            BackgroundColor="{StaticResource HeaderOverlay}"
+                            TextColor="{StaticResource OnAccent}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button"
+                                         Binding="{Binding IsFavorite}"
+                                         Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource Warning}" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+
+                    <!-- Close (X) -->
+                    <Button Grid.Column="3"
                             Clicked="CloseButton_Clicked"
                             ToolTipProperties.Text="Închide"
                             SemanticProperties.Description="Închide detaliile stației"
-                            CornerRadius="18"
-                            HeightRequest="36"
-                            WidthRequest="36"
+                            CornerRadius="22"
+                            HeightRequest="44"
+                            WidthRequest="44"
+                            MinimumHeightRequest="44"
+                            MinimumWidthRequest="44"
                             Padding="0"
                             VerticalOptions="Start"
-                            BackgroundColor="#38FFFFFF">
+                            BackgroundColor="{StaticResource HeaderOverlay}">
                         <Button.ImageSource>
                             <FontImageSource FontFamily="MaterialSymbolsRounded"
                                              Glyph="&#xe5cd;"
                                              Size="20"
-                                             Color="White" />
+                                             Color="{StaticResource OnAccent}" />
                         </Button.ImageSource>
                     </Button>
                 </Grid>
@@ -108,14 +146,15 @@
                                Text="&#xe55f;"
                                FontSize="16"
                                VerticalOptions="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                               SemanticProperties.Description="Detalii stație"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                         <Label Grid.Column="1"
                                Text="{Binding StopSubtitle}"
                                FontSize="12"
                                MaxLines="2"
                                LineBreakMode="TailTruncation"
                                VerticalOptions="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                     </Grid>
 
                     <!-- Titlul secțiunii + reîmprospătare -->
@@ -125,43 +164,66 @@
                                              VerticalOptions="Center">
                             <Label Text="Sosiri"
                                    FontSize="15"
-                                   FontAttributes="Bold" />
+                                   FontAttributes="Bold"
+                                   SemanticProperties.HeadingLevel="Level2"
+                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
                             <Label Text="{Binding ArrivalsSummary}"
                                    IsVisible="{Binding ArrivalsSummary, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
                                    FontSize="11"
                                    MaxLines="2"
                                    LineBreakMode="TailTruncation"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                            <!-- „Actualizat acum Xs” – se actualizează la fiecare secundă -->
+                            <Label Text="{Binding LastUpdateText}"
+                                   IsVisible="{Binding LastUpdateText, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
+                                   FontSize="11"
+                                   MaxLines="1"
+                                   LineBreakMode="TailTruncation"
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                         </VerticalStackLayout>
 
-                        <Button Grid.Column="1"
-                                Command="{Binding RefreshCommand}"
-                                IsEnabled="{Binding IsLoading, Converter={toolkit:InvertedBoolConverter}}"
-                                ToolTipProperties.Text="Reîmprospătează"
-                                SemanticProperties.Description="Reîmprospătează sosirile"
-                                CornerRadius="18"
-                                HeightRequest="36"
-                                WidthRequest="36"
-                                Padding="0"
-                                VerticalOptions="Center"
-                                BackgroundColor="Transparent"
-                                BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
-                                BorderWidth="1">
-                            <Button.ImageSource>
-                                <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                                 Glyph="&#xe5d5;"
-                                                 Size="20"
-                                                 Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                            </Button.ImageSource>
-                        </Button>
+                        <Grid Grid.Column="1"
+                              WidthRequest="44"
+                              HeightRequest="44"
+                              VerticalOptions="Center">
+                            <Button Command="{Binding RefreshCommand}"
+                                    IsVisible="{Binding IsRefreshing, Converter={toolkit:InvertedBoolConverter}}"
+                                    IsEnabled="{Binding IsBusy, Converter={toolkit:InvertedBoolConverter}}"
+                                    ToolTipProperties.Text="Reîmprospătează"
+                                    SemanticProperties.Description="Reîmprospătează sosirile"
+                                    CornerRadius="22"
+                                    HeightRequest="44"
+                                    WidthRequest="44"
+                                    MinimumHeightRequest="44"
+                                    MinimumWidthRequest="44"
+                                    Padding="0"
+                                    BackgroundColor="Transparent"
+                                    BorderColor="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
+                                    BorderWidth="1">
+                                <Button.ImageSource>
+                                    <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                                     Glyph="&#xe5d5;"
+                                                     Size="20"
+                                                     Color="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                                </Button.ImageSource>
+                            </Button>
+                            <ActivityIndicator IsVisible="{Binding IsRefreshing}"
+                                               IsRunning="{Binding IsRefreshing}"
+                                               HeightRequest="22"
+                                               WidthRequest="22"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               SemanticProperties.Description="Se actualizează sosirile"
+                                               Color="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}" />
+                        </Grid>
                     </Grid>
 
                     <!-- Se încarcă -->
                     <Border IsVisible="{Binding IsLoading}"
                             StrokeThickness="1"
-                            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                            Stroke="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
                             StrokeShape="RoundRectangle 16"
-                            BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#1a2233}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedLight}, Dark={StaticResource SurfaceMutedDark}}"
                             Padding="14,16">
                         <HorizontalStackLayout Spacing="10"
                                                HorizontalOptions="Center">
@@ -169,11 +231,11 @@
                                                HeightRequest="20"
                                                WidthRequest="20"
                                                VerticalOptions="Center"
-                                               Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                               Color="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}" />
                             <Label Text="Se încarcă sosirile…"
                                    FontSize="13"
                                    VerticalOptions="Center"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                         </HorizontalStackLayout>
                     </Border>
 
@@ -183,14 +245,21 @@
                                          Spacing="8"
                                          BindableLayout.ItemsSource="{Binding Arrivals}">
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="model:StopArrival">
+                            <DataTemplate x:DataType="vm:StopArrivalItem">
+                                <!-- Rândurile cu vehicul identificat pot fi atinse pentru a-l urmări pe hartă -->
                                 <Border StrokeThickness="1"
-                                        Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                                        Stroke="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
                                         StrokeShape="RoundRectangle 16"
-                                        BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#1a2233}"
-                                        Padding="12,10">
-                                    <Grid ColumnDefinitions="Auto, *, Auto"
-                                          ColumnSpacing="12">
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedLight}, Dark={StaticResource SurfaceMutedDark}}"
+                                        MinimumHeightRequest="56"
+                                        Padding="12,10"
+                                        SemanticProperties.Description="{Binding AccessibilityText}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding TrackArrivalCommand, Source={RelativeSource AncestorType={x:Type vm:StopPopupViewModel}}, x:DataType=vm:StopPopupViewModel}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="Auto, *, Auto, Auto"
+                                          ColumnSpacing="10">
                                         <!-- Pastila traseului, colorată după tipul vehiculului -->
                                         <Border Grid.Column="0"
                                                 StrokeThickness="0"
@@ -207,14 +276,14 @@
                                                        Text="{Binding VehicleGlyph}"
                                                        FontSize="18"
                                                        VerticalOptions="Center"
-                                                       TextColor="White" />
+                                                       TextColor="{StaticResource OnAccent}" />
                                                 <Label Grid.Column="1"
                                                        Text="{Binding VehicleLabel}"
                                                        FontSize="16"
                                                        FontAttributes="Bold"
                                                        LineBreakMode="TailTruncation"
                                                        VerticalOptions="Center"
-                                                       TextColor="White" />
+                                                       TextColor="{StaticResource OnAccent}" />
                                             </Grid>
                                         </Border>
 
@@ -225,44 +294,55 @@
                                             <Label Text="{Binding TypeName}"
                                                    FontSize="14"
                                                    FontAttributes="Bold"
-                                                   LineBreakMode="TailTruncation" />
+                                                   LineBreakMode="TailTruncation"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
                                             <Label Text="{Binding ArrivalHint}"
                                                    FontSize="11"
                                                    LineBreakMode="TailTruncation"
-                                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                                         </VerticalStackLayout>
 
-                                        <!-- Timpul până la sosire -->
+                                        <!-- Timpul relativ până la sosire + ora estimată -->
                                         <VerticalStackLayout Grid.Column="2"
                                                              Spacing="0"
                                                              VerticalOptions="Center"
                                                              HorizontalOptions="End">
-                                            <Label Text="{Binding ArrivalValue}"
-                                                   FontSize="20"
+                                            <Label Text="{Binding RelativeText}"
+                                                   FontSize="17"
                                                    FontAttributes="Bold"
                                                    HorizontalOptions="End"
-                                                   LineBreakMode="TailTruncation"
-                                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}">
+                                                   LineBreakMode="NoWrap"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}">
                                                 <Label.Triggers>
                                                     <DataTrigger TargetType="Label"
                                                                  Binding="{Binding IsImminent}"
                                                                  Value="True">
-                                                        <Setter Property="TextColor" Value="#16A34A" />
+                                                        <Setter Property="TextColor" Value="{StaticResource Success}" />
                                                     </DataTrigger>
                                                     <DataTrigger TargetType="Label"
                                                                  Binding="{Binding IsAtTerminus}"
                                                                  Value="True">
                                                         <Setter Property="FontSize" Value="13" />
-                                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                                                     </DataTrigger>
                                                 </Label.Triggers>
                                             </Label>
-                                            <Label Text="min"
-                                                   IsVisible="{Binding HasArrivalUnit}"
+                                            <Label Text="{Binding ClockText}"
+                                                   IsVisible="{Binding HasClockText}"
                                                    FontSize="11"
                                                    HorizontalOptions="End"
-                                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                                         </VerticalStackLayout>
+
+                                        <!-- Indicator „urmărește pe hartă” (doar pentru vehiculele identificate) -->
+                                        <Label Grid.Column="3"
+                                               IsVisible="{Binding CanTrack}"
+                                               FontFamily="MaterialSymbolsRounded"
+                                               Text="&#xe5cc;"
+                                               FontSize="20"
+                                               VerticalOptions="Center"
+                                               SemanticProperties.Description="Urmărește pe hartă"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -272,29 +352,23 @@
                     <!-- Nicio sosire / eroare -->
                     <Border IsVisible="{Binding ErrorMessage, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
                             StrokeThickness="1"
-                            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                            Stroke="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
                             StrokeShape="RoundRectangle 16"
-                            BackgroundColor="{AppThemeBinding Light=#F7F8FA, Dark=#1a2233}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedLight}, Dark={StaticResource SurfaceMutedDark}}"
                             Padding="14,16">
                         <VerticalStackLayout Spacing="6">
                             <Label FontFamily="MaterialSymbolsRounded"
                                    Text="&#xe8b5;"
                                    FontSize="28"
                                    HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray500}}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                             <Label Text="{Binding ErrorMessage}"
                                    FontSize="13"
                                    HorizontalTextAlignment="Center"
                                    LineBreakMode="WordWrap"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                         </VerticalStackLayout>
                     </Border>
-
-                    <Label Text="{Binding LastUpdateText}"
-                           IsVisible="{Binding LastUpdateText, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
-                           FontSize="11"
-                           HorizontalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
                 </VerticalStackLayout>
             </ScrollView>
 
@@ -313,33 +387,30 @@
                         LineBreakMode="WordWrap"
                         Padding="8,6"
                         BackgroundColor="Transparent"
-                        BorderColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource OffBlackBorder}}"
+                        BorderColor="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
                         BorderWidth="1"
-                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}">
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}">
                     <Button.ImageSource>
                         <FontImageSource FontFamily="MaterialSymbolsRounded"
                                          Glyph="&#xe8d5;"
                                          Size="18"
-                                         Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+                                         Color="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
                     </Button.ImageSource>
                 </Button>
 
                 <Button Text="Adaugă widget"
+                        Style="{StaticResource AccentButton}"
                         Command="{Binding PinWidgetCommand}"
                         IsVisible="{Binding CanPinWidget}"
                         CornerRadius="22"
-                        MinimumHeightRequest="44"
                         FontSize="14"
-                        FontAttributes="Bold"
                         LineBreakMode="WordWrap"
-                        Padding="8,6"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                        TextColor="White">
+                        Padding="8,6">
                     <Button.ImageSource>
                         <FontImageSource FontFamily="MaterialSymbolsRounded"
                                          Glyph="&#xe1bd;"
                                          Size="18"
-                                         Color="White" />
+                                         Color="{StaticResource OnAccent}" />
                     </Button.ImageSource>
                 </Button>
             </VerticalStackLayout>

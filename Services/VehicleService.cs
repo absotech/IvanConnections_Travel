@@ -1,33 +1,50 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using IvanConnections_Travel.Messages;
 using IvanConnections_Travel.Models;
 
 namespace IvanConnections_Travel.Services;
 
 public partial class VehicleService : ObservableObject, IVehicleService, IDisposable
 {
-    private readonly ApiService _apiService;
-    private CancellationTokenSource? _cts;
+    public const string RefreshIntervalPreferenceKey = "RefreshIntervalSeconds";
+    public const int DefaultRefreshIntervalSeconds = 5;
 
-    public string? DeviceId
-    {
-        get;
-        set;
-    }
+    private readonly ApiService _apiService;
+    private readonly SemaphoreSlim _refreshGate = new(1, 1);
+    private CancellationTokenSource? _cts;
+    private PeriodicTimer? _timer;
+
+    public string? DeviceId { get; set; }
+
     [ObservableProperty]
     private ObservableCollection<Vehicle> _vehicles = [];
 
     [ObservableProperty]
-    private HashSet<string> _availableRoutes = [];
+    private HashSet<string> _availableRoutes = new(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
     private bool _isBusy;
 
     [ObservableProperty]
+    private bool _isOffline;
+
+    [ObservableProperty]
+    private DateTime? _lastUpdatedUtc;
+
+    [ObservableProperty]
+    private bool _isPaused;
+
+    [ObservableProperty]
+    private int _refreshIntervalSeconds;
+
+    [ObservableProperty]
     private Vehicle? _trackedVehicle;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MatchedRoute))]
     private string? _searchText;
 
     [ObservableProperty]
@@ -43,16 +60,50 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
     private string? _previousShapeFilter;
     private List<Vehicle> _allVehicles = [];
 
+    /// <summary>Unfiltered snapshot of the last refresh (used for route suggestions).</summary>
+    public IReadOnlyList<Vehicle> AllVehicles => _allVehicles;
+
     public VehicleService(ApiService apiService)
     {
         _apiService = apiService;
+        _refreshIntervalSeconds = Math.Clamp(
+            Microsoft.Maui.Storage.Preferences.Default.Get(RefreshIntervalPreferenceKey, DefaultRefreshIntervalSeconds), 2, 60);
+
+        WeakReferenceMessenger.Default.Register<RefreshIntervalChangedMessage>(this,
+            (_, m) => RefreshIntervalSeconds = m.Value);
+    }
+
+    /// <summary>
+    /// Resolves the typed search to an existing route, ignoring case and surrounding whitespace.
+    /// </summary>
+    public string? MatchedRoute
+    {
+        get
+        {
+            var text = SearchText?.Trim();
+            if (string.IsNullOrEmpty(text)) return null;
+            if (AvailableRoutes.TryGetValue(text, out var actual)) return actual;
+
+            // Lenient match: "cu" -> "C-U", "1 b" -> "1B".
+            return AvailableRoutes.FirstOrDefault(r => Utils.RouteSearch.AreEquivalent(r, text));
+        }
+    }
+
+    partial void OnAvailableRoutesChanged(HashSet<string> value) => OnPropertyChanged(nameof(MatchedRoute));
+
+    partial void OnRefreshIntervalSecondsChanged(int value)
+    {
+        var seconds = Math.Clamp(value, 2, 60);
+        if (_timer is not null) _timer.Period = TimeSpan.FromSeconds(seconds);
     }
 
     public void StartPeriodicRefresh()
     {
         if (_cts != null) return;
         _cts = new CancellationTokenSource();
-        Task.Run(() => PeriodicRefreshLoopAsync(_cts.Token));
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(Math.Clamp(RefreshIntervalSeconds, 2, 60)));
+        _ = RefreshCoreAsync(forced: false, showBusy: false);
+        _ = PeriodicRefreshLoopAsync(_timer, _cts.Token);
     }
 
     public void StopPeriodicRefresh()
@@ -60,45 +111,68 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;
+        _timer?.Dispose();
+        _timer = null;
     }
 
-    private async Task PeriodicRefreshLoopAsync(CancellationToken token)
+    private async Task PeriodicRefreshLoopAsync(PeriodicTimer timer, CancellationToken token)
     {
-        while (!token.IsCancellationRequested)
-        {
-            try
-            {
-                await RefreshAsync(forced: false);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[VehicleService] Periodic Refresh Error: {ex.Message}");
-            }
-
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(3), token);
-            }
-            catch (OperationCanceledException) { }
-        }
-    }
-
-    public async Task RefreshAsync(bool forced = false)
-    {
-        IsBusy = true;
         try
         {
-            var (freshVehicles, isNotModified) = await _apiService.GetVehiclesAsync(null, forced);
+            while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false))
+            {
+                if (IsPaused) continue;
+                try
+                {
+                    await RefreshCoreAsync(forced: false, showBusy: false).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[VehicleService] Periodic Refresh Error: {ex.Message}");
+                }
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) { }
+    }
 
-            if (isNotModified || freshVehicles is null) return;
+    public Task RefreshAsync(bool forced = false) => RefreshCoreAsync(forced, showBusy: forced);
+
+    private async Task RefreshCoreAsync(bool forced, bool showBusy)
+    {
+        // Background polls are simply skipped if a refresh is already running.
+        if (!await _refreshGate.WaitAsync(forced ? Timeout.Infinite : 0).ConfigureAwait(false)) return;
+
+        if (showBusy) SetOnMain(() => IsBusy = true);
+        try
+        {
+            var (freshVehicles, isNotModified) = await _apiService.GetVehiclesAsync(null, forced).ConfigureAwait(false);
+
+            if (isNotModified)
+            {
+                SetOnMain(() =>
+                {
+                    IsOffline = false;
+                    LastUpdatedUtc = DateTime.UtcNow;
+                });
+                return;
+            }
+
+            if (freshVehicles is null)
+            {
+                SetOnMain(() => IsOffline = true);
+                return;
+            }
 
             _allVehicles = freshVehicles;
 
-            await UpdateShapesInternalAsync();
+            await UpdateShapesInternalAsync().ConfigureAwait(false);
 
-            MainThread.BeginInvokeOnMainThread(() =>
+            SetOnMain(() =>
             {
+                IsOffline = false;
+                LastUpdatedUtc = DateTime.UtcNow;
+                OnPropertyChanged(nameof(AllVehicles));
                 PopulateRoutes(_allVehicles);
                 UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles));
             });
@@ -106,18 +180,26 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
         catch (Exception ex)
         {
             Debug.WriteLine($"[VehicleService] Refresh Error: {ex.Message}");
+            SetOnMain(() => IsOffline = true);
         }
         finally
         {
-            IsBusy = false;
+            if (showBusy) SetOnMain(() => IsBusy = false);
+            _refreshGate.Release();
         }
+    }
+
+    private static void SetOnMain(Action action)
+    {
+        if (MainThread.IsMainThread) action();
+        else MainThread.BeginInvokeOnMainThread(action);
     }
 
     private void UpdateVehiclesInternal(List<Vehicle> freshVehicles)
     {
         if (TrackedVehicle != null)
         {
-            var updatedTrackedVehicle = freshVehicles.FirstOrDefault(v => v.Id == TrackedVehicle.Id);
+            var updatedTrackedVehicle = _allVehicles.FirstOrDefault(v => v.Id == TrackedVehicle.Id);
             if (updatedTrackedVehicle != null)
             {
                 updatedTrackedVehicle.IsTracked = true;
@@ -140,26 +222,20 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
     {
         if (freshVehicles.Count == 0) return;
 
-        var uniqueRoutes = freshVehicles
-            .Select(v => v.RouteShortName)
-            .Where(name => !string.IsNullOrEmpty(name))
-            .Distinct()
-            .ToList();
+        var routesSet = new HashSet<string>(
+            freshVehicles
+                .Select(v => v.RouteShortName)
+                .OfType<string>()
+                .Where(name => name.Length > 0),
+            StringComparer.OrdinalIgnoreCase);
 
-        var routesSet = new HashSet<string>();
-        foreach (var route in uniqueRoutes.OfType<string>())
-        {
-            routesSet.Add(route);
-        }
-        AvailableRoutes = routesSet;
+        if (!routesSet.SetEquals(AvailableRoutes))
+            AvailableRoutes = routesSet;
     }
 
     partial void OnSearchTextChanged(string? value)
     {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles));
-        });
+        SetOnMain(() => UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles)));
         _ = UpdateShapesInternalAsync();
     }
 
@@ -170,64 +246,60 @@ public partial class VehicleService : ObservableObject, IVehicleService, IDispos
 
     partial void OnVehicleTypeFilterChanged(Models.Enums.VehicleType? value)
     {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles));
-        });
+        SetOnMain(() => UpdateVehiclesInternal(GetFilteredVehicles(_allVehicles)));
     }
 
     private List<Vehicle> GetFilteredVehicles(List<Vehicle> allVehicles)
     {
-        var filtered = allVehicles;
-        if (!string.IsNullOrWhiteSpace(SearchText) && AvailableRoutes.Contains(SearchText))
+        IEnumerable<Vehicle> filtered = allVehicles;
+
+        if (MatchedRoute is { } route)
         {
-            filtered = filtered
-                .Where(v => v.RouteShortName?.Equals(SearchText, StringComparison.OrdinalIgnoreCase) == true)
-                .ToList();
+            filtered = filtered.Where(v => string.Equals(v.RouteShortName, route, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (VehicleTypeFilter.HasValue)
+        if (VehicleTypeFilter is { } type)
         {
-            filtered = filtered
-                .Where(v => v.VehicleType == VehicleTypeFilter.Value)
-                .ToList();
+            filtered = filtered.Where(v => v.VehicleType == type);
         }
 
-        return filtered;
+        return [.. filtered];
     }
 
     private async Task UpdateShapesInternalAsync()
     {
-        var currentRouteId = !string.IsNullOrWhiteSpace(SearchText) && _allVehicles.Count > 0
-            ? _allVehicles.FirstOrDefault(v => v.RouteShortName?.Equals(SearchText, StringComparison.OrdinalIgnoreCase) == true && v.RouteId.HasValue)?.RouteId
+        var route = MatchedRoute;
+        var currentRouteId = route is not null
+            ? _allVehicles.FirstOrDefault(v => string.Equals(v.RouteShortName, route, StringComparison.OrdinalIgnoreCase) && v.RouteId.HasValue)?.RouteId
             : null;
 
-        if (currentRouteId != _previousRouteId || ShapeFilter != _previousShapeFilter)
+        if (currentRouteId == _previousRouteId && ShapeFilter == _previousShapeFilter) return;
+
+        _previousRouteId = currentRouteId;
+        _previousShapeFilter = ShapeFilter;
+
+        if (currentRouteId != null)
         {
-            _previousRouteId = currentRouteId;
-            _previousShapeFilter = ShapeFilter;
-            
-            if (currentRouteId != null)
-            {
-                var shapesList = await _apiService.GetShapesAsync(currentRouteId.Value, DeviceId);
+            var shapesList = await _apiService.GetShapesAsync(currentRouteId.Value, DeviceId).ConfigureAwait(false);
 
-                if (!string.IsNullOrEmpty(ShapeFilter))
-                {
-                    shapesList = shapesList.Where(s => s.ShapeId.EndsWith(ShapeFilter)).ToList();
-                }
-
-                MainThread.BeginInvokeOnMainThread(() => Shapes = new ObservableCollection<Shape>(shapesList));
-            }
-            else
+            if (!string.IsNullOrEmpty(ShapeFilter))
             {
-                MainThread.BeginInvokeOnMainThread(() => Shapes = []);
+                shapesList = [.. shapesList.Where(s => s.ShapeId.EndsWith(ShapeFilter))];
             }
+
+            SetOnMain(() => Shapes = new ObservableCollection<Shape>(shapesList));
+        }
+        else
+        {
+            SetOnMain(() => Shapes = []);
         }
     }
 
     public void Dispose()
     {
         StopPeriodicRefresh();
+        WeakReferenceMessenger.Default.UnregisterAll(this);
+        _refreshGate.Dispose();
         GC.SuppressFinalize(this);
     }
 }

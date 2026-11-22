@@ -5,29 +5,49 @@
              x:Class="IvanConnections_Travel.MainPage"
              xmlns:xct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:local="clr-namespace:IvanConnections_Travel.Controls"
-             xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
+             xmlns:models="clr-namespace:IvanConnections_Travel.Models"
+             xmlns:enums="clr-namespace:IvanConnections_Travel.Models.Enums"
              Shell.NavBarIsVisible="False"
              Shell.TabBarIsVisible="False"
              x:Name="This"
              xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
              x:DataType="vm:MainPageViewModel">
     <ContentPage.Resources>
-        <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+
         <Style TargetType="Button" x:Key="FilterButtonStyle">
             <Setter Property="BackgroundColor" Value="Transparent" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
             <Setter Property="BorderWidth" Value="1" />
-            <Setter Property="BorderColor" Value="{StaticResource OffBlackBorder}" />
-            <Setter Property="HeightRequest" Value="40" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}" />
+            <Setter Property="HeightRequest" Value="44" />
+            <Setter Property="CornerRadius" Value="22" />
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="14,0" />
+        </Style>
+
+        <Style TargetType="Border" x:Key="MapCardStyle">
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
+            <Setter Property="Shadow">
+                <Shadow Brush="Black" Offset="0,3" Radius="10" Opacity="0.18" />
+            </Setter>
+        </Style>
+
+        <Style TargetType="ImageButton" x:Key="MapRoundButtonStyle" BasedOn="{StaticResource MapFabButton}">
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}" />
+            <Setter Property="Shadow">
+                <Shadow Brush="Black" Offset="0,3" Radius="10" Opacity="0.25" />
+            </Setter>
         </Style>
     </ContentPage.Resources>
     <ContentPage.Behaviors>
         <xct:EventToCommandBehavior EventName="Appearing"
-                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference This}}"
+                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference This}, x:DataType=ContentPage}"
                                     Command="{Binding AppearingCommand}" />
         <xct:EventToCommandBehavior EventName="Disappearing"
-                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference This}}"
+                                    BindingContext="{Binding Path=BindingContext, Source={x:Reference This}, x:DataType=ContentPage}"
                                     Command="{Binding DisappearingCommand}" />
     </ContentPage.Behaviors>
 
@@ -45,329 +65,482 @@
                              VehiclePinSize="{Binding VehicleSize}"
                              ShowNumberOnly="{Binding ShowNumberOnly}"
                              MarkerClickCommand="{Binding MarkerClickedCommand}"
-                             MapClickCommand="{Binding MapClickedCommand}">
-        </local:CustomMauiMap>
+                             MapClickCommand="{Binding MapClickedCommand}" />
 
-        <Grid ColumnDefinitions="*, Auto, Auto"
-              RowDefinitions="Auto, Auto, *">
-            <Border VerticalOptions="Center"
-                    Margin="5,15,5,10"
-                    StrokeThickness="1"
-                    Stroke="{StaticResource OffBlackBorder}"
-                    Grid.Column="0"
+        <Grid ColumnDefinitions="*, Auto"
+              RowDefinitions="Auto, Auto, *"
+              Padding="8,12,8,0">
+
+            <!-- ===== Top bar: menu + search ===== -->
+            <Border Grid.Column="0"
+                    Style="{StaticResource MapCardStyle}"
                     StrokeShape="RoundRectangle 25"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                    Padding="5,0,5,0">
-                <Grid
-                    ColumnDefinitions="Auto, *">
-                    <Button
-                        Grid.Column="0"
-                        Clicked="OnMenuClicked"
-                        HeightRequest="25"
-                        WidthRequest="25"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-                        <Button.ImageSource>
+                    Padding="2,0,4,0"
+                    HeightRequest="52">
+                <Grid ColumnDefinitions="Auto, *">
+                    <ImageButton Grid.Column="0"
+                                 Clicked="OnMenuClicked"
+                                 WidthRequest="48"
+                                 HeightRequest="48"
+                                 Padding="11"
+                                 CornerRadius="24"
+                                 BackgroundColor="Transparent"
+                                 SemanticProperties.Description="Deschide meniul">
+                        <ImageButton.Source>
                             <FontImageSource FontFamily="MaterialSymbolsRounded"
                                              Glyph="&#xe5d2;"
-                                             Size="30"
-                                             Color="{AppThemeBinding Light={StaticResource OffBlack}, Dark={StaticResource PrimaryDarkText}}" />
-                        </Button.ImageSource>
-                        </Button>
-                    <local:FancySearchBar Grid.Column="1"
+                                             Color="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                        </ImageButton.Source>
+                    </ImageButton>
+                    <local:FancySearchBar x:Name="SearchBox"
+                                          Grid.Column="1"
                                           BorderThickness="0"
                                           BackgroundColor="Transparent"
                                           VerticalOptions="Center"
-                                          Placeholder="Caută o rută"
-                                          IsEnabled="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
-                                          Opacity="{Binding IsTracking, Converter={StaticResource BoolToOpacityConverter}}"
+                                          Placeholder="Caută o rută (ex. 1, 27, 3b)"
+                                          ClearCommand="{Binding ClearSearchCommand}"
                                           Text="{Binding SearchText}" />
-                    <BoxView BackgroundColor="Transparent"
-                             Grid.Column="1"
-                             IsVisible="{Binding IsTracking}">
-                        <BoxView.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ShowSearchDisabledToastCommand}" />
-                        </BoxView.GestureRecognizers>
-                    </BoxView>
                 </Grid>
             </Border>
-                    <Button
-                        Command="{Binding ToggleShowStopsCommand}"
-                        HeightRequest="50"
-                        WidthRequest="50"
-                        Margin="5,15,5,10"
-                        CornerRadius="30"
-                        Grid.Column="1"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                        BorderColor="{StaticResource OffBlackBorder}"
-                        BorderWidth="1">
-                        <Button.ImageSource>
-                            <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                             Glyph="&#xe55f;"
-                                             Size="30"
-                                             Color="{StaticResource PrimaryDarkText}" />
-                        </Button.ImageSource>
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button"
-                                         Binding="{Binding ShowStopsOnMap}"
-                                         Value="True">
-                                <Setter Property="BackgroundColor"
-                                        Value="#2196F3" />
-                            </DataTrigger>
 
-                        </Button.Triggers>
-                    </Button>
-                    <Button
-                        Command="{Binding ToggleTrafficCommand}"
-                        HeightRequest="50"
-                        WidthRequest="50"
-                        Margin="5,15,5,10"
-                        CornerRadius="30"
-                        Grid.Column="2"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                        BorderColor="{StaticResource OffBlackBorder}"
-                        BorderWidth="1">
-                        <Button.ImageSource>
-                            <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                             Glyph="&#xe565;"
-                                             Size="30"
-                                             Color="{StaticResource PrimaryDarkText}" />
-                        </Button.ImageSource>
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button"
-                                         Binding="{Binding IsTrafficEnabled}"
-                                         Value="True">
-                                <Setter Property="BackgroundColor"
-                                        Value="#2196F3" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
-            <Border HorizontalOptions="Center"
-                    Grid.ColumnSpan="3"
+            <!-- ===== Layers button (stops + traffic) ===== -->
+            <ImageButton Grid.Column="1"
+                         Margin="8,0,0,0"
+                         Style="{StaticResource MapRoundButtonStyle}"
+                         WidthRequest="52"
+                         HeightRequest="52"
+                         CornerRadius="26"
+                         Clicked="OnLayersClicked"
+                         SemanticProperties.Description="Straturi hartă: stații și trafic">
+                <ImageButton.Source>
+                    <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                     Glyph="&#xe53b;"
+                                     Color="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                </ImageButton.Source>
+            </ImageButton>
+
+            <!-- ===== Layers sheet ===== -->
+            <Border x:Name="LayersPanel"
                     Grid.Row="1"
-                    VerticalOptions="Start"
-                    Margin="10,0,10,10"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 25"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
-                    Opacity="0.8"
-                    IsVisible="{Binding IsTracking}"
-                    Padding="10">
-                <Border.Shadow>
-                    <Shadow Brush="Black"
-                            Offset="5,5"
-                            Radius="10"
-                            Opacity="0.3" />
-                </Border.Shadow>
-                <Label>
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span Text="Urmăriți vehiculul "></Span>
-                            <Span Text="{Binding TrackedVehicle.Id}"></Span>
-                            <Span Text=", ruta "></Span>
-                            <Span Text="{Binding TrackedVehicle.RouteShortName}"></Span>
-                            <Span Text=". "></Span>
-                            <Span Text="Nu mai urmări."
-                                  TextDecorations="Underline">
-                                <Span.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding StopTrackingCommand}" />
-                                </Span.GestureRecognizers>
-                            </Span>
-                        </FormattedString>
-                    </Label.FormattedText>
-                </Label>
+                    Grid.ColumnSpan="2"
+                    HorizontalOptions="End"
+                    Margin="0,8,0,0"
+                    Padding="8"
+                    ZIndex="10"
+                    IsVisible="False"
+                    StrokeShape="RoundRectangle 16"
+                    Style="{StaticResource MapCardStyle}">
+                <VerticalStackLayout Spacing="4" WidthRequest="220">
+                    <Label Text="Straturi hartă"
+                           Style="{StaticResource SectionHeaderLabel}"
+                           Margin="8,4,8,4" />
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Padding="8,0" HeightRequest="48"
+                          SemanticProperties.Description="Afișează stațiile pe hartă">
+                        <Label Text="&#xe55f;" FontFamily="MaterialSymbolsRounded" FontSize="22" VerticalOptions="Center"
+                               TextColor="{StaticResource Accent}" />
+                        <Label Grid.Column="1" Text="Stații" VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                        <Label Grid.Column="2" VerticalOptions="Center" FontAttributes="Bold" Text="Ascunse"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ShowStopsOnMap}" Value="True">
+                                    <Setter Property="Text" Value="Afișate" />
+                                    <Setter Property="TextColor" Value="{StaticResource Accent}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleShowStopsCommand}" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Padding="8,0" HeightRequest="48"
+                          SemanticProperties.Description="Afișează traficul pe hartă">
+                        <Label Text="&#xe565;" FontFamily="MaterialSymbolsRounded" FontSize="22" VerticalOptions="Center"
+                               TextColor="{StaticResource Accent}" />
+                        <Label Grid.Column="1" Text="Trafic" VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                        <Label Grid.Column="2" VerticalOptions="Center" FontAttributes="Bold" Text="Ascuns"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsTrafficEnabled}" Value="True">
+                                    <Setter Property="Text" Value="Afișat" />
+                                    <Setter Property="TextColor" Value="{StaticResource Accent}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleTrafficCommand}" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                </VerticalStackLayout>
             </Border>
 
-            <xct:Expander Grid.Row="1"
-                          Grid.ColumnSpan="3"
-                          VerticalOptions="Start"
-                          Margin="10,0,10,10"
-                          x:Name="FilterExpander"
-                          IsExpanded="False"
-                          IsVisible="{Binding IsTracking, Converter={xct:InvertedBoolConverter}}"
-                          ExpandedChanged="OnFilterExpanderExpandedChanged">
-                <xct:Expander.Header>
-                    <Border StrokeThickness="1"
-                            Stroke="{StaticResource OffBlackBorder}"
-                            StrokeShape="RoundRectangle 25"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                            Padding="15,10"
-                            HorizontalOptions="Center">
-                        <HorizontalStackLayout Spacing="10">
-                            <Label Text="Opțiuni filtrare"
-                                   VerticalOptions="Center"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-                            <Image Source="{FontImageSource FontFamily=MaterialSymbolsRounded, Glyph=&#xe5cf;, Color={AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}, Size=20}"
-                                   x:Name="FilterIcon" />
-                        </HorizontalStackLayout>
-                    </Border>
-                </xct:Expander.Header>
-                <xct:Expander.Content>
-                    <Border StrokeThickness="1"
-                            x:Name="FilterExpanderContent"
-                            Opacity="0"
-                            TranslationY="-10"
-                            Stroke="{StaticResource OffBlackBorder}"
-                            StrokeShape="RoundRectangle 20"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-                            Padding="15"
-                            Margin="0,5,0,0"
-                            HorizontalOptions="Center">
-                        <VerticalStackLayout Spacing="15">
-                            <Label Text="Direcție (numai pentru ruta selectată):" 
-                                   FontSize="12"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                            <HorizontalStackLayout Spacing="10"
-                                                   HorizontalOptions="Center">
-                                <Button Text="Tur"
-                                        Style="{StaticResource FilterButtonStyle}"
-                                        Command="{Binding SetShapeFilterCommand}"
-                                        CommandParameter="_0"
-                                        WidthRequest="100"
-                                        CornerRadius="15">
-                                    <Button.Triggers>
-                                        <DataTrigger TargetType="Button"
-                                                     Binding="{Binding ShapeFilter}"
-                                                     Value="_0">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                            <Setter Property="TextColor" Value="White" />
-                                            <Setter Property="BorderWidth" Value="0" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                                <Button Text="Retur"
-                                        Style="{StaticResource FilterButtonStyle}"
-                                        Command="{Binding SetShapeFilterCommand}"
-                                        CommandParameter="_1"
-                                        WidthRequest="100"
-                                        CornerRadius="15">
-                                    <Button.Triggers>
-                                        <DataTrigger TargetType="Button"
-                                                     Binding="{Binding ShapeFilter}"
-                                                     Value="_1">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                            <Setter Property="TextColor" Value="White" />
-                                            <Setter Property="BorderWidth" Value="0" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                            </HorizontalStackLayout>
+            <!-- ===== Everything under the search bar ===== -->
+            <VerticalStackLayout Grid.Row="1"
+                                 Grid.ColumnSpan="2"
+                                 Spacing="8"
+                                 Margin="0,8,0,0">
 
-                            <Label Text="Tip vehicul:"
-                                   FontSize="12"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
-                            <HorizontalStackLayout Spacing="10"
-                                                   HorizontalOptions="Center">
-                                <Button Text="Autobuz"
-                                        Style="{StaticResource FilterButtonStyle}"
-                                        Command="{Binding SetVehicleTypeFilterCommand}"
-                                        CommandParameter="Autobuz"
-                                        WidthRequest="85"
-                                        CornerRadius="15">
-                                     <Button.Triggers>
-                                        <DataTrigger TargetType="Button"
-                                                     Binding="{Binding VehicleTypeFilter}"
-                                                     Value="Bus">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                            <Setter Property="TextColor" Value="White" />
-                                            <Setter Property="BorderWidth" Value="0" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                                <Button Text="Tramvai"
-                                        Style="{StaticResource FilterButtonStyle}"
-                                        Command="{Binding SetVehicleTypeFilterCommand}"
-                                        CommandParameter="tramvai"
-                                        WidthRequest="85"
-                                        CornerRadius="15">
-                                     <Button.Triggers>
-                                        <DataTrigger TargetType="Button"
-                                                     Binding="{Binding VehicleTypeFilter}"
-                                                     Value="Tram">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                            <Setter Property="TextColor" Value="White" />
-                                            <Setter Property="BorderWidth" Value="0" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                                <Button Text="Toate"
-                                        Style="{StaticResource FilterButtonStyle}"
-                                        Command="{Binding SetVehicleTypeFilterCommand}"
-                                        CommandParameter="toate"
-                                        WidthRequest="85"
-                                        CornerRadius="15">
-                                    <Button.Triggers>
-                                        <DataTrigger TargetType="Button"
-                                                     Binding="{Binding VehicleTypeFilter}"
-                                                     Value="{x:Null}">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                            <Setter Property="TextColor" Value="White" />
-                                            <Setter Property="BorderWidth" Value="0" />
-                                        </DataTrigger>
-                                    </Button.Triggers>
-                                </Button>
-                            </HorizontalStackLayout>
+                <!-- Route suggestions while typing -->
+                <CollectionView ItemsSource="{Binding RouteSuggestions}"
+                                IsVisible="{Binding HasSuggestions}"
+                                ItemsLayout="HorizontalList"
+                                HeightRequest="48">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:RouteChip">
+                            <Border Margin="0,0,8,0"
+                                    Padding="16,0"
+                                    HeightRequest="44"
+                                    MinimumWidthRequest="56"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 22"
+                                    BackgroundColor="{Binding Background}"
+                                    SemanticProperties.Description="{Binding ShortName, StringFormat='Ruta {0}'}">
+                                <Border.Shadow>
+                                    <Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.2" />
+                                </Border.Shadow>
+                                <Label Text="{Binding ShortName}"
+                                       TextColor="{Binding Foreground}"
+                                       FontAttributes="Bold"
+                                       FontSize="16"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=SelectRouteCommand, x:DataType=vm:MainPageViewModel}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- No matching route -->
+                <Border Style="{StaticResource BannerBorder}"
+                        Margin="0"
+                        HorizontalOptions="Start"
+                        IsVisible="{Binding ShowNoRouteHint}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}">
+                    <Label Text="Ruta nu există sau nu are vehicule active acum."
+                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                </Border>
+
+                <!-- Recent routes -->
+                <VerticalStackLayout IsVisible="{Binding ShowQuickRoutes}" Spacing="4">
+                    <CollectionView ItemsSource="{Binding QuickRoutes}"
+                                    ItemsLayout="HorizontalList"
+                                    HeightRequest="44">
+                        <CollectionView.Header>
+                            <Border Margin="0,0,8,0"
+                                    Padding="12,0"
+                                    HeightRequest="40"
+                                    StrokeShape="RoundRectangle 20"
+                                    Style="{StaticResource MapCardStyle}">
+                                <Label VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="&#xe889; " FontFamily="MaterialSymbolsRounded" FontSize="16" />
+                                            <Span Text="Recente" FontSize="13" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </Border>
+                        </CollectionView.Header>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:RouteChip">
+                                <Border Margin="0,0,8,0"
+                                        Padding="14,0"
+                                        HeightRequest="40"
+                                        MinimumWidthRequest="48"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 20"
+                                        BackgroundColor="{Binding Background}"
+                                        SemanticProperties.Description="{Binding ShortName, StringFormat='Ruta recentă {0}'}">
+                                    <Label Text="{Binding ShortName}"
+                                           TextColor="{Binding Foreground}"
+                                           FontAttributes="Bold"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainPageViewModel}}, Path=SelectRouteCommand, x:DataType=vm:MainPageViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <!-- Tracking card -->
+                <Border IsVisible="{Binding IsTracking}"
+                        Style="{StaticResource MapCardStyle}"
+                        StrokeShape="RoundRectangle 18"
+                        Padding="10,8">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <Border Grid.Column="0"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                MinimumWidthRequest="48"
+                                HeightRequest="40"
+                                Padding="10,0"
+                                VerticalOptions="Center"
+                                BackgroundColor="{Binding TrackedRouteChip.Background, FallbackValue={StaticResource Accent}}">
+                            <Label Text="{Binding TrackedRouteChip.ShortName}"
+                                   TextColor="{Binding TrackedRouteChip.Foreground, FallbackValue=White}"
+                                   FontAttributes="Bold"
+                                   FontSize="17"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                            <Label Text="{Binding TrackedTitle}"
+                                   Style="{StaticResource TitleLabel}"
+                                   LineBreakMode="TailTruncation" />
+                            <Label Text="{Binding TrackedSubtitle}"
+                                   Style="{StaticResource SubtitleLabel}"
+                                   LineBreakMode="TailTruncation" />
                         </VerticalStackLayout>
-                    </Border>
-                </xct:Expander.Content>
-            </xct:Expander>
+                        <Button Grid.Column="2"
+                                Text="Oprește"
+                                Style="{StaticResource AccentButton}"
+                                BackgroundColor="{StaticResource Danger}"
+                                Padding="14,0"
+                                HeightRequest="44"
+                                VerticalOptions="Center"
+                                SemanticProperties.Description="Nu mai urmări vehiculul"
+                                Command="{Binding StopTrackingCommand}" />
+                    </Grid>
+                </Border>
+
+                <!-- Offline banner -->
+                <Border Style="{StaticResource BannerBorder}"
+                        Margin="0"
+                        BackgroundColor="{StaticResource Danger}"
+                        IsVisible="{Binding IsOffline}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                        <Label Text="&#xe648;" FontFamily="MaterialSymbolsRounded" FontSize="22"
+                               TextColor="White" VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="Fără conexiune – pozițiile pot fi vechi."
+                               TextColor="White"
+                               VerticalOptions="Center" />
+                        <Button Grid.Column="2"
+                                Text="Reîncearcă"
+                                TextColor="{StaticResource Danger}"
+                                BackgroundColor="White"
+                                CornerRadius="16"
+                                HeightRequest="40"
+                                Padding="12,0"
+                                FontAttributes="Bold"
+                                Command="{Binding RefreshCommand}" />
+                    </Grid>
+                </Border>
+
+                <!-- Empty / few vehicles banner -->
+                <Border Style="{StaticResource BannerBorder}"
+                        Margin="0"
+                        BackgroundColor="{AppThemeBinding Light=#FFF7E6, Dark=#3A2E12}"
+                        IsVisible="{Binding ShowEmptyBanner}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                        <Label Text="&#xe88e;" FontFamily="MaterialSymbolsRounded" FontSize="22"
+                               TextColor="{StaticResource Warning}" VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding EmptyBannerText}"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                               VerticalOptions="Center" />
+                        <ImageButton Grid.Column="2"
+                                     WidthRequest="44" HeightRequest="44" Padding="12"
+                                     BackgroundColor="Transparent"
+                                     SemanticProperties.Description="Închide mesajul"
+                                     Command="{Binding DismissEmptyBannerCommand}">
+                            <ImageButton.Source>
+                                <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="&#xe5cd;"
+                                                 Color="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                            </ImageButton.Source>
+                        </ImageButton>
+                    </Grid>
+                </Border>
+
+                <!-- Filters -->
+                <xct:Expander VerticalOptions="Start"
+                              x:Name="FilterExpander"
+                              IsExpanded="False"
+                              IsVisible="{Binding ShowFilters}"
+                              ExpandedChanged="OnFilterExpanderExpandedChanged">
+                    <xct:Expander.Header>
+                        <Border Style="{StaticResource MapCardStyle}"
+                                StrokeShape="RoundRectangle 22"
+                                Padding="16,0"
+                                HeightRequest="44"
+                                HorizontalOptions="Center">
+                            <HorizontalStackLayout Spacing="8">
+                                <Label Text="&#xef4f;" FontFamily="MaterialSymbolsRounded" FontSize="20"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                                <Label Text="{Binding FilterHeaderText}"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                                <Image Source="{FontImageSource FontFamily=MaterialSymbolsRounded, Glyph=&#xe5cf;, Color={AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}, Size=20}"
+                                       VerticalOptions="Center"
+                                       x:Name="FilterIcon" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </xct:Expander.Header>
+                    <xct:Expander.Content>
+                        <Border x:Name="FilterExpanderContent"
+                                Opacity="0"
+                                TranslationY="-10"
+                                Style="{StaticResource MapCardStyle}"
+                                StrokeShape="RoundRectangle 20"
+                                Padding="16"
+                                Margin="0,6,0,0"
+                                HorizontalOptions="Center">
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="Tip vehicul" Style="{StaticResource SectionHeaderLabel}" Margin="0" />
+                                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                    <Button Text="Toate"
+                                            Style="{StaticResource FilterButtonStyle}"
+                                            Command="{Binding SetVehicleTypeFilterCommand}"
+                                            CommandParameter="{x:Null}">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button" Binding="{Binding VehicleTypeFilter}" Value="{x:Null}">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                                <Setter Property="TextColor" Value="{StaticResource OnAccent}" />
+                                                <Setter Property="BorderWidth" Value="0" />
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                    <Button Text="Autobuz"
+                                            Style="{StaticResource FilterButtonStyle}"
+                                            Command="{Binding SetVehicleTypeFilterCommand}"
+                                            CommandParameter="{x:Static enums:VehicleType.Bus}">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button" Binding="{Binding VehicleTypeFilter}" Value="{x:Static enums:VehicleType.Bus}">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                                <Setter Property="TextColor" Value="{StaticResource OnAccent}" />
+                                                <Setter Property="BorderWidth" Value="0" />
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                    <Button Text="Tramvai"
+                                            Style="{StaticResource FilterButtonStyle}"
+                                            Command="{Binding SetVehicleTypeFilterCommand}"
+                                            CommandParameter="{x:Static enums:VehicleType.Tram}">
+                                        <Button.Triggers>
+                                            <DataTrigger TargetType="Button" Binding="{Binding VehicleTypeFilter}" Value="{x:Static enums:VehicleType.Tram}">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                                <Setter Property="TextColor" Value="{StaticResource OnAccent}" />
+                                                <Setter Property="BorderWidth" Value="0" />
+                                            </DataTrigger>
+                                        </Button.Triggers>
+                                    </Button>
+                                </HorizontalStackLayout>
+
+                                <Label Text="Direcție" Style="{StaticResource SectionHeaderLabel}" Margin="0" />
+                                <Label Text="Alege mai întâi o rută pentru a filtra direcția."
+                                       FontSize="13"
+                                       IsVisible="{Binding IsDirectionFilterAvailable, Converter={xct:InvertedBoolConverter}}"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsDirectionFilterAvailable}">
+                                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                        <Button Text="Tur"
+                                                Style="{StaticResource FilterButtonStyle}"
+                                                Command="{Binding SetShapeFilterCommand}"
+                                                CommandParameter="_0"
+                                                WidthRequest="110">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button" Binding="{Binding ShapeFilter}" Value="_0">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                                    <Setter Property="TextColor" Value="{StaticResource OnAccent}" />
+                                                    <Setter Property="BorderWidth" Value="0" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                        <Button Text="Retur"
+                                                Style="{StaticResource FilterButtonStyle}"
+                                                Command="{Binding SetShapeFilterCommand}"
+                                                CommandParameter="_1"
+                                                WidthRequest="110">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button" Binding="{Binding ShapeFilter}" Value="_1">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                                    <Setter Property="TextColor" Value="{StaticResource OnAccent}" />
+                                                    <Setter Property="BorderWidth" Value="0" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                    </HorizontalStackLayout>
+                                    <Label Text="{Binding DirectionDestinations, StringFormat='Capete de linie: {0}'}"
+                                           FontSize="12"
+                                           HorizontalTextAlignment="Center"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </xct:Expander.Content>
+                </xct:Expander>
+            </VerticalStackLayout>
         </Grid>
-        <Button VerticalOptions="End"
-                HorizontalOptions="End"
-                Margin="20,20,20,85"
-                WidthRequest="50"
-                BorderColor="{StaticResource OffBlackBorder}"
-                BorderWidth="1"
-                BackgroundColor="{StaticResource OffBlack}"
-                HeightRequest="50"
-                CornerRadius="30"
-                Command="{Binding ResetBearingCommand}"
-                Rotation="{Binding CompassRotation}"
-                IsVisible="{Binding IsCompassVisible}">
 
-            <Button.ImageSource>
-                <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                 Glyph="&#xf1e0;"
-                                 Color="{StaticResource White}" />
-            </Button.ImageSource>
-            <Button.Shadow>
-                <Shadow Brush="Black"
-                        Offset="5,5"
-                        Radius="10"
-                        Opacity="0.5" />
-            </Button.Shadow>
+        <!-- ===== Bottom-right map controls ===== -->
+        <VerticalStackLayout VerticalOptions="End"
+                             HorizontalOptions="End"
+                             Spacing="12"
+                             Margin="16,16,16,24">
+            <ImageButton Style="{StaticResource MapRoundButtonStyle}"
+                         Command="{Binding ResetBearingCommand}"
+                         Rotation="{Binding CompassRotation}"
+                         IsVisible="{Binding IsCompassVisible}"
+                         SemanticProperties.Description="Orientează harta spre nord">
+                <ImageButton.Source>
+                    <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                     Glyph="&#xf1e0;"
+                                     Color="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                </ImageButton.Source>
+            </ImageButton>
+            <Grid>
+                <ImageButton Style="{StaticResource MapRoundButtonStyle}"
+                             Command="{Binding CenterOnUserLocationCommand}"
+                             SemanticProperties.Description="Centrează harta pe locația mea">
+                    <ImageButton.Source>
+                        <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                         Glyph="&#xe1b3;"
+                                         Color="{StaticResource Accent}" />
+                    </ImageButton.Source>
+                </ImageButton>
+                <ActivityIndicator IsVisible="{Binding IsLocating}"
+                                   IsRunning="{Binding IsLocating}"
+                                   InputTransparent="True"
+                                   WidthRequest="48"
+                                   HeightRequest="48"
+                                   Color="{StaticResource Accent}" />
+            </Grid>
+        </VerticalStackLayout>
 
-        </Button>
-        <Button VerticalOptions="End"
-                HorizontalOptions="End"
-                Margin="20"
-                WidthRequest="50"
-                BorderColor="{StaticResource OffBlackBorder}"
-                BorderWidth="1"
-                BackgroundColor="{StaticResource OffBlack}"
-                HeightRequest="50"
-                CornerRadius="30"
-                Command="{Binding CenterOnUserLocationCommand}">
-
-            <Button.ImageSource>
-                <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                 Glyph="&#xe1b3;"
-                                 Color="{StaticResource White}" />
-            </Button.ImageSource>
-            <Button.Shadow>
-                <Shadow Brush="Black"
-                        Offset="5,5"
-                        Radius="10"
-                        Opacity="0.5" />
-            </Button.Shadow>
-
-        </Button>
-        <ActivityIndicator IsVisible="{Binding IsBusy}"
-                           VerticalOptions="End"
-                           HorizontalOptions="Start"
-                           Margin="15,20,15,15"
-                           WidthRequest="10"
-                           HeightRequest="10"
-                           IsRunning="{Binding IsBusy}">
-        </ActivityIndicator>
+        <!-- ===== Bottom-left status pill ===== -->
+        <Border VerticalOptions="End"
+                HorizontalOptions="Start"
+                Margin="16,16,16,28"
+                Padding="10,6"
+                StrokeShape="RoundRectangle 14"
+                Style="{StaticResource MapCardStyle}"
+                SemanticProperties.Description="{Binding LastUpdatedText}">
+            <HorizontalStackLayout Spacing="6">
+                <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                   IsRunning="{Binding IsBusy}"
+                                   WidthRequest="16"
+                                   HeightRequest="16"
+                                   Color="{StaticResource Accent}" />
+                <Label Text="{Binding LastUpdatedText}"
+                       FontSize="12"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+            </HorizontalStackLayout>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding RefreshCommand}" />
+            </Border.GestureRecognizers>
+        </Border>
     </Grid>
 </ContentPage>

@@ -6,9 +6,10 @@
     xmlns:converters="clr-namespace:IvanConnections_Travel.Converters"
     xmlns:views="clr-namespace:IvanConnections_Travel.Views"
     xmlns:controls="clr-namespace:IvanConnections_Travel.Controls"
+    xmlns:vm="clr-namespace:IvanConnections_Travel.ViewModels"
     FlyoutBehavior="Flyout"
     FlyoutHeaderBehavior="Fixed"
-    FlyoutBackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#111827}"
+    FlyoutBackgroundColor="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}"
     Title="IvanConnections">
 
     <Shell.Resources>
@@ -21,13 +22,13 @@
 
         <Style x:Key="StatLabel" TargetType="Label">
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#666666, Dark=#9CA3AF}" />
+            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
             <Setter Property="VerticalOptions" Value="Center" />
         </Style>
     </Shell.Resources>
 
     <Shell.FlyoutHeader>
-        <Grid Padding="20,40,20,24" RowSpacing="15" Margin="0,25,0,0">
+        <Grid x:DataType="vm:AppShellViewModel" Padding="20,40,20,24" RowSpacing="15" Margin="0,25,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -42,7 +43,7 @@
                     <Border
                         WidthRequest="60"
                         HeightRequest="60"
-                        Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#374151}"
+                        Stroke="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
                         StrokeThickness="2">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="30" />
@@ -51,7 +52,8 @@
                             Source="{Binding CurrentUser.AvatarUrl}"
                             Aspect="AspectFill"
                             WidthRequest="60"
-                            HeightRequest="60" />
+                            HeightRequest="60"
+                            SemanticProperties.Description="Avatar utilizator" />
                     </Border>
 
                     <VerticalStackLayout VerticalOptions="Center" Spacing="2">
@@ -59,58 +61,59 @@
                             Text="{Binding CurrentUser.DisplayName}"
                             FontSize="18"
                             FontAttributes="Bold"
-                            TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
                         <Label
                             Text="Călător activ"
                             FontSize="12"
-                            TextColor="#3B82F6"
+                            TextColor="{StaticResource Accent}"
                             FontAttributes="Italic" />
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
 
                 <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Start">
-                    <HorizontalStackLayout Margin="0,0,12,0" Spacing="6">
-                        <Label Text="⭐" FontSize="14" />
-                        <Label Style="{StaticResource StatLabel}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="{Binding CurrentUser.KarmaPoints}" FontAttributes="Bold"
-                                          TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                                    <Span Text=" karma" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource ChipBorder}"
+                            Margin="0,0,8,0"
+                            MinimumHeightRequest="44"
+                            SemanticProperties.Description="Puncte karma. Atinge pentru a vedea medaliile"
+                            SemanticProperties.Hint="Deschide pagina Medalii">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenBadgesCommand}" />
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Label Text="⭐" FontSize="14" VerticalOptions="Center" />
+                            <Label Style="{StaticResource StatLabel}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding CurrentUser.KarmaPoints}" FontAttributes="Bold"
+                                              TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                                        <Span Text=" karma" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Border>
 
-                    <HorizontalStackLayout Spacing="6">
-                        <Label Text="🏆" FontSize="14" />
-                        <Label Style="{StaticResource StatLabel}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="{Binding CurrentUser.BadgeCount}" FontAttributes="Bold"
-                                          TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                                    <Span Text=" medalii" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
-                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource ChipBorder}"
+                            MinimumHeightRequest="44"
+                            SemanticProperties.Description="Medalii câștigate. Atinge pentru a vedea medaliile"
+                            SemanticProperties.Hint="Deschide pagina Medalii">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenBadgesCommand}" />
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Label Text="🏆" FontSize="14" VerticalOptions="Center" />
+                            <Label Style="{StaticResource StatLabel}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding CurrentUser.BadgeCount}" FontAttributes="Bold"
+                                              TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                                        <Span Text=" medalii" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Border>
                 </FlexLayout>
-                <!-- <FlexLayout  -->
-                <!--     BindableLayout.ItemsSource="{Binding CurrentUser.UserBadges}" -->
-                <!--     Wrap="Wrap" -->
-                <!--     Direction="Row" -->
-                <!--     JustifyContent="Start" -->
-                <!--     AlignContent="Start" -->
-                <!--     Margin="0,10,0,0"> -->
-                <!-- -->
-                <!--     <BindableLayout.ItemTemplate> -->
-                <!--         <DataTemplate> -->
-                <!--             <Grid Padding="0,0,8,8">  -->
-                <!--                 <controls:BadgeHexagon /> -->
-                <!--             </Grid> -->
-                <!--         </DataTemplate> -->
-                <!--     </BindableLayout.ItemTemplate> -->
-                <!-- </FlexLayout> -->
             </VerticalStackLayout>
 
             <Border
@@ -118,7 +121,7 @@
                 IsVisible="{Binding IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
                 Padding="16"
                 StrokeThickness="0"
-                BackgroundColor="{AppThemeBinding Light=#F3F4F6, Dark=#1F2937}">
+                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedLight}, Dark={StaticResource SurfaceDark}}">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="12" />
                 </Border.StrokeShape>
@@ -127,19 +130,18 @@
                     <Label
                         Text="Salutare, Călătorule!"
                         FontAttributes="Bold"
-                        FontSize="16" />
+                        FontSize="16"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
                     <Label
                         Text="Autentifică-te pentru a accesa chat-ul comunității."
                         FontSize="13"
-                        TextColor="{AppThemeBinding Light=#4B5563, Dark=#9CA3AF}" />
+                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                     <Button
                         Text="Activează chatul"
                         Command="{Binding LoginCommand}"
-                        BackgroundColor="#3B82F6"
-                        TextColor="White"
-                        FontAttributes="Bold"
+                        Style="{StaticResource AccentButton}"
                         CornerRadius="8"
-                        HeightRequest="40"
+                        HeightRequest="44"
                         Margin="0,5,0,0" />
                 </VerticalStackLayout>
             </Border>
@@ -147,49 +149,53 @@
             <BoxView
                 Grid.Row="0"
                 IsVisible="{Binding IsLoggingIn}"
-                Color="{AppThemeBinding Light=#80FFFFFF, Dark=#80000000}"
+                Color="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource PageBackgroundDark}}"
+                Opacity="0.5"
                 CornerRadius="12" />
             <ActivityIndicator
                 Grid.Row="0"
                 IsRunning="{Binding IsLoggingIn}"
                 IsVisible="{Binding IsLoggingIn}"
-                Color="#3B82F6"
+                Color="{StaticResource Accent}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center" />
 
-            <BoxView Grid.Row="1" HeightRequest="1" Color="{AppThemeBinding Light=#E5E7EB, Dark=#374151}"
+            <BoxView Grid.Row="1" HeightRequest="1"
+                     Color="{AppThemeBinding Light={StaticResource DividerLight}, Dark={StaticResource DividerDark}}"
                      Margin="0,10,0,0" />
         </Grid>
     </Shell.FlyoutHeader>
 
-    <FlyoutItem Title="Hartă Interactivă">
+    <!-- Flyout menu items use the default Shell template (Android: 50dp rows, >= 44dp touch targets, selection highlight). -->
+
+    <FlyoutItem Title="Hartă Interactivă" Route="map">
         <FlyoutItem.Icon>
             <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconMap}" Size="24"
-                             Color="#3B82F6" />
+                             Color="{StaticResource Accent}" />
         </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Medalii">
+    <FlyoutItem Title="Medalii" Route="badges">
         <FlyoutItem.Icon>
             <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconMedal}" Size="24"
-                             Color="#3B82F6" />
+                             Color="{StaticResource Accent}" />
         </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:BadgesPage}" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Orar Metropolitan">
+    <FlyoutItem Title="Orar Metropolitan" Route="schedule">
         <FlyoutItem.Icon>
             <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconSchedule}" Size="24"
-                             Color="#3B82F6" />
+                             Color="{StaticResource Accent}" />
         </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:SchedulePage}" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Setări Aplicație">
+    <FlyoutItem Title="Setări Aplicație" Route="settings">
         <FlyoutItem.Icon>
             <FontImageSource FontFamily="MaterialSymbolsRounded" Glyph="{StaticResource IconSettings}" Size="24"
-                             Color="#3B82F6" />
+                             Color="{StaticResource Accent}" />
         </FlyoutItem.Icon>
         <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
     </FlyoutItem>

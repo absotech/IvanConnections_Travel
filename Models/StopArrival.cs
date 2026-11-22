@@ -6,9 +6,11 @@ namespace IvanConnections_Travel.Models
 {
     public class StopArrival
     {
-        // [JsonPropertyName("vehicleId")]
-        // public string VehicleId { get; set; }
-        
+        /// <summary>Id-ul vehiculului; corespunde cu <see cref="Vehicle.Id"/>.</summary>
+        [JsonPropertyName("vehicleId")]
+        public int? VehicleId { get; set; }
+
+        /// <summary>Atenție: API-ul trimite aici numărul liniei (ex. „41”), nu eticheta vehiculului.</summary>
         [JsonPropertyName("vehicleLabel")]
         public string VehicleLabel { get; set; }
 

@@ -31,6 +31,25 @@ public partial class AppShellViewModel : ObservableObject
         _apiService = apiService;
     }
 
+    public const string RouteMap = "map";
+    public const string RouteBadges = "badges";
+    public const string RouteSchedule = "schedule";
+    public const string RouteSettings = "settings";
+
+    [RelayCommand]
+    private async Task OpenBadgesAsync()
+    {
+        try
+        {
+            Shell.Current.FlyoutIsPresented = false;
+            await Shell.Current.GoToAsync($"//{RouteBadges}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[AppShellViewModel] Navigation to badges failed: {ex.Message}");
+        }
+    }
+
     public async Task TryAutoLoginAsync()
     {
         try

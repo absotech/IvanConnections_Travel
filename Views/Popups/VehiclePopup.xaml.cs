@@ -6,14 +6,14 @@ namespace IvanConnections_Travel.Views.Popups;
 public partial class VehiclePopup : Popup<bool>
 {
     // Cât din ecran poate ocupa popup-ul și cât din el este rezervat chatului,
-    // astfel încât panoul de chat să fie mereu vizibil integral.
-    private const double MaxScreenHeightRatio = 0.88;
+    // astfel încât panoul de chat să fie mereu vizibil integral. Popup-ul este afișat ca
+    // bottom sheet, ca partea de sus a hărții (și vehiculul atins) să rămână vizibilă.
+    private const double MaxScreenHeightRatio = 0.75;
     private const double ChatHeightRatio = 0.45;
     private const double MinPopupHeight = 320;
     private const double MinChatHeight = 170;
     private const double MaxChatHeight = 380;
     private const double MinDetailsHeight = 96;
-    private const double MinSideMargin = 32;
     private const double FallbackHeaderHeight = 84;
     private const double ChatBottomMargin = 16;
 
@@ -93,7 +93,9 @@ public partial class VehiclePopup : Popup<bool>
 
         PopupHeight = Math.Max(MinPopupHeight, screenHeight * MaxScreenHeightRatio);
         RootCard.MaximumHeightRequest = PopupHeight;
-        RootCard.MaximumWidthRequest = Math.Max(300, Math.Min(400, screenWidth - MinSideMargin));
+        // Full width on phones, a centered sheet on wide screens / landscape.
+        RootCard.MaximumWidthRequest = screenWidth > 600 ? 560 : screenWidth;
+        RootCard.WidthRequest = Math.Min(screenWidth, RootCard.MaximumWidthRequest);
 
         // Chatul primește o parte din înălțimea disponibilă, dar niciodată atât de mult
         // încât detaliile să dispară complet.

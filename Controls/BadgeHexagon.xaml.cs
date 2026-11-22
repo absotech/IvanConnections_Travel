@@ -1,5 +1,4 @@
 ﻿using IvanConnections_Travel.Models;
-using IvanConnections_Travel.Views.Popups;
 
 namespace IvanConnections_Travel.Controls;
 
@@ -34,18 +33,7 @@ public partial class BadgeHexagon : ContentView
     {
         InitializeComponent();
     }
-    private async void OnBadgeTapped(object sender, TappedEventArgs e)
-    {
-        if (BindingContext is not UserBadgeDto userBadge) return;
-
-        var title = IsLocked ? "Medalie indisponibilă" : "Medalie câștigată";
-        var message = IsLocked
-            ? userBadge.Badge.Description
-            : $"Deblocat la {userBadge.EarnedAt:dd.MM.yyyy}";
-        var type = IsLocked ? MessagePopupType.Info : MessagePopupType.Success;
-
-        await MessagePopup.ShowAsync(title + '\n' + userBadge.Badge.Name, message, type, MessagePopupButtons.Ok);
-    }
+    // Tap handling (details popup) lives in BadgesViewModel.ShowBadgeDetailsCommand on the hosting page.
     private void StartPulse(int rarity)
     {
         if (rarity < 3) return;

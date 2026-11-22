@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:IvanConnections_Travel.Controls"
+             x:Class="IvanConnections_Travel.Controls.SettingsRow"
+             x:DataType="controls:SettingsRow"
+             x:Name="Root">
+    <ContentView.Content>
+        <Border Style="{StaticResource CardBorder}"
+                Padding="16,12"
+                MinimumHeightRequest="56">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnRowTapped" />
+            </Border.GestureRecognizers>
+            <Grid ColumnDefinitions="Auto, *, Auto"
+                  RowDefinitions="Auto, Auto"
+                  ColumnSpacing="14">
+                <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                        Style="{StaticResource ChipBorder}"
+                        Padding="0"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        StrokeShape="RoundRectangle 12"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding HasIcon, Source={x:Reference Root}}">
+                    <Label Text="{Binding Icon, Source={x:Reference Root}}"
+                           FontSize="20"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center" />
+                </Border>
+
+                <Label Grid.Row="0" Grid.Column="1"
+                       Style="{StaticResource TitleLabel}"
+                       Text="{Binding Title, Source={x:Reference Root}}"
+                       VerticalOptions="End" />
+                <Label Grid.Row="1" Grid.Column="1"
+                       Style="{StaticResource SubtitleLabel}"
+                       Text="{Binding Subtitle, Source={x:Reference Root}}"
+                       IsVisible="{Binding HasSubtitle, Source={x:Reference Root}}"
+                       VerticalOptions="Start" />
+
+                <ContentView Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
+                             VerticalOptions="Center"
+                             HorizontalOptions="End"
+                             Content="{Binding TrailingContent, Source={x:Reference Root}}" />
+            </Grid>
+        </Border>
+    </ContentView.Content>
+</ContentView>

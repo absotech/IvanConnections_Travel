@@ -4,9 +4,6 @@
              xmlns:models="clr-namespace:IvanConnections_Travel.Models"
              x:Class="IvanConnections_Travel.Controls.BadgeHexagon"
              x:DataType="models:UserBadgeDto">
-    <ContentView.GestureRecognizers>
-        <TapGestureRecognizer Tapped="OnBadgeTapped" />
-    </ContentView.GestureRecognizers>
     <ContentView.Resources>
         <converters:BadgeIconConverter x:Key="BadgeIconConverter" />
         <converters:RarityToBrushConverter x:Key="RarityToBrushConverter" />

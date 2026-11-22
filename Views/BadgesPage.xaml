@@ -7,6 +7,7 @@
              x:Class="IvanConnections_Travel.Views.BadgesPage"
              x:DataType="vm:BadgesViewModel"
              Shell.NavBarIsVisible="False"
+             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}"
              Title="Medalii">
 
 
@@ -17,63 +18,99 @@
             Grid.RowSpan="2"
             IsRunning="{Binding IsLoading}"
             IsVisible="{Binding IsLoading}"
-            Color="#3B82F6"
+            Color="{StaticResource Accent}"
             HorizontalOptions="Center"
             InputTransparent="True"
             VerticalOptions="Center"
             ZIndex="10" />
 
-        <ScrollView Grid.Row="0" Grid.RowSpan="2">
-            <VerticalStackLayout Spacing="16" Padding="16,20">
-                <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
-                    <Button Clicked="OnMenuClicked"
-                            HeightRequest="36"
-                            WidthRequest="36"
-                            BackgroundColor="Transparent"
-                            VerticalOptions="Center">
-                        <Button.ImageSource>
-                            <FontImageSource FontFamily="MaterialSymbolsRounded"
-                                             Glyph="&#xe5d2;"
-                                             Size="30"
-                                             Color="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
-                        </Button.ImageSource>
-                    </Button>
-                    <Label Text="Medalii"
-                           FontSize="26"
+        <!-- CollectionView with fixed-size cells: FlexLayout inside a ScrollView mis-measured
+             wrapping badge names, so rows overlapped. -->
+        <CollectionView Grid.Row="0"
+                        Grid.RowSpan="2"
+                        ItemsSource="{Binding Badges}"
+                        SelectionMode="None"
+                        Margin="12,0">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="4" VerticalItemSpacing="8" HorizontalItemSpacing="4" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="12" Padding="4,20,4,16">
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                        <Button Clicked="OnMenuClicked"
+                                HeightRequest="44"
+                                WidthRequest="44"
+                                Padding="0"
+                                BackgroundColor="Transparent"
+                                SemanticProperties.Description="Deschide meniul"
+                                VerticalOptions="Center">
+                            <Button.ImageSource>
+                                <FontImageSource FontFamily="MaterialSymbolsRounded"
+                                                 Glyph="&#xe5d2;"
+                                                 Size="30"
+                                                 Color="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                            </Button.ImageSource>
+                        </Button>
+                        <Label Text="Medalii"
+                               FontSize="26"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"
+                               SemanticProperties.HeadingLevel="Level1"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                    </HorizontalStackLayout>
+                    <Label Text="Toate medaliile"
+                           FontSize="20"
                            FontAttributes="Bold"
-                           VerticalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
-                </HorizontalStackLayout>
-                <Label
-                    Text="Toate medaliile"
-                    FontSize="20"
-                    FontAttributes="Bold"
-                    TextColor="{AppThemeBinding Light=#1F2937, Dark=White}" />
-
-                <Label
-                    Text="Deblochează medalii participând activ în comunitate."
-                    FontSize="13"
-                    TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}" />
-
-                <FlexLayout
-                    BindableLayout.ItemsSource="{Binding Badges}"
-                    Wrap="Wrap"
-                    CascadeInputTransparent="False"
-                    InputTransparent="False"
-                    Direction="Row"
-                    JustifyContent="Start"
-                    AlignContent="Start">
-
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="models:BadgeDisplayItem">
-                            <Grid x:Name="BadgeItemGrid" Padding="6" WidthRequest="60" HeightRequest="60" Background="Transparent">
-                                <controls:BadgeHexagon BindingContext="{Binding UserBadge}" IsLocked="{Binding BindingContext.IsLocked, Source={x:Reference BadgeItemGrid}}" />
-                            </Grid>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </FlexLayout>
-            </VerticalStackLayout>
-        </ScrollView>
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                    <Label Text="Deblochează medalii participând activ în comunitate. Atinge o medalie pentru detalii."
+                           Style="{StaticResource SubtitleLabel}" />
+                    <Label Text="{Binding ProgressText}"
+                           FontAttributes="Bold"
+                           FontSize="13"
+                           TextColor="{StaticResource Accent}" />
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:BadgeDisplayItem">
+                    <Grid x:Name="BadgeItemGrid"
+                          RowDefinitions="60,34"
+                          RowSpacing="4"
+                          Padding="2"
+                          BackgroundColor="Transparent"
+                          SemanticProperties.Description="{Binding UserBadge.Badge.Name}"
+                          SemanticProperties.Hint="Atinge pentru detalii despre medalie">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding ShowBadgeDetailsCommand, Source={RelativeSource AncestorType={x:Type vm:BadgesViewModel}}, x:DataType=vm:BadgesViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Grid.GestureRecognizers>
+                        <controls:BadgeHexagon Grid.Row="0"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True"
+                                               BindingContext="{Binding UserBadge}"
+                                               IsLocked="{Binding BindingContext.IsLocked, Source={x:Reference BadgeItemGrid}, x:DataType=Grid}" />
+                        <Label Grid.Row="1"
+                               Text="{Binding UserBadge.Badge.Name}"
+                               FontSize="11"
+                               MaxLines="2"
+                               LineBreakMode="TailTruncation"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Start"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Start"
+                               TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsLocked}" Value="True">
+                                    <Setter Property="TextColor"
+                                            Value="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
     </Grid>
 </ContentPage>
